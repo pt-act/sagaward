@@ -1,13 +1,15 @@
 import json
 import logging
-import platform
-import sys
 import urllib.request
-from pathlib import Path
+from datetime import datetime
 from typing import TYPE_CHECKING, Any
-from uuid import uuid4
 
 from strix.config import load_settings
+from strix.telemetry._common import (
+    SESSION_ID,
+    base_props,
+    is_first_run,
+)
 
 
 if TYPE_CHECKING:
@@ -19,34 +21,9 @@ logger = logging.getLogger(__name__)
 _POSTHOG_PUBLIC_API_KEY = "phc_7rO3XRuNT5sgSKAl6HDIrWdSGh1COzxw0vxVIAR6vVZ"
 _POSTHOG_HOST = "https://us.i.posthog.com"
 
-_SESSION_ID = uuid4().hex[:16]
-
 
 def _is_enabled() -> bool:
-    """Master telemetry gate. ``STRIX_POSTHOG_TELEMETRY`` overrides ``STRIX_TELEMETRY``."""
-    return load_settings().telemetry.posthog_enabled
-
-
-def _is_first_run() -> bool:
-    marker = Path.home() / ".strix" / ".seen"
-    if marker.exists():
-        return False
-    try:
-        marker.parent.mkdir(parents=True, exist_ok=True)
-        marker.touch()
-    except Exception:  # noqa: BLE001, S110
-        pass  # nosec B110
-    return True
-
-
-def _get_version() -> str:
-    try:
-        from importlib.metadata import version
-
-        return version("strix-agent")
-    except Exception:  # noqa: BLE001
-        logger.debug("strix-agent version lookup failed", exc_info=True)
-        return "unknown"
+    return load_settings().telemetry.enabled
 
 
 def _send(event: str, properties: dict[str, Any]) -> None:
@@ -57,7 +34,7 @@ def _send(event: str, properties: dict[str, Any]) -> None:
         payload = {
             "api_key": _POSTHOG_PUBLIC_API_KEY,
             "event": event,
-            "distinct_id": _SESSION_ID,
+            "distinct_id": SESSION_ID,
             "properties": properties,
         }
         req = urllib.request.Request(  # noqa: S310
@@ -74,15 +51,6 @@ def _send(event: str, properties: dict[str, Any]) -> None:
         logger.debug("posthog event sent: %s", event)
 
 
-def _base_props() -> dict[str, Any]:
-    return {
-        "os": platform.system().lower(),
-        "arch": platform.machine(),
-        "python": f"{sys.version_info.major}.{sys.version_info.minor}",
-        "strix_version": _get_version(),
-    }
-
-
 def start(
     model: str | None,
     scan_mode: str | None,
@@ -93,13 +61,13 @@ def start(
     _send(
         "scan_started",
         {
-            **_base_props(),
+            **base_props(),
             "model": model or "unknown",
             "scan_mode": scan_mode or "unknown",
             "scan_type": "whitebox" if is_whitebox else "blackbox",
             "interactive": interactive,
             "has_instructions": has_instructions,
-            "first_run": _is_first_run(),
+            "first_run": is_first_run(),
         },
     )
 
@@ -108,7 +76,7 @@ def finding(severity: str) -> None:
     _send(
         "finding_reported",
         {
-            **_base_props(),
+            **base_props(),
             "severity": severity.lower(),
         },
     )
@@ -123,8 +91,6 @@ def end(report_state: "ReportState", exit_reason: str = "completed") -> None:
 
     duration = 0.0
     try:
-        from datetime import datetime
-
         start = datetime.fromisoformat(report_state.start_time.replace("Z", "+00:00"))
         end_iso = report_state.end_time or datetime.now(start.tzinfo).isoformat()
         duration = (datetime.fromisoformat(end_iso.replace("Z", "+00:00")) - start).total_seconds()
@@ -148,7 +114,7 @@ def end(report_state: "ReportState", exit_reason: str = "completed") -> None:
     _send(
         "scan_ended",
         {
-            **_base_props(),
+            **base_props(),
             "exit_reason": exit_reason,
             "duration_seconds": round(duration),
             "vulnerabilities_total": len(report_state.vulnerability_reports),
@@ -159,7 +125,7 @@ def end(report_state: "ReportState", exit_reason: str = "completed") -> None:
 
 
 def error(error_type: str, error_msg: str | None = None) -> None:
-    props = {**_base_props(), "error_type": error_type}
+    props = {**base_props(), "error_type": error_type}
     if error_msg:
         props["error_msg"] = error_msg
     _send("error", props)
