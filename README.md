@@ -2,7 +2,7 @@
 
 # Strix — Bounty-Grade Engine (fork)
 
-### Autonomous AI that finds vulnerabilities and prove them with evidence.
+### Autonomous AI agents whose findings are never self-confirmed — every candidate is validated by a deterministic harness.
 
 <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-3b82f6?style=flat-square" alt="License"></a>
 <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/changelog-fork-2b9246?style=flat-square" alt="Changelog"></a>
@@ -57,10 +57,9 @@ agent's capabilities.
 
 ## Overview
 
-Strix agents act like real hackers — they run your code dynamically, find vulnerabilities, and
-validate them through actual proof-of-concepts. Built for developers and security teams who need
-fast, accurate security testing without the overhead of manual pentesting or the false positives
-of static analysis tools.
+Strix agents operate like a disciplined hunter: propose, then prove — no finding ships without evidence. They run your code dynamically, find vulnerabilities, and validate them through actual proof-of-concepts.
+
+Built for developers and security teams who need fast, accurate security testing — without the overhead of manual pentesting or the false positives of static analysis.
 
 **Key capabilities (inherited):**
 
