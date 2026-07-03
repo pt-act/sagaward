@@ -57,7 +57,7 @@ agent's capabilities.
 
 ## Overview
 
-Strix agents operate like a disciplined hunter: propose, then prove — no finding ships without evidence. They run your code dynamically, find vulnerabilities, and validate them through actual proof-of-concepts.
+**Strix agents operate like a disciplined hunter: propose, then prove — no finding ships without evidence.** They run your code dynamically, find vulnerabilities, and validate them through actual proof-of-concepts.
 
 Built for developers and security teams who need fast, accurate security testing — without the overhead of manual pentesting or the false positives of static analysis.
 
@@ -73,7 +73,7 @@ Built for developers and security teams who need fast, accurate security testing
 
 - **Application Security Testing** — detect and validate critical vulnerabilities
 - **Rapid Penetration Testing** — pentests in hours, not weeks
-- **Bug Bounty Automation** — automate research and generate PoCs
+- **Bug Bounty Automation** — automate research and PoC generation, within each program's rules of engagement
 - **CI/CD Integration** — block vulnerabilities before they reach production
 - **Detection research** — measure recall vs. precision on Behavioral-V2P pairs (this fork)
 
@@ -278,3 +278,4 @@ to all of these projects' authors.
 ---
 
 Fork maintained by Ricardo Almeida. This is a research fork; for my ground-up projects see https://ricardoalmeidaportfolio.netlify.app
+
