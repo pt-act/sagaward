@@ -275,3 +275,7 @@ to all of these projects' authors.
 > [!WARNING]
 > Only test apps you own or have permission to test. You are responsible for using this software
 > ethically and legally.
+
+---
+
+Fork maintained by Ricardo Almeida. This is a research fork; for my ground-up projects see https://ricardoalmeidaportfolio.netlify.app
