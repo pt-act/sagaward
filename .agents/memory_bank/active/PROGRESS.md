@@ -400,3 +400,10 @@
 3. Decision: live LLM E3 confirmatory ablation (glm-5.2, estimated ~$5–10)
 4. Commit all new files (`benchmarks/bv2p/` + `strix/research/corpus.py` + `artifacts/` + paper v1.0) to `new` branch and push
 5. S3.1 poller→breaker wiring test (non-blocking, deferred from verdict-11)
+
+### 2026-07-24 — propose-dispose-validation completion-report filed
+
+- completion-report.md written: `specs/propose-dispose/specs/propose-dispose-validation/validation/completion-report.md`
+- §A artifacts index (18 research + 5 software), §B per-task-group AC self-check (TG0–TG5), §C 6 deviations, §D state/backlog, §E handoff
+- Key open item: operator must lock E2-preregistration.md (DEV-6)
+- 568 passed / 0 failures confirmed at report time
