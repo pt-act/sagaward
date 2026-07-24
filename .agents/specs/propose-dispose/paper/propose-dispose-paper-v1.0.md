@@ -733,5 +733,5 @@ magnitudes.
 - Corpus: 10 B-V2P pairs (2 real CVEs, 8 synthesized)
 - Primary result: H2a McNemar, χ²=8.100, p≈0.0044
 - Honest limit: H2b tied (b=0,c=0); FN arm = proposer recall ceiling
-- Experiment pipeline: `strix/artifacts/run_experiments.py`
+- Experiment pipeline: `strix/artifacts/run_live_experiments.py` (live; E2 haiku via OpenRouter) / `strix/artifacts/run_experiments.py` (pilot; E1/E3/E4 static proxy)
 - Corpus registry: `strix/research/corpus.py` (BV2P_CORPUS)
