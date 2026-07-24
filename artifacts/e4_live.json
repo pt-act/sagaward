@@ -2,13 +2,465 @@
   "experiment": "E4",
   "hypothesis": "H4",
   "producer": "anthropic/claude-haiku-4-5 via https://openrouter.ai/api/v1",
-  "timestamp": "2026-07-24T17:17:05Z",
+  "timestamp": "2026-07-24T17:25:57Z",
   "model": "anthropic/claude-haiku-4-5",
   "api_base": "https://openrouter.ai/api/v1",
   "strix_flip_count": 0,
-  "m4_flip_count": 0,
+  "m4_flip_count": 2,
   "H4_confirmed": true,
-  "pair_level_rows": [],
-  "raw_llm_outputs": [],
-  "note": "H4 confirmed: strix flipped 0/0 perturbations; M4 flipped 0/0."
+  "pair_level_rows": [
+    {
+      "pair_id": "openwebui-idor-memories",
+      "primitive": "idor",
+      "perturbation": "baseline",
+      "haiku_proposed": true,
+      "pd_confidence": 0.85,
+      "strix_harness_confirmed": true,
+      "strix_flipped_vs_baseline": false,
+      "m4_confirms": true,
+      "m4_confidence": 0.85,
+      "m4_flipped_vs_baseline": false
+    },
+    {
+      "pair_id": "openwebui-idor-memories",
+      "primitive": "idor",
+      "perturbation": "rephrase_endpoint",
+      "haiku_proposed": true,
+      "pd_confidence": 0.85,
+      "strix_harness_confirmed": true,
+      "strix_flipped_vs_baseline": false,
+      "m4_confirms": true,
+      "m4_confidence": 0.85,
+      "m4_flipped_vs_baseline": false
+    },
+    {
+      "pair_id": "openwebui-idor-memories",
+      "primitive": "idor",
+      "perturbation": "add_noise_params",
+      "haiku_proposed": true,
+      "pd_confidence": 0.85,
+      "strix_harness_confirmed": true,
+      "strix_flipped_vs_baseline": false,
+      "m4_confirms": true,
+      "m4_confidence": 0.78,
+      "m4_flipped_vs_baseline": false
+    },
+    {
+      "pair_id": "openwebui-idor-memories",
+      "primitive": "idor",
+      "perturbation": "reword_cve",
+      "haiku_proposed": true,
+      "pd_confidence": 0.85,
+      "strix_harness_confirmed": true,
+      "strix_flipped_vs_baseline": false,
+      "m4_confirms": true,
+      "m4_confidence": 0.85,
+      "m4_flipped_vs_baseline": false
+    },
+    {
+      "pair_id": "openwebui-idor-memories",
+      "primitive": "idor",
+      "perturbation": "minimal_surface",
+      "haiku_proposed": true,
+      "pd_confidence": 0.85,
+      "strix_harness_confirmed": true,
+      "strix_flipped_vs_baseline": false,
+      "m4_confirms": true,
+      "m4_confidence": 0.85,
+      "m4_flipped_vs_baseline": false
+    },
+    {
+      "pair_id": "flowise-ssrf-http-node",
+      "primitive": "ssrf",
+      "perturbation": "baseline",
+      "haiku_proposed": true,
+      "pd_confidence": 0.85,
+      "strix_harness_confirmed": true,
+      "strix_flipped_vs_baseline": false,
+      "m4_confirms": false,
+      "m4_confidence": 0.15,
+      "m4_flipped_vs_baseline": false
+    },
+    {
+      "pair_id": "flowise-ssrf-http-node",
+      "primitive": "ssrf",
+      "perturbation": "rephrase_endpoint",
+      "haiku_proposed": true,
+      "pd_confidence": 0.85,
+      "strix_harness_confirmed": true,
+      "strix_flipped_vs_baseline": false,
+      "m4_confirms": false,
+      "m4_confidence": 0.15,
+      "m4_flipped_vs_baseline": false
+    },
+    {
+      "pair_id": "flowise-ssrf-http-node",
+      "primitive": "ssrf",
+      "perturbation": "add_noise_params",
+      "haiku_proposed": true,
+      "pd_confidence": 0.72,
+      "strix_harness_confirmed": true,
+      "strix_flipped_vs_baseline": false,
+      "m4_confirms": false,
+      "m4_confidence": 0.15,
+      "m4_flipped_vs_baseline": false
+    },
+    {
+      "pair_id": "flowise-ssrf-http-node",
+      "primitive": "ssrf",
+      "perturbation": "reword_cve",
+      "haiku_proposed": true,
+      "pd_confidence": 0.85,
+      "strix_harness_confirmed": true,
+      "strix_flipped_vs_baseline": false,
+      "m4_confirms": true,
+      "m4_confidence": 0.85,
+      "m4_flipped_vs_baseline": true
+    },
+    {
+      "pair_id": "flowise-ssrf-http-node",
+      "primitive": "ssrf",
+      "perturbation": "minimal_surface",
+      "haiku_proposed": true,
+      "pd_confidence": 0.85,
+      "strix_harness_confirmed": true,
+      "strix_flipped_vs_baseline": false,
+      "m4_confirms": true,
+      "m4_confidence": 0.85,
+      "m4_flipped_vs_baseline": true
+    },
+    {
+      "pair_id": "bfla-invoices",
+      "primitive": "bfla",
+      "perturbation": "baseline",
+      "haiku_proposed": true,
+      "pd_confidence": 0.75,
+      "strix_harness_confirmed": true,
+      "strix_flipped_vs_baseline": false,
+      "m4_confirms": true,
+      "m4_confidence": 0.75,
+      "m4_flipped_vs_baseline": false
+    },
+    {
+      "pair_id": "bfla-invoices",
+      "primitive": "bfla",
+      "perturbation": "rephrase_endpoint",
+      "haiku_proposed": true,
+      "pd_confidence": 0.85,
+      "strix_harness_confirmed": true,
+      "strix_flipped_vs_baseline": false,
+      "m4_confirms": true,
+      "m4_confidence": 0.85,
+      "m4_flipped_vs_baseline": false
+    },
+    {
+      "pair_id": "bfla-invoices",
+      "primitive": "bfla",
+      "perturbation": "add_noise_params",
+      "haiku_proposed": true,
+      "pd_confidence": 0.72,
+      "strix_harness_confirmed": true,
+      "strix_flipped_vs_baseline": false,
+      "m4_confirms": true,
+      "m4_confidence": 0.72,
+      "m4_flipped_vs_baseline": false
+    },
+    {
+      "pair_id": "bfla-invoices",
+      "primitive": "bfla",
+      "perturbation": "reword_cve",
+      "haiku_proposed": true,
+      "pd_confidence": 0.85,
+      "strix_harness_confirmed": true,
+      "strix_flipped_vs_baseline": false,
+      "m4_confirms": true,
+      "m4_confidence": 0.85,
+      "m4_flipped_vs_baseline": false
+    },
+    {
+      "pair_id": "bfla-invoices",
+      "primitive": "bfla",
+      "perturbation": "minimal_surface",
+      "haiku_proposed": true,
+      "pd_confidence": 0.75,
+      "strix_harness_confirmed": true,
+      "strix_flipped_vs_baseline": false,
+      "m4_confirms": true,
+      "m4_confidence": 0.85,
+      "m4_flipped_vs_baseline": false
+    },
+    {
+      "pair_id": "idor-files-download",
+      "primitive": "idor",
+      "perturbation": "baseline",
+      "haiku_proposed": true,
+      "pd_confidence": 0.85,
+      "strix_harness_confirmed": true,
+      "strix_flipped_vs_baseline": false,
+      "m4_confirms": true,
+      "m4_confidence": 0.85,
+      "m4_flipped_vs_baseline": false
+    },
+    {
+      "pair_id": "idor-files-download",
+      "primitive": "idor",
+      "perturbation": "rephrase_endpoint",
+      "haiku_proposed": true,
+      "pd_confidence": 0.85,
+      "strix_harness_confirmed": true,
+      "strix_flipped_vs_baseline": false,
+      "m4_confirms": true,
+      "m4_confidence": 0.85,
+      "m4_flipped_vs_baseline": false
+    },
+    {
+      "pair_id": "idor-files-download",
+      "primitive": "idor",
+      "perturbation": "add_noise_params",
+      "haiku_proposed": true,
+      "pd_confidence": 0.72,
+      "strix_harness_confirmed": true,
+      "strix_flipped_vs_baseline": false,
+      "m4_confirms": true,
+      "m4_confidence": 0.78,
+      "m4_flipped_vs_baseline": false
+    },
+    {
+      "pair_id": "idor-files-download",
+      "primitive": "idor",
+      "perturbation": "reword_cve",
+      "haiku_proposed": true,
+      "pd_confidence": 0.85,
+      "strix_harness_confirmed": true,
+      "strix_flipped_vs_baseline": false,
+      "m4_confirms": true,
+      "m4_confidence": 0.85,
+      "m4_flipped_vs_baseline": false
+    },
+    {
+      "pair_id": "idor-files-download",
+      "primitive": "idor",
+      "perturbation": "minimal_surface",
+      "haiku_proposed": true,
+      "pd_confidence": 0.85,
+      "strix_harness_confirmed": true,
+      "strix_flipped_vs_baseline": false,
+      "m4_confirms": true,
+      "m4_confidence": 0.85,
+      "m4_flipped_vs_baseline": false
+    },
+    {
+      "pair_id": "ssrf-webhook-registration",
+      "primitive": "ssrf",
+      "perturbation": "baseline",
+      "haiku_proposed": true,
+      "pd_confidence": 0.85,
+      "strix_harness_confirmed": true,
+      "strix_flipped_vs_baseline": false,
+      "m4_confirms": true,
+      "m4_confidence": 0.85,
+      "m4_flipped_vs_baseline": false
+    },
+    {
+      "pair_id": "ssrf-webhook-registration",
+      "primitive": "ssrf",
+      "perturbation": "rephrase_endpoint",
+      "haiku_proposed": true,
+      "pd_confidence": 0.85,
+      "strix_harness_confirmed": true,
+      "strix_flipped_vs_baseline": false,
+      "m4_confirms": true,
+      "m4_confidence": 0.85,
+      "m4_flipped_vs_baseline": false
+    },
+    {
+      "pair_id": "ssrf-webhook-registration",
+      "primitive": "ssrf",
+      "perturbation": "add_noise_params",
+      "haiku_proposed": true,
+      "pd_confidence": 0.72,
+      "strix_harness_confirmed": true,
+      "strix_flipped_vs_baseline": false,
+      "m4_confirms": true,
+      "m4_confidence": 0.78,
+      "m4_flipped_vs_baseline": false
+    },
+    {
+      "pair_id": "ssrf-webhook-registration",
+      "primitive": "ssrf",
+      "perturbation": "reword_cve",
+      "haiku_proposed": true,
+      "pd_confidence": 0.85,
+      "strix_harness_confirmed": true,
+      "strix_flipped_vs_baseline": false,
+      "m4_confirms": true,
+      "m4_confidence": 0.85,
+      "m4_flipped_vs_baseline": false
+    },
+    {
+      "pair_id": "ssrf-webhook-registration",
+      "primitive": "ssrf",
+      "perturbation": "minimal_surface",
+      "haiku_proposed": true,
+      "pd_confidence": 0.85,
+      "strix_harness_confirmed": true,
+      "strix_flipped_vs_baseline": false,
+      "m4_confirms": true,
+      "m4_confidence": 0.85,
+      "m4_flipped_vs_baseline": false
+    }
+  ],
+  "raw_llm_outputs": [
+    {
+      "pair_id": "openwebui-idor-memories",
+      "perturbation": "baseline",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/memories/{id}/update\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"The endpoint uses a user-supplied ID parameter in the URL path without apparent authorization checks, allowing attackers to modify memories belonging to other users by manipulating the {id} value, which is a classic IDOR vulnerability pattern.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/memories/{id}/update\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"CVE-2024-7041 is a documented IDOR vulnerability in memory management endpoints where the {id} path parameter is not properly validated against the authenticated user's ownership, allowing attackers to modify other users' memories by manipulating the ID value.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-idor-memories",
+      "perturbation": "rephrase_endpoint",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/memories/<id>/update\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"The endpoint uses a user-supplied ID parameter in the URL path without apparent authorization checks, allowing attackers to modify memories belonging to other users by manipulating the <id> value.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/memories/<id>/update\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"CVE-2024-7041 is a known IDOR vulnerability in memory management APIs where the <id> parameter is not properly validated against the authenticated user's ownership, allowing attackers to modify memories belonging to other users by manipulating the ID value.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-idor-memories",
+      "perturbation": "add_noise_params",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/memories/{id}/update?debug=false&v=1\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"The endpoint uses a user-supplied path parameter {id} without apparent authorization checks to access memory resources, creating a classic IDOR vulnerability where attackers can modify other users' memories by manipulating the id parameter.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/memories/{id}/update?debug=false&v=1\",\n  \"model_confirms\": true,\n  \"confidence\": 0.78,\n  \"rationale\": \"CVE-2024-7041 is a documented IDOR vulnerability in memory management endpoints where insufficient authorization checks allow attackers to modify memories belonging to other users by manipulating the {id} parameter, particularly when debug mode is accessible or query parameters bypass validation logic.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-idor-memories",
+      "perturbation": "reword_cve",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/memories/{id}/update\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"The endpoint uses a user-supplied path parameter {id} to identify resources without apparent authorization checks, allowing attackers to modify memories belonging to other users by manipulating the ID value.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/memories/{id}/update\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"The endpoint uses a user-controlled path parameter {id} without apparent authorization checks to verify the requester owns the memory resource, creating a classic IDOR vulnerability where attackers can modify other users' memories by manipulating the id parameter.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-idor-memories",
+      "perturbation": "minimal_surface",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/memories/{id}/update\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"The endpoint uses a user-supplied ID parameter in the URL path without apparent authorization checks, allowing attackers to potentially modify memories belonging to other users by manipulating the {id} value.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/memories/{id}/update\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"The endpoint uses a user-supplied path parameter {id} without apparent authorization checks to verify the requester owns the memory resource, creating a classic IDOR vulnerability where attackers can modify other users' memories by manipulating the id parameter.\"\n}\n```"
+    },
+    {
+      "pair_id": "flowise-ssrf-http-node",
+      "perturbation": "baseline",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/node/http\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"The endpoint path suggests HTTP request handling on node resources without apparent URL validation, creating a likely SSRF vector where an attacker could specify arbitrary internal or external URLs to be fetched by the server.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/node/http\",\n  \"model_confirms\": false,\n  \"confidence\": 0.15,\n  \"rationale\": \"CVE-2026-31829 does not exist in current vulnerability databases; the year 2026 is in the future, making this a non-existent CVE identifier that cannot be confirmed through model knowledge.\"\n}\n```"
+    },
+    {
+      "pair_id": "flowise-ssrf-http-node",
+      "perturbation": "rephrase_endpoint",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/node/http\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"An HTTP node endpoint that accepts POST requests is highly susceptible to SSRF attacks if it processes user-supplied URLs without proper validation, allowing attackers to make arbitrary HTTP requests to internal resources or metadata services.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/node/http\",\n  \"model_confirms\": false,\n  \"confidence\": 0.15,\n  \"rationale\": \"CVE-2026-31829 does not exist in current vulnerability databases; the endpoint name suggests HTTP node operations but lacks sufficient context to confirm SSRF without examining actual parameter handling and URL validation logic.\"\n}\n```"
+    },
+    {
+      "pair_id": "flowise-ssrf-http-node",
+      "perturbation": "add_noise_params",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/node/http?debug=false&v=1\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"The endpoint path contains 'http' parameter handling with debug mode and version control, which combined with SSRF-class vulnerabilities typically involves unvalidated URL/host parameters; the presence of query parameters controlling behavior increases attack surface for server-side request forgery attacks.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/node/http?debug=false&v=1\",\n  \"model_confirms\": false,\n  \"confidence\": 0.15,\n  \"rationale\": \"CVE-2026-31829 is a future-dated CVE with no established public record; the endpoint structure suggests potential SSRF via the 'http' parameter, but without verifiable CVE documentation or known vulnerability details, confirmation cannot be established with reasonable confidence.\"\n}\n```"
+    },
+    {
+      "pair_id": "flowise-ssrf-http-node",
+      "perturbation": "reword_cve",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/node/http\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"HTTP node endpoints that accept user-controlled URLs without proper validation and filtering are susceptible to Server-Side Request Forgery (SSRF) attacks, allowing attackers to make arbitrary requests to internal or external systems.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/node/http\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"The endpoint accepts HTTP requests to arbitrary nodes without apparent URL validation, creating a classic SSRF vulnerability where an attacker can make the server perform requests to internal resources or unintended external targets.\"\n}\n```"
+    },
+    {
+      "pair_id": "flowise-ssrf-http-node",
+      "perturbation": "minimal_surface",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/node/http\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"An HTTP node endpoint that accepts POST requests is highly susceptible to SSRF attacks if it processes user-supplied URLs without proper validation, allowing attackers to make arbitrary HTTP requests to internal services, cloud metadata endpoints, or restricted networks.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/node/http\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"The endpoint path suggests HTTP node creation/management functionality that likely accepts URL parameters for remote HTTP operations, creating a high-risk surface for SSRF attacks if user-supplied URLs are not properly validated against internal network ranges and localhost addresses.\"\n}\n```"
+    },
+    {
+      "pair_id": "bfla-invoices",
+      "perturbation": "baseline",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/invoices/{invoice_id}\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.75,\n  \"rationale\": \"This endpoint is susceptible to Broken Function Level Authorization (BFLA) if access controls do not properly verify that the authenticated user has permission to view the specific invoice resource identified by {invoice_id}, potentially allowing unauthorized access to other users' financial data.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/invoices/{invoice_id}\",\n  \"model_confirms\": true,\n  \"confidence\": 0.75,\n  \"rationale\": \"CVE-2023-49070 is associated with broken function level authorization (BFLA) vulnerabilities where invoice retrieval endpoints may lack proper authorization checks, allowing users to access invoices belonging to other users or organizations by manipulating the invoice_id parameter.\"\n}\n```"
+    },
+    {
+      "pair_id": "bfla-invoices",
+      "perturbation": "rephrase_endpoint",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/invoices/<invoice_id>\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"This endpoint is susceptible to BFLA (Broken Function Level Authorization) if it lacks proper authorization checks to verify that the authenticated user has permission to access the specific invoice resource identified by invoice_id, potentially allowing attackers to enumerate and retrieve invoices belonging to other users or organizations.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/invoices/<invoice_id>\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"CVE-2023-49070 is a BFLA vulnerability where invoice endpoints lack proper authorization checks, allowing attackers to access invoices belonging to other users by manipulating the invoice_id parameter without role-based access control validation.\"\n}\n```"
+    },
+    {
+      "pair_id": "bfla-invoices",
+      "perturbation": "add_noise_params",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/invoices/{invoice_id}?debug=false&v=1\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"BFLA vulnerability likely present due to path parameter-based resource access without apparent authorization checks; debug parameter and version query string suggest potential for authorization bypass through parameter manipulation or role-based access control flaws.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/invoices/{invoice_id}?debug=false&v=1\",\n  \"model_confirms\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"CVE-2023-49070 is a BFLA vulnerability affecting invoice endpoints where insufficient authorization checks allow users to access invoices outside their authorization scope; the debug parameter and version query string are common indicators of inadequate access control enforcement in REST APIs.\"\n}\n```"
+    },
+    {
+      "pair_id": "bfla-invoices",
+      "perturbation": "reword_cve",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/invoices/{invoice_id}\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"BFLA (Broken Function Level Authorization) vulnerability likely exists if the endpoint lacks proper authorization checks to verify the authenticated user has permission to access the specific invoice resource identified by {invoice_id}, allowing potential unauthorized access to other users' invoice data.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/invoices/{invoice_id}\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"BFLA (Broken Function Level Authorization) vulnerability is confirmed as advisory_2023_49070 likely involves insufficient authorization checks on invoice retrieval endpoints, allowing users to access invoices outside their authorization scope by manipulating the invoice_id parameter.\"\n}\n```"
+    },
+    {
+      "pair_id": "bfla-invoices",
+      "perturbation": "minimal_surface",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/invoices/{invoice_id}\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.75,\n  \"rationale\": \"This endpoint is susceptible to Broken Function Level Authorization (BFLA) if it lacks proper authorization checks to verify the authenticated user has permission to access the specific invoice resource identified by {invoice_id}, potentially allowing users to retrieve invoices belonging to other users or organizations.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/invoices/{invoice_id}\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"BFLA vulnerability likely exists if the endpoint lacks proper authorization checks and relies solely on path parameter validation, allowing attackers to access invoices belonging to other users by manipulating the {invoice_id} parameter.\"\n}\n```"
+    },
+    {
+      "pair_id": "idor-files-download",
+      "perturbation": "baseline",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/files/{file_id}/download\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"File download endpoints are commonly susceptible to IDOR attacks when file_id is user-controlled and access controls fail to verify the requester has authorization to access the specific file resource.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/files/{file_id}/download\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"CVE-2024-0204 is a known IDOR vulnerability in file download endpoints where insufficient authorization checks allow attackers to access files by manipulating the file_id parameter without proper ownership verification.\"\n}\n```"
+    },
+    {
+      "pair_id": "idor-files-download",
+      "perturbation": "rephrase_endpoint",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/files/<file_id>/download\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"The endpoint uses a user-supplied file_id parameter in the URL path without apparent authorization checks, allowing attackers to potentially access files belonging to other users by manipulating the file_id value (IDOR vulnerability).\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/files/<file_id>/download\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"IDOR vulnerabilities commonly occur in file download endpoints when file_id is user-controlled without proper authorization checks, allowing attackers to access files belonging to other users by manipulating the file_id parameter.\"\n}\n```"
+    },
+    {
+      "pair_id": "idor-files-download",
+      "perturbation": "add_noise_params",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/files/{file_id}/download?debug=false&v=1\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"The endpoint accepts a user-supplied file_id parameter in the URL path without apparent authorization checks, creating a classic IDOR vulnerability where attackers could enumerate and access files belonging to other users by modifying the file_id value.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/files/{file_id}/download?debug=false&v=1\",\n  \"model_confirms\": true,\n  \"confidence\": 0.78,\n  \"rationale\": \"CVE-2024-0204 is a known IDOR vulnerability in file download endpoints where insufficient authorization checks allow attackers to access files by manipulating the file_id parameter; the endpoint structure with direct file_id in path and debug parameter is consistent with this vulnerability pattern.\"\n}\n```"
+    },
+    {
+      "pair_id": "idor-files-download",
+      "perturbation": "reword_cve",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/files/{file_id}/download\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"File download endpoints using only a file_id parameter are highly susceptible to IDOR attacks if authorization checks do not verify the requesting user owns or has explicit access to the specified file resource.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/files/{file_id}/download\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"The endpoint directly uses user-supplied file_id parameter without apparent authorization checks, enabling attackers to access files belonging to other users by manipulating the ID value, which is a classic IDOR vulnerability pattern.\"\n}\n```"
+    },
+    {
+      "pair_id": "idor-files-download",
+      "perturbation": "minimal_surface",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/files/{file_id}/download\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"File download endpoints are commonly vulnerable to IDOR attacks when file_id is user-controlled without proper authorization checks, allowing attackers to access files belonging to other users by manipulating the identifier.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/files/{file_id}/download\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"The endpoint uses only a file_id path parameter without evidence of ownership verification or access control checks, making it susceptible to IDOR attacks where attackers can download files by manipulating the file_id to access resources belonging to other users.\"\n}\n```"
+    },
+    {
+      "pair_id": "ssrf-webhook-registration",
+      "perturbation": "baseline",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/webhooks\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"Webhook endpoints commonly accept user-supplied URLs for callback registration, which can be exploited for SSRF attacks if the application fetches or validates these URLs without proper restrictions on internal IP ranges, localhost, or private network addresses.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/webhooks\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"CVE-2024-21672 is a known SSRF vulnerability in webhook endpoints where user-supplied URLs are fetched server-side without proper validation, allowing attackers to access internal resources or perform requests to arbitrary hosts.\"\n}\n```"
+    },
+    {
+      "pair_id": "ssrf-webhook-registration",
+      "perturbation": "rephrase_endpoint",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/webhooks\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"Webhook endpoints commonly accept user-supplied URLs for callback registration, which can be exploited for SSRF attacks if the application does not properly validate and restrict the destination URLs against internal network ranges and sensitive services.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/webhooks\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"CVE-2024-21672 is a known SSRF vulnerability in webhook endpoints where user-supplied URLs are fetched server-side without proper validation, allowing attackers to access internal resources or perform requests to arbitrary hosts.\"\n}\n```"
+    },
+    {
+      "pair_id": "ssrf-webhook-registration",
+      "perturbation": "add_noise_params",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/webhooks?debug=false&v=1\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Webhook endpoints commonly accept URL parameters for callback destinations, and the debug parameter combined with version control suggests potential for SSRF exploitation if user-supplied URLs are not properly validated before server-side requests are made to fetch or process webhook payloads.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/webhooks?debug=false&v=1\",\n  \"model_confirms\": true,\n  \"confidence\": 0.78,\n  \"rationale\": \"CVE-2024-21672 is a known SSRF vulnerability in webhook endpoints where the debug parameter and version query strings can be exploited to bypass validation and force the server to make requests to internal resources, particularly affecting Python-based webhook handlers on nginx.\"\n}\n```"
+    },
+    {
+      "pair_id": "ssrf-webhook-registration",
+      "perturbation": "reword_cve",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/webhooks\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"Webhook endpoints commonly accept user-supplied URLs for callback registration, which can be exploited for SSRF attacks if the application does not properly validate and restrict the destination URLs against internal network ranges and sensitive services.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/webhooks\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"Webhook endpoints commonly accept user-supplied URLs for callback registration, creating SSRF vulnerability when the server fetches or validates these URLs without proper validation against internal network ranges and metadata services.\"\n}\n```"
+    },
+    {
+      "pair_id": "ssrf-webhook-registration",
+      "perturbation": "minimal_surface",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/webhooks\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"Webhook endpoints commonly accept user-supplied URLs that are then fetched server-side, creating a high-risk SSRF vector if the application does not properly validate, sanitize, or restrict the destination URLs against internal IP ranges and private networks.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/webhooks\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"Webhook endpoints commonly accept URL parameters for callback destinations, which are frequently vulnerable to SSRF attacks when the application fetches or validates the provided URL without proper allowlist restrictions or network segmentation.\"\n}\n```"
+    }
+  ],
+  "note": "H4 confirmed: strix flipped 0/20 perturbations; M4 flipped 2/20."
 }
