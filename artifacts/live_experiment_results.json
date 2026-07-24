@@ -1,9 +1,9 @@
 {
-  "producer": "glm-5.2 via agentrouter",
+  "producer": "anthropic/claude-haiku-4-5 via openrouter.ai",
   "pm_dispatcher": "Nyx/Eragon",
-  "timestamp": "2026-07-24T10:31:02Z",
-  "model": "glm-5.2",
-  "api_base": "https://agentrouter.org/v1",
+  "timestamp": "2026-07-24T10:50:18Z",
+  "model": "anthropic/claude-haiku-4-5",
+  "api_base": "https://openrouter.ai/api/v1",
   "pairs": [
     {
       "pair_id": "openwebui-idor-memories",

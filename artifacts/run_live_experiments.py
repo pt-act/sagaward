@@ -48,10 +48,18 @@ from strix.research.ablation.single_stage import (
 ARTIFACTS = Path(__file__).parent
 ARTIFACTS.mkdir(exist_ok=True)
 
+# Runtime provenance — resolved at startup for JSON metadata accuracy
+_LLM_API_KEY  = (os.environ.get("LLM_API_KEY")
+                 or os.environ.get("OPENROUTER_API_KEY")
+                 or os.environ.get("OPENAI_API_KEY") or "")
+_LLM_API_BASE = os.environ.get("LLM_API_BASE", "https://openrouter.ai/api/v1")
+_LLM_MODEL    = os.environ.get("STRIX_LLM", "anthropic/claude-haiku-4-5")
+
+
 # ─── LLM CLIENT ────────────────────────────────────────────────────────────────
 
 def _llm_call(prompt: str, system: str = "", temperature: float = 0.0) -> str:
-    """Call glm-5.2 via agentrouter. Raw response text — no post-processing by PM."""
+    """Call the configured LLM. Raw response text — no post-processing by PM."""
     import urllib.request
 
     api_key = (os.environ.get("LLM_API_KEY")
@@ -667,11 +675,11 @@ def main() -> None:
 
     # Save all raw outputs — producer evidence verbatim
     raw_outputs = {
-        "producer": "glm-5.2 via agentrouter",
+        "producer": f"{_LLM_MODEL} via {_LLM_API_BASE.split("/")[2]}",
         "pm_dispatcher": "Nyx/Eragon",
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "model": os.environ.get("STRIX_LLM", "glm-5.2"),
-        "api_base": os.environ.get("LLM_API_BASE", "https://agentrouter.org/v1"),
+        "model": _LLM_MODEL,
+        "api_base": _LLM_API_BASE,
         "pairs": [
             {
                 **{k: v for k, v in asdict(r).items()

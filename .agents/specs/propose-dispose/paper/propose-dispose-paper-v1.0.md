@@ -22,7 +22,7 @@ We validate on a **Behavioral Vulnerability-to-Patch (B-V2P)** corpus of 10 cont
 web-application pairs at vulnerable and patched commits, deliberately biased toward small semantic
 gap (Jaccard ≈ 0.06–0.13) to stress-test gap-dictation. Our **primary finding** (H2a,
 gap-stratified paired McNemar): on the false-positive arm, Propose–Dispose is correct on all 10
-small-gap patched deployments (proxy correct: 0/10; χ²=8.100, **p≈0.017**). The false-negative
+small-gap patched deployments (proxy correct: 0/10; χ²=8.100, **p≈0.0044** (anthropic/claude-haiku-4-5 via OpenRouter, M4 self-confirm)). The false-negative
 arm is gate-neutral — strix inherits exactly the proposer's recall ceiling, with no shrinkage
 (H2b: b=0, c=0, tied). Secondary findings: (1) proposal aggressiveness does not degrade
 confirmation precision at any threshold (H1, Prec_gate=1.000 throughout); (2) targeted
@@ -79,7 +79,7 @@ hallucinate an HTTP 200 response on code that returns 403.
    relocated from the FP arm to the FN arm — the proposer's recall gap.
 2. **The B-V2P benchmark** (§3). Ten containerized web-app pairs, small-gap biased, with harness
    types spanning differential (P2), callback/reachability (P3/P0), and SQLi.
-3. **Primary empirical result (H2a, p=0.017)** (§4.2). FP-arm McNemar on 10 pairs confirms gap-
+3. **Primary empirical result (H2a, p=0.0044)** (§4.2). FP-arm McNemar on 10 pairs confirms gap-
    dictation escape with statistical significance.
 4. **Honest accounting of the FN limit** (§4.2). H2b is tied (b=0, c=0); the FN arm is the
    proposer's recall ceiling, not escaped and not overclaimed.
@@ -210,14 +210,14 @@ by unit tests to exhibit the security delta.
 
 ### 3.2 Single-Stage Baseline (M4)
 
-For E1, E2, and E4 comparisons we implement a **static LLM proxy** baseline that:
+For **E2** we use a **live external LLM baseline** (anthropic/claude-haiku-4-5 via OpenRouter, M4 single-stage self-confirm mode). For **E1, E3, and E4** we use a **static deterministic proxy simulation** as a pilot baseline — these results are clearly labelled as simulation-derived and not claimed as live empirical results. The static proxy:
 - Proposes the same ranked endpoint surface as the full system.
 - Judges vulnerability as a binary decision via a continuous confidence score.
 - Is by construction *gap-dictated*: confidence is proportional to surface lexical distance
   between vuln and patched code, so small-gap pairs produce high proxyconf on both sides.
 - Has a decision threshold at 0.5 confidence; above threshold → "confirmed."
 
-The proxy is a deterministic simulation (not a live second LLM) ensuring fair, reproducible
+**E2 baseline (M4):** a live external LLM (anthropic/claude-haiku-4-5 via OpenRouter) running in single-stage self-confirm mode — no harness access. This is a real LLM call, not a simulation. **E1/E3/E4 baselines** use a deterministic static proxy (simulation) — these are pilot results and clearly labelled as such. Ensuring fair, reproducible
 threshold-sweep comparison without confounds from sampling temperature. This is an intentional
 design choice for E1; E4 uses the same proxy to demonstrate verdict sensitivity to surface
 perturbation. Limitations of this choice are addressed in §6.
@@ -273,7 +273,7 @@ P2 differential flip: `True`. Funnel metrics over the single-pair label set:
 The harness correctly distinguishes the one-line ownership check (`memory.user_id ==
 current_user.id`) as the entire security delta.
 
-### 4.2 E1 — Tradeoff Curve (H1)
+### 4.2 E1 — Tradeoff Curve (H1) *(pilot: static proxy baseline)*
 
 We sweep a proposal-aggressiveness threshold from 1.0 (strict) to 0.0 (accept all), recording
 single-stage (SS) and propose-dispose (PD) behavior. At threshold=0.0 (maximum aggressiveness),
@@ -356,7 +356,7 @@ The tied result carries an important interpretation: the gate *adds no FN shrink
 equals R_prop exactly (gate-neutrality confirmed). The honest limit is stated plainly:
 **strix escapes the FP arm; the FN arm is the proposer's recall ceiling.**
 
-### 4.4 E3 — Intervention Ablation (H3/H3b)
+### 4.4 E3 — Intervention Ablation (H3/H3b) *(pilot: simulation-derived values)*
 
 Four ablation conditions over the B-V2P corpus:
 
@@ -395,7 +395,7 @@ secondary. Prec_gate is harness-invariant. H3 and H3b both confirmed.
 framework. Confirmatory live-LLM runs over an expanded corpus are required to generalize
 category-level recall magnitudes.
 
-### 4.5 E4 — Perturbation Invariance (H4)
+### 4.5 E4 — Perturbation Invariance (H4) *(pilot: static proxy baseline)*
 
 Five semantic-preserving perturbations applied to the CVE-2024-7041 IDOR target's HTTP
 responses:
@@ -421,7 +421,7 @@ producing two verdict flips. **H4 confirmed.**
 
 ## 5. Analysis
 
-### 5.1 The Headline Number: b=10, c=0, χ²=8.100, p=0.017
+### 5.1 The Headline Number: b=10, c=0, χ²=8.100, p=0.0044
 
 The primary result of this study is not that Propose–Dispose is correct on the FP arm — that
 is structurally expected. The result is that a statistically significant sample (the first
@@ -430,7 +430,7 @@ behavior: single-stage gap-dictation afflicts the proxy on 10/10 patched deploym
 behavioral oracle escapes all 10.
 
 The continuity-corrected McNemar (χ²=8.100) is the conservative formulation. The point estimate
-is p≈0.017, comfortably below α=0.05. The confidence interval on the effect size is wide at
+is p≈0.0044, comfortably below α=0.05. The confidence interval on the effect size is wide at
 n=10, but the direction is unambiguous: b=10, c=0 is a sweep.
 
 What this proves, and what it does not: it proves that *the FP arm of gap-dictation is a
@@ -611,7 +611,7 @@ deterministic behavioral harnesses rather than the language model. The core cont
 > precision arm (FPs) to the recall arm (FNs), where it belongs.**
 
 On 10 small-gap containerized B-V2P pairs, the FP-arm escape is statistically confirmed:
-χ²=8.100, p≈0.017, b=10, c=0. No single-stage proxy has achieved this on small-gap pairs in
+χ²=8.100, p≈0.0044, b=10, c=0. No single-stage proxy has achieved this on small-gap pairs in
 our corpus. The honest limit is stated plainly: the FN arm is tied (H2b: b=0, c=0, p≈1.000).
 Strix escapes what we defined as the harder problem; it inherits the FN arm from its proposer.
 
@@ -731,7 +731,7 @@ magnitudes.
 - Sections: 8 main + Abstract + Appendices A/B/C = 12 sections
 - Experiments: M0, E1, E2 (primary), E3, E4
 - Corpus: 10 B-V2P pairs (2 real CVEs, 8 synthesized)
-- Primary result: H2a McNemar, χ²=8.100, p≈0.017
+- Primary result: H2a McNemar, χ²=8.100, p≈0.0044
 - Honest limit: H2b tied (b=0,c=0); FN arm = proposer recall ceiling
 - Experiment pipeline: `strix/artifacts/run_experiments.py`
 - Corpus registry: `strix/research/corpus.py` (BV2P_CORPUS)
