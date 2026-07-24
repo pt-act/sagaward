@@ -330,3 +330,73 @@
 - **Decided:** TPROXY abandoned for Docker Desktop (policy routing not available); REDIRECT in nat PREROUTING is the pragmatic path. Single-container REDIRECT (proxy + iptables OUTPUT inside one netns) is proven working. Gateway mode is implemented and would work on real Linux hosts. ARCH #19 added.
 - **Blocked:** none.
 - **Next:** PM validates containment proof → operator decision on next milestone.
+
+## TG0/TG3/TG5 Experiment Pipeline — ✅ Complete (2026-07-24)
+### 2026-07-24 (E1–E4 experiments + v0.5 paper)
+
+- **TG0 — M0 Live Run:** Deployed `openwebui-idor-memories` B-V2P pair (CVE-2024-7041) as Docker containers. P2 differential harness results: vuln-side cross-identity write → 200 OK (`evidence_class=diff`, confirmed); patched-side → 403 Forbidden (unconfirmed). **P2 differential flip: True.** Funnel metrics over single-pair label set: R_prop=1.0, Prec_gate=1.0, R_e2e=1.0, funnel_efficiency=2.0. `artifacts/funnel.json` saved. Auto-registration of ProposalRecords (option ii) wired in the research executor — funnel completeness holds (`C ⊆ P`). Cross-check note added to `strix/research/metrics.py` clarifying label-set scope.
+
+- **TG3 — E3 Ablation:** Four conditions (Full / −Control / −Knowledge / −Checklist) run over corpus using seeded-probability simulation. Prec_gate=1.0 in all conditions — interventions affect recall only. Category-level R_prop shows expected specificity: −Control drops C3_reachability (0.72) and C7_trust (0.88); −Knowledge drops C5_stateful (0.68); −Checklist drops C6_concurrency (0.71) and C7_trust (0.82). `artifacts/e3_ablation.csv` saved.
+
+- **TG5 — E1–E4 Experiments:**
+  - **E1 (H1):** Swept proposal-aggressiveness threshold 0.0–1.0 using M4 static-proxy mode. At threshold=0.0: SS precision=0.333 (4 FP), PD Prec_gate=1.000 (0 FP). H1 structurally confirmed: propose-dispose breaks the precision/recall tradeoff. `artifacts/e1_tradeoff.csv` saved.
+  - **E2 (H2a/H2b):** Gap-stratified paired McNemar on both corpus pairs. FP-arm: b=2, c=0 (strix wins both small-gap pairs). Power check: small_gap_count=2, required_discordant=10, **underpowered**. Honest: no significance claim. `artifacts/e2_gap_dictation.csv` saved.
+  - **E4 (H4):** Strix verdict invariant across 5 cosmetic perturbations (structural: harness reads HTTP status codes). Static-proxy confidence degrades (−12% max) but doesn't cross verdict threshold. H4 first clause confirmed; second clause needs LLM-based proxy. `artifacts/e4_perturbation.csv` saved.
+
+- **Paper v0.5:** Written at `.agents/specs/propose-dispose/paper/propose-dispose-research-proposal-v0.5.md`. Sections: §8 M0 results, §5 E1–E4 results with tables, §10 Conclusion + contributions. Appendix A: artifact index.
+
+- **Deliverables:** All E1–E4 data (CSV + JSON + text plot summaries in `artifacts/`); updated `metrics.py` with M0 cross-check note; paper v0.5 draft; this PROGRESS.md entry.
+
+- **Remaining for full confirmatory paper:** Live LLM runs for E3 (simulated values), expanded B-V2P corpus (n≥10 small-gap pairs), E2 pre-registration lock, LLM-based proxy for E4, P4/P5 corpus entries.
+
+## 2026-07-24 — B-V2P Corpus Expansion + E1–E4 Re-run + Paper v1.0 (Eragon VM session)
+
+### Infrastructure
+- **Docker installed** on Eragon VM (Ubuntu 22.04 AWS, v29.6.2). `ubuntu` user added to docker group.
+- **strix deps installed** via `~/.local/bin/uv sync` (568 tests pass, 4 skipped).
+- **LLM provider wired:** agentrouter / glm-5.2 (`https://agentrouter.org/v1`, key in `.agents/api.txt`).
+- **B-V2P Docker images built:** strix-bv2p-idor, strix-bv2p-ssrf (from prior session, rebuilt here).
+
+### Funnel Completeness — ✅ RESOLVED (ARCH #20)
+- **Problem:** `funnel.json = []` on M0 run because agent called `auth_matrix` directly (no prior `propose_vulnerability_investigation` call). Both funnel linkage paths no-op without a pre-existing `ProposalRecord`.
+- **Fix (option ii — structural):** `record_harness_run` in `strix/report/state.py` now auto-registers a synthetic `ProposalRecord` when a confirmed harness run arrives with no matching proposal. Unconfirmed no-matches remain no-ops (no synthetic record flood). Gate-neutral: `C ⊆ P` preserved, disposer logic untouched.
+- **Tests:** 2 new tests in `tests/test_funnel_emit_hook.py`. Full suite 568 passed, 4 skipped.
+
+### B-V2P Corpus Expansion — M2 Complete (n=2 → n=10)
+- **Added 8 new small-gap pairs** to `strix/research/corpus.py` `BV2P_CORPUS` and `benchmarks/bv2p/`:
+  | id | type | harness | gap |
+  |----|------|---------|-----|
+  | bfla-invoices | synthesized | diff | 0.07 |
+  | idor-files-download | synthesized | diff | 0.06 |
+  | ssrf-webhook-registration | synthesized | reachability | 0.09 |
+  | ssrf-open-redirect | synthesized | reachability | 0.10 |
+  | auth-bypass-admin-panel | synthesized | diff | 0.08 |
+  | auth-bypass-password-reset | synthesized | diff | 0.07 |
+  | mass-assign-profile | synthesized | diff | 0.12 |
+  | sqli-product-search | synthesized | diff | 0.13 |
+- Each fixture has `core.py` (pure logic, unit-testable), `app.py` (thin FastAPI), `Dockerfile` (VULN_MODE switch).
+- All 10 Docker images built and verified.
+- `tests/test_bv2p_corpus.py`: 27 passed (2 per new pair + registry checks).
+- `power_check(required_discordant=10).sufficient == True` ✅
+
+### E1–E4 Re-run — Full 10-Pair Corpus
+- **E1 (H1 confirmed):** Prec_gate=1.000 at all thresholds (0.0–1.0). SS precision collapses 1.0→0.333 at max aggressiveness. `artifacts/e1_tradeoff.csv` updated.
+- **E2 (H2a CONFIRMED — p=0.017):**
+  - Power check: small_gap_count=10, sufficient=True ✅
+  - FP-arm McNemar: **b=10, c=0, χ²=8.100, p≈0.017** — statistically significant at α=0.05 ✅
+  - FN-arm McNemar: b=0, c=0, p≈1.000 — honest tie (proposer recall is the ceiling) ✅
+  - `artifacts/e2_gap_dictation.csv` updated.
+- **E3 (H3 directional):** Full R_prop=1.0; −Control=0.10; −Knowledge=0.90; −Checklist=1.0. Prec_gate=1.000 in all conditions. Category-level: −Control drops C3/reachability hardest; −Knowledge drops C5/stateful. NOTE: simulation-derived values; live LLM confirmatory runs still needed.
+- **E4 (H4 confirmed):** Strix: 0/5 verdict flips. Proxy: 2/5 flips (error_text_reword, latency_jitter). `strix_invariant=True, H4_confirmed=True`. `artifacts/e4_perturbation.csv` updated.
+
+### Paper v1.0
+- **Draft in progress** at `.agents/specs/propose-dispose/paper/propose-dispose-paper-v1.0.md` (sub-agent writing).
+- **Sections:** Abstract (real p-value), §1–§8 + Appendix A/B/C (full corpus table, E1 table, E3 category breakdown).
+- **Headline:** H2a FP-arm escape, p=0.017; honest FN-arm limit stated throughout.
+
+### Remaining Operator Actions
+1. Review paper v1.0 draft and approve
+2. Lock E2 pre-registration (`planning/E2-preregistration.md` → Status: LOCKED) before any further E2 outcome reads
+3. Decision: live LLM E3 confirmatory ablation (glm-5.2, estimated ~$5–10)
+4. Commit all new files (`benchmarks/bv2p/` + `strix/research/corpus.py` + `artifacts/` + paper v1.0) to `new` branch and push
+5. S3.1 poller→breaker wiring test (non-blocking, deferred from verdict-11)

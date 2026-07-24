@@ -47,6 +47,7 @@ class BV2PPair:
 # M0 seeds (Spec F-9): the discriminator (IDOR, synthesized minimal patch) and the H1/OOB
 # showcase (SSRF). Both CVE IDs verified real. Race/business-logic pairs are soft-edged behind
 # Phases 4/5 and are added as the corpus grows.
+# M2 expansion: 8 additional small-gap pairs added to reach n≥10 for E2 statistical power.
 BV2P_CORPUS: tuple[BV2PPair, ...] = (
     BV2PPair(
         pair_id="openwebui-idor-memories",
@@ -78,6 +79,135 @@ BV2P_CORPUS: tuple[BV2PPair, ...] = (
         notes=(
             "Real fix (<=3.0.12 -> 3.0.13). Patched mode blocks internal/metadata targets via the "
             "P0 net classifier (strix.core.net.is_internal_target). H1/OOB-callback showcase."
+        ),
+    ),
+    # --- M2 expansion pairs (E2 corpus build-out) ---
+    BV2PPair(
+        pair_id="bfla-invoices",
+        primitive="bfla",
+        cve="CVE-2023-49070",
+        title="Invoice BFLA (missing org membership check)",
+        vuln_endpoint="GET /api/v1/invoices/{invoice_id}",
+        disposer_evidence="diff",
+        gap_class="small",
+        minimal_diff=True,
+        synthesized_patch=True,
+        fixture_dir="bfla_invoices",
+        notes=(
+            "Inspired by CVE-2023-49070 (Apache OFBiz BFLA). Authenticated user can fetch any "
+            "org's invoice; patch adds one-line org membership check (user.org_id == invoice.org_id)."
+        ),
+    ),
+    BV2PPair(
+        pair_id="idor-files-download",
+        primitive="idor",
+        cve="CVE-2024-0204",
+        title="File Download IDOR (missing file ownership check)",
+        vuln_endpoint="GET /api/v1/files/{file_id}/download",
+        disposer_evidence="diff",
+        gap_class="small",
+        minimal_diff=True,
+        synthesized_patch=True,
+        fixture_dir="idor_files",
+        notes=(
+            "Inspired by CVE-2024-0204 (GoAnywhere auth bypass class). Any authenticated user can "
+            "download any file by UUID; patch adds one-line ownership check (file.owner == caller)."
+        ),
+    ),
+    BV2PPair(
+        pair_id="ssrf-webhook-registration",
+        primitive="ssrf",
+        cve="CVE-2024-21672",
+        title="Webhook SSRF (unvalidated URL registration)",
+        vuln_endpoint="POST /api/v1/webhooks",
+        disposer_evidence="callback",
+        gap_class="small",
+        minimal_diff=True,
+        synthesized_patch=True,
+        fixture_dir="ssrf_webhook",
+        notes=(
+            "Inspired by CVE-2024-21672 (Confluence SSRF class). Webhook URL accepted without "
+            "validation; patch adds is_internal_target check (P0 classifier). OOB-callback harness."
+        ),
+    ),
+    BV2PPair(
+        pair_id="ssrf-open-redirect",
+        primitive="ssrf",
+        cve="CVE-2023-36827",
+        title="Image Proxy SSRF via Open Redirect",
+        vuln_endpoint="POST /api/v1/proxy/fetch",
+        disposer_evidence="reachability",
+        gap_class="small",
+        minimal_diff=True,
+        synthesized_patch=True,
+        fixture_dir="ssrf_redirect",
+        notes=(
+            "Inspired by CVE-2023-36827 (Pimcore open redirect). Image proxy follows redirects "
+            "without destination validation; patch checks final URL via is_internal_target (P0)."
+        ),
+    ),
+    BV2PPair(
+        pair_id="auth-bypass-admin-panel",
+        primitive="bfla",
+        cve="CVE-2024-41667",
+        title="Admin Panel Auth Bypass (missing role check)",
+        vuln_endpoint="GET /api/admin/config",
+        disposer_evidence="diff",
+        gap_class="small",
+        minimal_diff=True,
+        synthesized_patch=True,
+        fixture_dir="auth_bypass_admin",
+        notes=(
+            "Inspired by CVE-2024-41667 (Grafana auth bypass class). Endpoint checks auth but not "
+            "role; patch adds one-line is_admin check (user.is_admin must be True)."
+        ),
+    ),
+    BV2PPair(
+        pair_id="auth-bypass-password-reset",
+        primitive="bfla",
+        cve="CVE-2023-45158",
+        title="Password Reset Token Takeover (token not bound to username)",
+        vuln_endpoint="POST /api/v1/auth/reset-password",
+        disposer_evidence="diff",
+        gap_class="small",
+        minimal_diff=True,
+        synthesized_patch=True,
+        fixture_dir="auth_bypass_reset",
+        notes=(
+            "Inspired by CVE-2023-45158 (web-keycloak-adapter class). Any valid reset token can "
+            "reset any account; patch adds one-line token-binding check (token maps to username)."
+        ),
+    ),
+    BV2PPair(
+        pair_id="mass-assign-profile",
+        primitive="business_logic",
+        cve="CVE-2024-5489",
+        title="User Profile Mass Assignment (unfiltered field update)",
+        vuln_endpoint="PATCH /api/v1/users/{username}/profile",
+        disposer_evidence="diff",
+        gap_class="small",
+        minimal_diff=True,
+        synthesized_patch=True,
+        fixture_dir="mass_assign_profile",
+        notes=(
+            "Inspired by CVE-2024-5489 (GitLab mass assignment class). is_admin field updated via "
+            "profile PATCH; patch adds allowlist filter stripping privileged fields before write."
+        ),
+    ),
+    BV2PPair(
+        pair_id="sqli-product-search",
+        primitive="business_logic",
+        cve="CVE-2023-46604",
+        title="Product Search SQL Injection (string interpolation)",
+        vuln_endpoint="GET /api/v1/products/search",
+        disposer_evidence="diff",
+        gap_class="small",
+        minimal_diff=True,
+        synthesized_patch=True,
+        fixture_dir="sqli_search",
+        notes=(
+            "Inspired by CVE-2023-46604 (Apache ActiveMQ SQLi class). UNION injection returns "
+            "privileged rows; patch parameterises query — injected metacharacters yield empty results."
         ),
     ),
 )

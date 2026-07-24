@@ -1,0 +1,60 @@
+[
+  {
+    "proposal_id": "prop-1784883152.131836",
+    "engagement_id": "m0-vuln",
+    "endpoint_key": "POST /api/v1/memories/{id}/update",
+    "param_name": null,
+    "cwe": "CWE-639",
+    "c1_c8_answers": {},
+    "active_interventions": {
+      "control_path": false,
+      "knowledge_path": false,
+      "c1_c8_checklist": false
+    },
+    "harnesses_selected": [
+      "auth_matrix_p2"
+    ],
+    "verdicts": [
+      {
+        "harness_name": "auth_matrix_p2",
+        "verdict": "confirmed",
+        "evidence_class": "diff",
+        "cost_ms": 0.0,
+        "timestamp": "2026-07-24T08:52:32.131984+00:00"
+      }
+    ],
+    "report_id": "rpt-vuln-001",
+    "supplied_context": null,
+    "created_at": "2026-07-24T08:52:32.131924+00:00",
+    "updated_at": "2026-07-24T08:52:32.132044+00:00"
+  },
+  {
+    "proposal_id": "prop-1784883154.661293",
+    "engagement_id": "m0-patched",
+    "endpoint_key": "POST /api/v1/memories/{id}/update",
+    "param_name": null,
+    "cwe": "CWE-639",
+    "c1_c8_answers": {},
+    "active_interventions": {
+      "control_path": false,
+      "knowledge_path": false,
+      "c1_c8_checklist": false
+    },
+    "harnesses_selected": [
+      "auth_matrix_p2"
+    ],
+    "verdicts": [
+      {
+        "harness_name": "auth_matrix_p2",
+        "verdict": "unconfirmed",
+        "evidence_class": "none",
+        "cost_ms": 0.0,
+        "timestamp": "2026-07-24T08:52:34.661383+00:00"
+      }
+    ],
+    "report_id": null,
+    "supplied_context": null,
+    "created_at": "2026-07-24T08:52:34.661349+00:00",
+    "updated_at": "2026-07-24T08:52:34.661390+00:00"
+  }
+]

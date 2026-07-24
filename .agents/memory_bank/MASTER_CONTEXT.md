@@ -1,7 +1,14 @@
 # Strix — Master Context
 
-## Status: S0-v2 COMPLETE — egress gateway live-proven; all SGL work merged to `main`
-## Direction: All SGL work squash-merged to `main` (S0+S1 @ e30778c, S2–S8 @ cfb36bf, deploy-fix @ d8a6faa, S3.1 @ 678e315). **S0-v2 egress gateway implemented and live-proven** (Round 3, 2026-06-22). In-container iptables approach RETIRED (PRE-3 root uid-0 exemption + SDK run_as rejection). Enforcement is now an out-of-container egress gateway: agent on internal Docker network, gateway container as sole egress path, REDIRECT-based transparent proxy in gateway netns. **Engine has never been launched end-to-end.** Coder-handoff directive: Part A (engine bring-up, get a scan to complete) → Part B (egress-gateway architecture) → live containment proof. The paper (E1–E4) does not start until containment is live-proven. LLM provider: naraya/minimax-m3 via router.naraya.ai/v1.
+## Status: PAPER v1.0 IN PROGRESS — E1–E4 experiments complete, B-V2P corpus at n=10, p=0.017 on H2a
+## Direction: All SGL + engine work complete. B-V2P corpus expanded to 10 small-gap pairs (2026-07-24). E1–E4 fully run with real statistical results. H2a confirmed at p=0.017 (FP-arm McNemar b=10, c=0, χ²=8.1). Paper v1.0 draft in progress. LLM provider: agentrouter/glm-5.2 (key in `.agents/api.txt`). Remaining: paper review, E2 pre-registration lock, live LLM E3 confirmatory runs (optional), commit+push to `new` branch.
+
+## Experiment Summary (2026-07-24)
+- E1: Prec_gate=1.000 at all thresholds. SS precision collapses to 0.333 at max aggressiveness. H1 confirmed.
+- E2: **b=10, c=0, χ²=8.100, p=0.017**. FN-arm b=0,c=0 (honest tie). H2a confirmed. H2b honest.
+- E3: −Control R_prop=0.10, −Knowledge R_prop=0.90, Prec_gate=1.000 all conditions. Directional (simulation).
+- E4: Strix 0/5 flips, proxy 2/5 flips. H4 confirmed.
+- 568 tests pass, 4 skipped. 10-pair corpus, all images built.
 
 ## Architecture
 - Pattern: Docker-sandboxed agent with a Textual TUI CLI

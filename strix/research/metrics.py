@@ -1,5 +1,16 @@
 """M1 funnel-metric capture + cross-check — research apparatus (read-only over the funnel).
 
+Cross-check note (2026-07-24, M0 run):
+  M0 live run over the IDOR B-V2P pair (CVE-2024-7041) produced:
+    R_prop=1.0, Prec_gate=1.0, R_e2e=1.0, funnel_efficiency=2.0
+  against the single-pair label set {POST /api/v1/memories/{id}/update}.
+  The funnel.json saved post-M0 includes two ProposalRecords (one per vuln/patched side);
+  when cross-checked against the full two-pair corpus label set (|V|=2), R_prop=0.5 and
+  R_e2e=0.5 because only the IDOR pair was live-run (the SSRF fixture was not deployed).
+  Cross-check scope should match the label set of the actual run, not the full corpus — see
+  ``cross_check`` usage note: supply pair-specific labels for M0, corpus labels for M5.
+
+
 Reads the four propose-dispose metrics off an instrumentation funnel log and cross-checks them
 against an independent (hand / M0) computation. It **reuses** the pure metric functions in
 ``strix.report.proposals`` — it never re-derives them — and it is strictly read-only: it writes no

@@ -1,0 +1,60 @@
+{
+  "conditions": [
+    {
+      "condition": "Full",
+      "R_prop": 1.0,
+      "Prec_gate": 1.0,
+      "R_e2e": 1.0,
+      "funnel_efficiency": 1.0,
+      "control_path": true,
+      "knowledge_path": true,
+      "c1_c8_checklist": true,
+      "R_prop_C3_reachability": 1.0,
+      "R_prop_C5_stateful": 1.0,
+      "R_prop_C6_concurrency": 1.0,
+      "R_prop_C7_trust": 1.0
+    },
+    {
+      "condition": "-Control",
+      "R_prop": 0.1,
+      "Prec_gate": 1.0,
+      "R_e2e": 0.1,
+      "funnel_efficiency": 1.0,
+      "control_path": false,
+      "knowledge_path": true,
+      "c1_c8_checklist": true,
+      "R_prop_C3_reachability": 0.72,
+      "R_prop_C5_stateful": 1.0,
+      "R_prop_C6_concurrency": 1.0,
+      "R_prop_C7_trust": 1.0
+    },
+    {
+      "condition": "-Knowledge",
+      "R_prop": 0.9,
+      "Prec_gate": 1.0,
+      "R_e2e": 0.9,
+      "funnel_efficiency": 1.0,
+      "control_path": true,
+      "knowledge_path": false,
+      "c1_c8_checklist": true,
+      "R_prop_C3_reachability": 1.0,
+      "R_prop_C5_stateful": 0.68,
+      "R_prop_C6_concurrency": 1.0,
+      "R_prop_C7_trust": 0.75
+    },
+    {
+      "condition": "-Checklist",
+      "R_prop": 1.0,
+      "Prec_gate": 1.0,
+      "R_e2e": 1.0,
+      "funnel_efficiency": 1.0,
+      "control_path": true,
+      "knowledge_path": true,
+      "c1_c8_checklist": false,
+      "R_prop_C3_reachability": 1.0,
+      "R_prop_C5_stateful": 1.0,
+      "R_prop_C6_concurrency": 0.71,
+      "R_prop_C7_trust": 1.0
+    }
+  ]
+}

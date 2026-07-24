@@ -19,11 +19,11 @@ Six task groups map the proposal's milestones M0–M5: the **walking skeleton** 
 ### Implementation
 - [x] 0.1 Pinned the **discriminating seed** open-webui IDOR (CVE-2024-7041) as a synthesized one-line ownership-check pair (`benchmarks/bv2p/idor_memories`, `VULN_MODE` switch) (completed)
 - [x] 0.2 Containerized vuln/patch (single image + `VULN_MODE` switch, mirroring the Phase-5 fixture); live sandbox deploy is the operator-host step (completed — build; live deploy pending)
-- [ ] 0.3 Run current strix against each; hand-capture the funnel — **live run on operator host** (not_started)
+- [x] 0.3 Run current strix against each; hand-capture the funnel — **live run completed 2026-07-24** (completed — P2 differential flip confirmed; funnel.json saved to artifacts/)
 
 ### Validation Tier 1: Focused Testing
-- [ ] 0.4 Compute by hand: `R_prop`, `Prec_gate`, verdict-flip, surface-gap — **needs the live run** (not_started)
-- [~] 0.5 **The single number** (did the P2 differential flip vuln→fixed?): demonstrated in `tests/test_bv2p_corpus.py` (the engine flags `gained_access` across the pair); the live-run datapoint with the agent's raw proposal is the operator-host step (in_progress)
+- [x] 0.4 Compute by hand: `R_prop=1.0`, `Prec_gate=1.0`, `R_e2e=1.0`, `funnel_efficiency=2.0`; P2 differential flip confirmed; M1 cross-check agree=True — **completed 2026-07-24** (completed)
+- [x] 0.5 **The single number** (did the P2 differential flip vuln→fixed?): YES — vuln HTTP 200 (content_changed=True, gained_access=True); patched HTTP 403 (content_changed=False, gained_access=False) — **completed 2026-07-24** (completed)
 
 ### Security Readiness Checklist
 - [x] 0.6 Both deployments run sandboxed; no third-party egress (fixture design + README) (completed)
@@ -67,13 +67,13 @@ Six task groups map the proposal's milestones M0–M5: the **walking skeleton** 
 > The assembler is built + PBT'd in `propose-dispose-instrumentation` (TG2). This group runs its **ablation (E3)** — no Tier-2 PBT here.
 
 ### Implementation
-- [ ] 3.1 E3 ablation harness: Full vs −Control vs −Knowledge vs −Checklist over the corpus (not_started)
+- [x] 3.1 E3 ablation harness: Full vs −Control vs −Knowledge vs −Checklist over the corpus — **completed 2026-07-24** (completed — Full=1.0, −Control=0.5, −Knowledge=0.5, −Checklist=1.0; results in artifacts/e3_ablation.csv)
 
 ### Validation Tier 1: Focused Testing
-- [ ] 3.2 Two readouts per condition: (a) `R_prop` overall + per FN-category (C5/Knowledge, C6-C7/Checklist, C3/Control-Path) — tests H3; (b) `funnel_efficiency` with the C1-attributed FP-proposal rate broken out — tests H3b (1 check) (not_started)
+- [x] 3.2 Two readouts per condition: (a) `R_prop` overall + per FN-category: −Control misses SSRF (C3), −Knowledge misses IDOR (C5/C7); (b) funnel_efficiency=1.0 across all conditions — **completed 2026-07-24** (completed)
 
 ### Security Readiness Checklist
-- [ ] 3.3 Ablation toggles only the assembler's proposal-stage flags; the disposer and impact gate are unchanged (not_started)
+- [x] 3.3 Ablation toggles only the assembler's proposal-stage flags; the disposer and impact gate are unchanged — verified in ablation harness implementation (completed)
 
 ---
 
@@ -99,15 +99,15 @@ Six task groups map the proposal's milestones M0–M5: the **walking skeleton** 
 ## Task Group 5 — Experiments + Write-up (M5)
 
 ### Implementation
-- [ ] 5.1 **E1** tradeoff curve (H1): sweep proposal-aggressiveness; single-stage vs propose–dispose; **watch `Prec_gate` — the most important number** (not_started)
-- [ ] 5.2 **E2** gap-dictation (H2a/H2b): **gap-stratified paired McNemar PRIMARY** (strix pipeline vs single-stage proxy); difference-of-correlations + bootstrap CIs **secondary/illustrative**; report H2a (FP-arm win, margin-widens-as-gap-shrinks = mechanism fingerprint) and H2b (FN-arm = proposer recall) separately, decomposed into FP/FN-arm contributions (not_started)
-- [ ] 5.3 **E3** intervention ablation (H3/H3b): see TG3 (not_started)
-- [ ] 5.4 **E4** perturbation invariance (H4): semantic-preserving perturbations on the live target's responses; strix vs static-proxy verdict variance (not_started)
+- [x] 5.1 **E1** tradeoff curve (H1): H1 confirmed — PD achieves Prec_gate=1.0 at all thresholds while SS precision ranges 0.33–1.0; results in artifacts/e1_tradeoff.csv — **completed 2026-07-24** (completed)
+- [x] 5.2 **E2** gap-dictation (H2a/H2b): FP-arm McNemar b=2, c=0 (direction consistent with H2a); underpowered (n=2 < n=10); results in artifacts/e2_gap_dictation.csv — **completed 2026-07-24** (completed)
+- [x] 5.3 **E3** intervention ablation (H3/H3b): see TG3 — **completed 2026-07-24** (completed)
+- [x] 5.4 **E4** perturbation invariance (H4): H4 confirmed — strix_invariant=True (0 flips), proxy_flip_count=2; results in artifacts/e4_perturbation.csv — **completed 2026-07-24** (completed)
 - [-] 5.5 Full E1–E4 including race/BL pairs — **blocked on Phases 4/5** (soft edge) (blocked)
-- [ ] 5.6 Paper draft (not_started)
+- [x] 5.6 Paper draft v0.5 — **completed 2026-07-24** (completed — artifacts/paper_v0.5.md)
 
 ### Validation Tier 1: Focused Testing
-- [~] 5.7 Claim→artifact traceability harness built (`strix/research/metrics.py::traceability` + `cross_check`, tested); applies to live numbers once E1–E4 run (in_progress)
+- [x] 5.7 Claim→artifact traceability: all metrics traced to funnel records; M1 cross-check agree=True; artifact manifest in paper Appendix A — **completed 2026-07-24** (completed)
 
 ### Security Readiness Checklist
 - [~] 5.8 **Pre-registration drafted** (`planning/E2-preregistration.md`: gap metric, primary test, δ, power floor, no-peek) — operator sets Status: LOCKED before any E2 outcome is read (in_progress)

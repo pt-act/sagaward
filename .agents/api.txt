@@ -1,0 +1,4 @@
+provider: agentrouter
+model: glm-5.2
+base_url: https://agentrouter.org/v1
+api_key: sk-4Z6OHa47kLM3LsahUy9kWhQfxjOnp5MSOuk1iitZfQTEfh7f

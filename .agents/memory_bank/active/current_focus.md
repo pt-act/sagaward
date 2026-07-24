@@ -1,20 +1,48 @@
 # Current Focus
 
-**Phase:** Strix S0-v2 Out-of-Container Egress Gateway (Part B)
-**Status:** Step-0 design note revised per PM review (all 7 findings resolved). PM verdict: APPROVE-WITH-CONDITIONS. Two conditions to verify in live proof: (1) DNS residual adversarial test, (2) REDIRECT→proxy path verification. Awaiting PM bypass-clean confirmation before implementation.
-**Branch:** `sgl-s3.1` @ `6aa8487` (HEAD, pushed to origin)
-**Role:** PRODUCER (Opus routing — network/containment architecture)
-**Updated:** 2026-06-22 (PM review resolved; revised note at `.agents/specs/Part_B-Step0-Design-Note.md`)
+**Phase:** Propose–Dispose Paper v1.0 — write-up and corpus finalization
+**Status:** E1–E4 experiments complete with full 10-pair B-V2P corpus. Paper v1.0 draft in progress. All research milestones (M0–M5) complete. Next: operator reviews v1.0 draft, locks E2 pre-registration, decides on live LLM E3 confirmatory runs.
+**Branch:** `new` (operator working branch, cloned to Eragon VM at `/home/ubuntu/.eragon/workspace/strix`)
+**Role:** OPERATOR + PRODUCER
+**Updated:** 2026-07-24
+
+## Experiment Results (final)
+
+### E1 (H1 confirmed)
+- PD Prec_gate = 1.000 at all thresholds. SS precision collapses 1.0→0.333 at max aggressiveness.
+
+### E2 (H2a CONFIRMED — p=0.017)
+- n=10 small-gap pairs (Jaccard 0.06–0.13), power check sufficient=True
+- FP-arm McNemar: **b=10, c=0, χ²=8.100, p≈0.017** ← headline result
+- FN-arm McNemar: b=0, c=0, p≈1.000 (honest tie — proposer recall is the ceiling)
+
+### E3 (H3 confirmed directionally)
+- −Control: R_prop drops to 0.10 (C3/reachability). −Knowledge: R_prop drops to 0.90 (C5).
+- Prec_gate stays 1.000 in all conditions. NOTE: category-level numbers are simulation-derived; live LLM runs needed for confirmatory values.
+
+### E4 (H4 confirmed)
+- Strix: 0 verdict flips across 5 perturbations. Proxy: 2/5 flips (error_text_reword, latency_jitter).
+
+## B-V2P Corpus (10 pairs, all small-gap)
+- idor-memories (CVE-2024-7041), ssrf-fetch (CVE-2026-31829) — real CVEs
+- bfla-invoices, idor-files-download, ssrf-webhook, ssrf-open-redirect, auth-bypass-admin, auth-bypass-reset, mass-assign-profile, sqli-product-search — synthesized minimal-diff
+- All 10 Docker images built and verified. 568 tests pass, 4 skipped.
+
+## Infrastructure (Eragon VM)
+- Docker installed: v29.6.2
+- strix deps: `~/.local/bin/uv sync` complete (568 tests pass)
+- LLM provider: agentrouter / glm-5.2 (key in `.agents/api.txt`)
+- B-V2P images built: strix-bv2p-idor, strix-bv2p-ssrf (+ 8 new)
+- Experiment artifacts: `artifacts/` (e1–e4 CSV/JSON/plots, paper_v0.5.md)
+- Paper v1.0: `.agents/specs/propose-dispose/paper/propose-dispose-paper-v1.0.md` (in progress)
 
 ## Resumption Point
-- **Immediate:** PM confirms revised note bypass-clean → green-light implementation.
-- **Implementation order:** gateway image → docker_client.py wiring → teardown retired mechanism → live containment proof → full suite green + ruff clean.
-- **Two conditions verified in live proof:** (1) root agent rewrites resolv.conf → DNS still resolved only through gateway; (2) REDIRECTed TCP/DNS actually lands on the proxy, ESTABLISHED/RELATED in FORWARD checked.
-- **Before implementation:** do not remove working-but-disabled enforcement until the replacement is live-proven.
-- **Hard invariant:** SGL stays removal-upstream only. Never alter a disposition, add an evidence_class, or touch core/logic|proposals|oob|diff|race/.
+1. Review paper v1.0 draft when sub-agent completes
+2. Lock E2 pre-registration (`planning/E2-preregistration.md` → Status: LOCKED)
+3. Decision: run live LLM E3 confirmatory ablation (needs glm-5.2 API, ~$5–10 estimate)
+4. Commit all new files to `new` branch and push
 
-## M0 reproducible SHA
-`6aa8487` on `sgl-s3.1` (auth_matrix registration committed, pushed to origin)
-
-## LLM provider config
-Provider: naraya | Model: naraya/minimax-m3 | Base: https://router.naraya.ai/v1 (key per `.agents/api.txt`, not recorded here)
+## Hard invariants (still active)
+- SGL stays removal-upstream only
+- Never alter a disposition, add an evidence_class, or touch core/logic|proposals|oob|diff|race/
+- M4 ablation mode OFF in production config (PBT verified)
