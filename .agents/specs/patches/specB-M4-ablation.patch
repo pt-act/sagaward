@@ -1,0 +1,497 @@
+diff --git a/strix/research/__init__.py b/strix/research/__init__.py
+new file mode 100644
+index 0000000..53cbae1
+--- /dev/null
++++ b/strix/research/__init__.py
+@@ -0,0 +1,12 @@
++"""Strix research apparatus — quarantined, NEVER part of the product DAG.
++
++Everything under ``strix.research`` is measurement-only scaffolding for the propose-dispose
++validation study (Spec B). It must never be imported by the product agent factory
++(``strix.agents.factory``), the run entry (``strix.core.runner``), or the product interface
++(``strix.interface``). In particular it hosts the **single-stage ablation mode** — the one
++research baseline that lets a model self-confirm without the deterministic disposer — which is
++a locus-1 failure if it ever reaches production. It is gated off by default and reachable only
++via its own research entrypoint (``python -m strix.research.ablation``).
++"""
++
++from __future__ import annotations
+diff --git a/strix/research/ablation/__init__.py b/strix/research/ablation/__init__.py
+new file mode 100644
+index 0000000..03f6c2e
+--- /dev/null
++++ b/strix/research/ablation/__init__.py
+@@ -0,0 +1,30 @@
++"""Single-stage ablation mode (M4) — quarantined research baseline (see strix.research)."""
++
++from __future__ import annotations
++
++from strix.research.ablation.single_stage import (
++    ABLATION_ENV_VAR,
++    AblationProposal,
++    ModelJudge,
++    SingleStageMode,
++    SingleStageVerdict,
++    is_single_stage_ablation_enabled,
++    require_single_stage_ablation,
++    run_self_confirm,
++    run_single_stage,
++    run_static_proxy,
++)
++
++
++__all__ = [
++    "ABLATION_ENV_VAR",
++    "AblationProposal",
++    "ModelJudge",
++    "SingleStageMode",
++    "SingleStageVerdict",
++    "is_single_stage_ablation_enabled",
++    "require_single_stage_ablation",
++    "run_self_confirm",
++    "run_single_stage",
++    "run_static_proxy",
++]
+diff --git a/strix/research/ablation/__main__.py b/strix/research/ablation/__main__.py
+new file mode 100644
+index 0000000..0b178c1
+--- /dev/null
++++ b/strix/research/ablation/__main__.py
+@@ -0,0 +1,69 @@
++"""Research entrypoint for the single-stage ablation baseline (M4).
++
++This is the ONLY entrypoint to the disposer-disabled / self-confirm path. It is never wired
++into the product CLI. Running it still requires the explicit research opt-in token (see
++``strix.research.ablation.single_stage.ABLATION_ENV_VAR``); without it, the run aborts.
++
++    STRIX_RESEARCH_SINGLE_STAGE_ABLATION=<token> \\
++        python -m strix.research.ablation --fixture pairs.json --mode static_proxy
++
++``--fixture`` is a JSON document: ``{"proposals": [{"endpoint": ..., "signals": {...},
++"model_confirms": true, "model_confidence": 0.9}, ...]}``. Verdicts are written to stdout as
++JSON for downstream E1/E2/E4 aggregation.
++"""
++
++from __future__ import annotations
++
++import argparse
++import dataclasses
++import json
++import sys
++from pathlib import Path
++from typing import Any
++
++from strix.research.ablation.single_stage import (
++    AblationProposal,
++    SingleStageMode,
++    require_single_stage_ablation,
++    run_single_stage,
++)
++
++
++def _proposal_from_dict(raw: dict[str, Any]) -> AblationProposal:
++    return AblationProposal(
++        endpoint=str(raw["endpoint"]),
++        cwe=raw.get("cwe"),
++        signals={str(k): float(v) for k, v in dict(raw.get("signals", {})).items()},
++        model_confirms=raw.get("model_confirms"),
++        model_confidence=float(raw.get("model_confidence", 0.0)),
++        model_rationale=str(raw.get("model_rationale", "")),
++    )
++
++
++def main(argv: list[str] | None = None) -> int:
++    parser = argparse.ArgumentParser(prog="python -m strix.research.ablation")
++    parser.add_argument("--fixture", required=True, type=Path, help="JSON fixture of proposals")
++    parser.add_argument(
++        "--mode",
++        required=True,
++        choices=("self_confirm", "static_proxy"),
++        help="single-stage baseline to run",
++    )
++    parser.add_argument("--threshold", type=float, default=0.5)
++    args = parser.parse_args(argv)
++
++    # Entrypoint gate: abort unless the operator explicitly opted in for a research run.
++    require_single_stage_ablation()
++
++    document = json.loads(args.fixture.read_text(encoding="utf-8"))
++    proposals = [_proposal_from_dict(p) for p in document.get("proposals", [])]
++    mode: SingleStageMode = args.mode
++
++    verdicts = run_single_stage(proposals, mode, threshold=args.threshold)
++    json.dump([dataclasses.asdict(v) for v in verdicts], sys.stdout, indent=2)
++    sys.stdout.write("\n")
++    return 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/strix/research/ablation/single_stage.py b/strix/research/ablation/single_stage.py
+new file mode 100644
+index 0000000..6c0708c
+--- /dev/null
++++ b/strix/research/ablation/single_stage.py
+@@ -0,0 +1,148 @@
++"""Single-stage ablation mode (M4) — research baseline, quarantined off in production.
++
++This is the propose-dispose validation study's single-stage baseline: a verdict produced
++**without** the deterministic disposer, either by the proposer self-confirming
++(``self_confirm``) or by a static classifier proxy (``static_proxy``). It exists only to
++measure what strix's two-stage pipeline buys over a single-stage detector (E1/E2/E4).
++
++Safety (locus-1): self-confirmation is the architecture's forbidden path — "the agent
++proposes, the harness disposes." It is therefore:
++
++- **Off by default.** ``is_single_stage_ablation_enabled()`` is False unless the exact research
++  opt-in token is present in the environment; no ordinary ``STRIX_*`` setting enables it.
++- **Entrypoint-gated.** Reachable only from ``python -m strix.research.ablation`` — never wired
++  into the product agent factory, the runner, or the interface.
++- **Incapable of touching product state.** ``SingleStageVerdict`` carries **no** ``evidence_class``
++  and this module never imports ``ReportState`` / ``add_vulnerability_report`` /
++  ``record_harness_run``. A single-stage verdict can never become a funnel confirmation, so
++  precision is never silently handed to a model.
++
++Every public runner calls :func:`require_single_stage_ablation`, so even a mistaken in-process
++call raises unless the operator has explicitly opted in for a research run.
++"""
++
++from __future__ import annotations
++
++import os
++from collections.abc import Callable, Mapping
++from dataclasses import dataclass, field
++from typing import Literal
++
++
++# Build-time / entrypoint gate. The value is an explicit, non-trivial research opt-in — not a
++# "1"/"true" toggle — so it cannot be flipped by accident and reads unambiguously as a
++# disposer-disabling research switch. Production deployments never set it.
++ABLATION_ENV_VAR = "STRIX_RESEARCH_SINGLE_STAGE_ABLATION"
++_ENABLE_SENTINEL = "enable-single-stage-self-confirm-research-only"
++
++SingleStageMode = Literal["self_confirm", "static_proxy"]
++
++
++def _empty_signals() -> dict[str, float]:
++    return {}
++
++
++def is_single_stage_ablation_enabled() -> bool:
++    """True only when the exact research opt-in value is set. Default (production): False."""
++    return os.environ.get(ABLATION_ENV_VAR) == _ENABLE_SENTINEL
++
++
++def require_single_stage_ablation() -> None:
++    """Guard every single-stage entry; raise unless the research opt-in is explicitly set."""
++    if not is_single_stage_ablation_enabled():
++        raise RuntimeError(
++            "single-stage ablation (disposer-disabled / self-confirm) is a quarantined research "
++            f"mode and is OFF in production. Set {ABLATION_ENV_VAR} to the research opt-in token "
++            "and run via `python -m strix.research.ablation` to enable it for an experiment."
++        )
++
++
++@dataclass(frozen=True)
++class AblationProposal:
++    """A single-stage input. Research-only: no ``evidence_class``, no ReportState handle.
++
++    ``model_confirms`` / ``model_confidence`` / ``model_rationale`` carry the proposer's captured
++    self-judgment for the ``self_confirm`` baseline (in a real experiment, the LLM's recorded
++    output); ``signals`` feeds the deterministic ``static_proxy`` baseline.
++    """
++
++    endpoint: str
++    cwe: str | None = None
++    signals: Mapping[str, float] = field(default_factory=_empty_signals)
++    model_confirms: bool | None = None
++    model_confidence: float = 0.0
++    model_rationale: str = ""
++
++
++@dataclass(frozen=True)
++class SingleStageVerdict:
++    """A single-stage verdict. Deliberately carries **no** ``evidence_class`` field — confirmation
++    here is not backed by a deterministic harness, which is exactly the mode under measurement.
++    """
++
++    endpoint: str
++    verdict: Literal["confirmed", "unconfirmed"]
++    mode: SingleStageMode
++    confidence: float
++    rationale: str
++
++
++# (confirm?, confidence, rationale) — injected so the self-confirm baseline is deterministic and
++# offline-testable; a live experiment supplies the proposer model here.
++ModelJudge = Callable[[AblationProposal], tuple[bool, float, str]]
++
++
++def _fixture_judge(proposal: AblationProposal) -> tuple[bool, float, str]:
++    return (
++        bool(proposal.model_confirms),
++        proposal.model_confidence,
++        proposal.model_rationale or "model self-confirmation (no harness)",
++    )
++
++
++def run_self_confirm(
++    proposal: AblationProposal, judge: ModelJudge | None = None
++) -> SingleStageVerdict:
++    """Harness-disabled baseline: the proposer's own judgment becomes the verdict."""
++    require_single_stage_ablation()
++    decide = judge or _fixture_judge
++    confirms, confidence, rationale = decide(proposal)
++    return SingleStageVerdict(
++        endpoint=proposal.endpoint,
++        verdict="confirmed" if confirms else "unconfirmed",
++        mode="self_confirm",
++        confidence=confidence,
++        rationale=rationale,
++    )
++
++
++def run_static_proxy(proposal: AblationProposal, *, threshold: float = 0.5) -> SingleStageVerdict:
++    """Static-proxy baseline: a deterministic score over the proposal's signals.
++
++    Uses a continuous score (not a binary heuristic) so the baseline has dynamic range — this
++    avoids the floor-effect confound the spec warns about when comparing against the pipeline.
++    """
++    require_single_stage_ablation()
++    score = sum(value for value in proposal.signals.values() if value > 0)
++    confidence = min(1.0, score)
++    return SingleStageVerdict(
++        endpoint=proposal.endpoint,
++        verdict="confirmed" if confidence >= threshold else "unconfirmed",
++        mode="static_proxy",
++        confidence=confidence,
++        rationale=f"static-proxy score {confidence:.3f} vs threshold {threshold:.3f}",
++    )
++
++
++def run_single_stage(
++    proposals: list[AblationProposal],
++    mode: SingleStageMode,
++    *,
++    judge: ModelJudge | None = None,
++    threshold: float = 0.5,
++) -> list[SingleStageVerdict]:
++    """Run a whole fixture (e.g. a B-V2P pair) through one single-stage baseline."""
++    require_single_stage_ablation()
++    if mode == "self_confirm":
++        return [run_self_confirm(p, judge) for p in proposals]
++    return [run_static_proxy(p, threshold=threshold) for p in proposals]
+diff --git a/tests/test_single_stage_ablation.py b/tests/test_single_stage_ablation.py
+new file mode 100644
+index 0000000..c1be9c9
+--- /dev/null
++++ b/tests/test_single_stage_ablation.py
+@@ -0,0 +1,208 @@
++"""M4 single-stage ablation mode — Tier-1 + Tier-2 PBT (locus-1 guardrails).
++
++The single-stage baseline is the one piece of the validation study that touches the forbidden
++self-confirm path. These tests pin its two locus-1 invariants:
++
++- **M4 production-off** (PBT 4.4): no ordinary environment enables it, and no production entry
++  module imports it — so no production entrypoint can reach the self-confirm path.
++- **Gate neutrality / no self-confirm** (PBT 4.5): a single-stage verdict can never become a
++  funnel confirmation (it carries no ``evidence_class`` and cannot write report state), and the
++  *production* emit path only records a ``confirmed`` verdict when it carries a deterministic
++  harness ``evidence_class`` (``!= none``).
++"""
++
++from __future__ import annotations
++
++import ast
++import dataclasses
++import json
++import os
++import sys
++from pathlib import Path
++from types import ModuleType
++from typing import Any
++from unittest import TestCase
++from unittest.mock import patch
++
++from hypothesis import assume, given
++from hypothesis import strategies as st
++
++
++# Mock the agents SDK before importing report-state-facing modules (mirrors the funnel tests).
++_agents: Any = ModuleType("agents")
++_agents_usage: Any = ModuleType("agents.usage")
++
++
++class _Usage:
++    pass
++
++
++_agents_usage.Usage = _Usage
++_agents_usage.serialize_usage = lambda _: {}
++_agents_usage.deserialize_usage = lambda _: _Usage()
++_agents.RunContextWrapper = object
++_agents.function_tool = lambda **_: lambda f: f
++sys.modules.setdefault("agents", _agents)
++sys.modules.setdefault("agents.usage", _agents_usage)
++
++from strix.agents.funnel_emit import emit_harness_run  # noqa: E402
++from strix.report.state import (  # noqa: E402
++    ReportState,
++    get_global_report_state,
++    set_global_report_state,
++)
++from strix.research.ablation.single_stage import (  # noqa: E402
++    _ENABLE_SENTINEL,
++    ABLATION_ENV_VAR,
++    AblationProposal,
++    SingleStageVerdict,
++    is_single_stage_ablation_enabled,
++    require_single_stage_ablation,
++    run_self_confirm,
++    run_single_stage,
++    run_static_proxy,
++)
++
++
++# Printable, NUL-free text — values the OS will actually accept in os.environ.
++_ENV_SAFE_TEXT = st.text(st.characters(min_codepoint=32, max_codepoint=126), max_size=64)
++_DETERMINISTIC_EVIDENCE = {"diff", "callback", "reachability", "race_result"}
++_ENDPOINT = "POST /api/v1/import"
++_PRODUCTION_ENTRY_MODULES = (
++    "strix/agents/factory.py",
++    "strix/core/runner.py",
++    "strix/interface/main.py",
++    "strix/interface/cli.py",
++)
++
++
++def _enabled_env() -> Any:
++    return patch.dict(os.environ, {ABLATION_ENV_VAR: _ENABLE_SENTINEL})
++
++
++class TestSingleStageBaselines(TestCase):
++    """TG4.3 — the ablation mode produces a single-stage verdict on a B-V2P fixture pair."""
++
++    def test_self_confirm_flips_across_a_pair(self) -> None:
++        vuln = AblationProposal(endpoint=_ENDPOINT, model_confirms=True, model_confidence=0.9)
++        patched = AblationProposal(endpoint=_ENDPOINT, model_confirms=False, model_confidence=0.1)
++        with _enabled_env():
++            verdicts = run_single_stage([vuln, patched], "self_confirm")
++        self.assertEqual([v.verdict for v in verdicts], ["confirmed", "unconfirmed"])
++        self.assertTrue(all(v.mode == "self_confirm" for v in verdicts))
++
++    def test_static_proxy_scores_with_dynamic_range(self) -> None:
++        vuln = AblationProposal(
++            endpoint=_ENDPOINT, signals={"reachable_sink": 0.8, "object_ref": 0.4}
++        )
++        patched = AblationProposal(endpoint=_ENDPOINT, signals={"reachable_sink": 0.1})
++        with _enabled_env():
++            hot = run_static_proxy(vuln)
++            cold = run_static_proxy(patched)
++        self.assertEqual(hot.verdict, "confirmed")
++        self.assertEqual(cold.verdict, "unconfirmed")
++        self.assertGreater(hot.confidence, cold.confidence)  # dynamic range, not a binary floor
++
++
++class TestProductionOff(TestCase):
++    """PBT 4.4 + the 4.6 off-in-prod regression guardrail."""
++
++    def test_disabled_by_default_and_runners_refuse(self) -> None:
++        # Regression (4.6): research opt-in absent -> mode OFF and every runner refuses.
++        with patch.dict(os.environ, {}, clear=False):
++            os.environ.pop(ABLATION_ENV_VAR, None)
++            self.assertFalse(is_single_stage_ablation_enabled())
++            with self.assertRaises(RuntimeError):
++                require_single_stage_ablation()
++            with self.assertRaises(RuntimeError):
++                run_self_confirm(AblationProposal(endpoint=_ENDPOINT, model_confirms=True))
++            with self.assertRaises(RuntimeError):
++                run_static_proxy(AblationProposal(endpoint=_ENDPOINT, signals={"x": 1.0}))
++
++    def test_no_production_entry_module_imports_the_ablation(self) -> None:
++        # 4.7 (mechanized): no production entrypoint can reach the self-confirm path.
++        repo_root = Path(__file__).resolve().parents[1]
++        for rel in _PRODUCTION_ENTRY_MODULES:
++            source = (repo_root / rel).read_text(encoding="utf-8")
++            self.assertNotIn("strix.research", source, f"{rel} must not import research apparatus")
++
++    @given(value=_ENV_SAFE_TEXT)
++    def test_no_token_value_but_the_exact_one_enables(self, value: str) -> None:
++        assume(value != _ENABLE_SENTINEL)
++        with patch.dict(os.environ, {ABLATION_ENV_VAR: value}):
++            self.assertFalse(is_single_stage_ablation_enabled())
++
++    @given(
++        extra=st.dictionaries(
++            keys=st.sampled_from(
++                ["STRIX_LLM", "STRIX_REASONING_EFFORT", "STRIX_IMAGE", "STRIX_TELEMETRY", "DEBUG"]
++            ),
++            values=_ENV_SAFE_TEXT,
++            max_size=5,
++        )
++    )
++    def test_unrelated_env_never_enables(self, extra: dict[str, str]) -> None:
++        assume(ABLATION_ENV_VAR not in extra)
++        with patch.dict(os.environ, extra, clear=False):
++            os.environ.pop(ABLATION_ENV_VAR, None)
++            self.assertFalse(is_single_stage_ablation_enabled())
++
++
++class TestGateNeutrality(TestCase):
++    """PBT 4.5 — the disposer never self-confirms; precision is never owned by a model."""
++
++    def setUp(self) -> None:
++        self.previous_state = get_global_report_state()
++
++    def tearDown(self) -> None:
++        set_global_report_state(self.previous_state)
++
++    def test_single_stage_verdict_carries_no_evidence_class(self) -> None:
++        # Structural: a single-stage verdict cannot masquerade as a harness-confirmed finding.
++        fields = {f.name for f in dataclasses.fields(SingleStageVerdict)}
++        self.assertNotIn("evidence_class", fields)
++
++    def test_ablation_module_cannot_write_report_state(self) -> None:
++        # Structural (AST, so docstrings that *name* these primitives don't count): the research
++        # module imports nothing from the product report layer, so it has no handle to write.
++        source = (
++            Path(__file__).resolve().parents[1] / "strix/research/ablation/single_stage.py"
++        ).read_text(encoding="utf-8")
++        imported: set[str] = set()
++        for node in ast.walk(ast.parse(source)):
++            if isinstance(node, ast.ImportFrom) and node.module:
++                imported.add(node.module)
++            elif isinstance(node, ast.Import):
++                imported.update(alias.name for alias in node.names)
++        self.assertFalse(
++            any(module.startswith("strix.report") for module in imported),
++            f"ablation must not import the product report layer; imported: {sorted(imported)}",
++        )
++
++    @given(
++        verdict_str=st.sampled_from(["confirmed", "unconfirmed", "race", "safe", "inconclusive"]),
++        evidence_class=st.sampled_from(
++            ["diff", "callback", "reachability", "race_result", "none", "bogus"]
++        ),
++        has_report=st.booleans(),
++    )
++    def test_funnel_confirmation_requires_deterministic_evidence(
++        self, verdict_str: str, evidence_class: str, has_report: bool
++    ) -> None:
++        state = ReportState(run_name="ablation-neutrality")
++        set_global_report_state(state)
++        record = state.funnel_log.start_proposal(
++            engagement_id="demo", endpoint_key=_ENDPOINT, cwe="CWE-918"
++        )
++
++        result: dict[str, Any] = {"verdict": verdict_str}
++        if has_report:
++            result["report"] = {"evidence_class": evidence_class}
++        emit_harness_run("p3_oob_harness", result, json.dumps({"endpoint": _ENDPOINT}))
++
++        recorded = state.funnel_log.get(record.proposal_id)
++        assert recorded is not None
++        for verdict in recorded.verdicts:
++            if verdict.verdict == "confirmed":
++                self.assertIn(verdict.evidence_class, _DETERMINISTIC_EVIDENCE)
++                self.assertNotEqual(verdict.evidence_class, "none")

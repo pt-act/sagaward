@@ -1,0 +1,590 @@
+diff --git a/benchmarks/bv2p/README.md b/benchmarks/bv2p/README.md
+new file mode 100644
+index 0000000..9b203ea
+--- /dev/null
++++ b/benchmarks/bv2p/README.md
+@@ -0,0 +1,53 @@
++# B-V2P Corpus (Propose–Dispose Validation · M2)
++
++Behavioral-V2P pairs: the same application at a **vulnerable** commit and its **minimal-diff
++patch**, deployed live. The deterministic disposer's verdict must *flip* across the pair (vuln →
++confirmed, patch → unconfirmed) while the raw model proposal does not — that flip is the single
++M0 number and the substrate for E1–E4.
++
++The typed registry (ground-truth labels `V`, gap class, which disposer confirms each pair, the
++power-check) is `strix/research/corpus.py`. These are **minimal faithful reproductions** of each
++CVE's vulnerability + fix, sized for hermetic disposer checks; swap in the real upstream repos at
++the cited commits for a full live run.
++
++Recall is reported as **recall-over-known**: `V` is the labeled set only, with the
++unknown-unknown caveat. The corpus is **small-gap-biased** (the E2 primary is a gap-stratified
++paired McNemar, which needs small-gap *discordant* pairs, not breadth) — `corpus.power_check`
++reports honestly when the count is below threshold; no tight effect size is claimed from tiny n.
++
++## Pairs
++
++| Pair | Primitive | CVE | Disposer | Vuln endpoint |
++|---|---|---|---|---|
++| `idor_memories` | IDOR | CVE-2024-7041 (open-webui) | P2 diff | `POST /api/v1/memories/{id}/update` |
++| `ssrf_fetch` | SSRF | CVE-2026-31829 (Flowise) | P3 OOB | `POST /api/v1/node/http` |
++
++Each app switches on `VULN_MODE` (`1` = vulnerable, `0` = patched):
++- **idor_memories** — patched adds the one-line ownership check (`memory.user_id == caller`);
++  the synthesized minimal diff (no clean public single-commit fix exists). The P2 differential
++  flips: the attacker's cross-user request is 2xx on vuln, 403 on patch.
++- **ssrf_fetch** — patched blocks internal/metadata targets via the P0 net classifier
++  (`strix.core.net.is_internal_target`, the `<=3.0.12 -> 3.0.13` fix). The P3 OOB callback fires
++  on vuln (the URL is fetched) and not on patch.
++
++## Run
++
++```bash
++# IDOR (self-contained)
++docker build -t strix-bv2p-idor benchmarks/bv2p/idor_memories
++docker run -p 8080:8080 -e VULN_MODE=1 strix-bv2p-idor      # vulnerable
++docker run -p 8080:8080 -e VULN_MODE=0 strix-bv2p-idor      # patched
++
++# SSRF (build from the repo root so strix.core.net is in context)
++docker build -f benchmarks/bv2p/ssrf_fetch/Dockerfile -t strix-bv2p-ssrf .
++docker run -p 8080:8080 -e VULN_MODE=1 strix-bv2p-ssrf      # vulnerable
++docker run -p 8080:8080 -e VULN_MODE=0 strix-bv2p-ssrf      # patched
++```
++
++Targets run sandboxed; SSRF confirmation uses the self-hosted P3 OOB oracle — no target data
++leaves to a third party.
++
++## Adding pairs
++
++Append a `BV2PPair` to `BV2P_CORPUS` in `strix/research/corpus.py` and add its fixture dir here.
++Race (P4) and business-logic (P5) pairs are soft-edged behind their phases.
+diff --git a/benchmarks/bv2p/__init__.py b/benchmarks/bv2p/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/benchmarks/bv2p/idor_memories/Dockerfile b/benchmarks/bv2p/idor_memories/Dockerfile
+new file mode 100644
+index 0000000..752da09
+--- /dev/null
++++ b/benchmarks/bv2p/idor_memories/Dockerfile
+@@ -0,0 +1,15 @@
++FROM python:3.12-slim
++
++WORKDIR /app
++
++RUN pip install --no-cache-dir \
++    "fastapi>=0.115.0" \
++    "uvicorn>=0.34.0" \
++    "pydantic>=2.11.0"
++
++COPY app.py .
++
++ENV VULN_MODE=1
++EXPOSE 8080
++
++CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8080"]
+diff --git a/benchmarks/bv2p/idor_memories/__init__.py b/benchmarks/bv2p/idor_memories/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/benchmarks/bv2p/idor_memories/app.py b/benchmarks/bv2p/idor_memories/app.py
+new file mode 100644
+index 0000000..96bed3d
+--- /dev/null
++++ b/benchmarks/bv2p/idor_memories/app.py
+@@ -0,0 +1,45 @@
++"""B-V2P IDOR pair — open-webui memories (CVE-2024-7041). Thin FastAPI wrapper over ``core``.
++
++``VULN_MODE=1`` (vulnerable): ``POST /api/v1/memories/{id}/update`` updates **any** memory.
++``VULN_MODE=0`` (patched): adds the one-line ownership check (see ``core.update_memory``).
++
++The disposer is the P2 differential engine: the attacker's cross-user request is 2xx on vuln and
++403 on patch, so the harness verdict flips across the pair while the raw proposal does not.
++"""
++
++from __future__ import annotations
++
++from core import MemoryAccessError, read_memory, reset_state, update_memory
++from fastapi import FastAPI, Header, HTTPException
++from pydantic import BaseModel
++
++
++app = FastAPI()
++
++
++class UpdateBody(BaseModel):
++    content: str
++
++
++@app.post("/reset")
++def reset() -> dict[str, str]:
++    reset_state()
++    return {"status": "reset"}
++
++
++@app.get("/api/v1/memories/{memory_id}")
++def read_route(memory_id: str) -> dict[str, object]:
++    try:
++        return read_memory(memory_id)
++    except MemoryAccessError as exc:
++        raise HTTPException(status_code=exc.status_code, detail=exc.detail) from exc
++
++
++@app.post("/api/v1/memories/{memory_id}/update")
++def update_route(
++    memory_id: str, body: UpdateBody, x_user_id: str = Header(default="anonymous")
++) -> dict[str, object]:
++    try:
++        return update_memory(memory_id, x_user_id, body.content)
++    except MemoryAccessError as exc:
++        raise HTTPException(status_code=exc.status_code, detail=exc.detail) from exc
+diff --git a/benchmarks/bv2p/idor_memories/core.py b/benchmarks/bv2p/idor_memories/core.py
+new file mode 100644
+index 0000000..49fc94e
+--- /dev/null
++++ b/benchmarks/bv2p/idor_memories/core.py
+@@ -0,0 +1,60 @@
++"""Pure IDOR logic for the open-webui memories B-V2P pair (CVE-2024-7041).
++
++No web-framework import, so the ground-truth behaviour is unit-testable without fastapi.
++``app.py`` is the thin FastAPI wrapper around this. ``VULN_MODE=0`` adds the one-line ownership
++check — the whole synthesized minimal diff.
++"""
++
++from __future__ import annotations
++
++import os
++
++
++class MemoryAccessError(Exception):
++    """Raised on a denied/missing access; ``status_code`` mirrors the HTTP the wrapper returns."""
++
++    def __init__(self, status_code: int, detail: str) -> None:
++        super().__init__(detail)
++        self.status_code = status_code
++        self.detail = detail
++
++
++class Memory:
++    def __init__(self, user_id: str, content: str) -> None:
++        self.user_id = user_id
++        self.content = content
++
++
++_MEMORIES: dict[str, Memory] = {}
++
++
++def is_vuln() -> bool:
++    return os.getenv("VULN_MODE", "1") == "1"
++
++
++def reset_state() -> None:
++    _MEMORIES.clear()
++    _MEMORIES["mem-1"] = Memory("alice", "alice private note")
++    _MEMORIES["mem-2"] = Memory("bob", "bob private note")
++
++
++reset_state()
++
++
++def read_memory(memory_id: str) -> dict[str, object]:
++    memory = _MEMORIES.get(memory_id)
++    if memory is None:
++        raise MemoryAccessError(404, "not_found")
++    return {"id": memory_id, "user_id": memory.user_id, "content": memory.content}
++
++
++def update_memory(memory_id: str, caller: str, content: str) -> dict[str, object]:
++    """Update a memory. Raises ``MemoryAccessError`` (404 unknown / 403 patched non-owner)."""
++    memory = _MEMORIES.get(memory_id)
++    if memory is None:
++        raise MemoryAccessError(404, "not_found")
++    if not is_vuln() and memory.user_id != caller:
++        # Patched: the one-line ownership check (the synthesized minimal diff).
++        raise MemoryAccessError(403, "forbidden")
++    memory.content = content
++    return {"id": memory_id, "user_id": memory.user_id, "content": memory.content}
+diff --git a/benchmarks/bv2p/ssrf_fetch/Dockerfile b/benchmarks/bv2p/ssrf_fetch/Dockerfile
+new file mode 100644
+index 0000000..ca23743
+--- /dev/null
++++ b/benchmarks/bv2p/ssrf_fetch/Dockerfile
+@@ -0,0 +1,23 @@
++# Build from the REPO ROOT so the strix package (for strix.core.net) is in the context:
++#   docker build -f benchmarks/bv2p/ssrf_fetch/Dockerfile -t strix-bv2p-ssrf .
++FROM python:3.12-slim
++
++WORKDIR /app
++
++RUN pip install --no-cache-dir \
++    "fastapi>=0.115.0" \
++    "uvicorn>=0.34.0" \
++    "pydantic>=2.11.0" \
++    "httpx>=0.27.0"
++
++# Make the strix package importable (the patched SSRF guard reuses strix.core.net) without
++# pulling strix's full dependency set — strix.core.net is pure-stdlib at import time.
++COPY strix /src/strix
++ENV PYTHONPATH=/src
++
++COPY benchmarks/bv2p/ssrf_fetch/app.py .
++
++ENV VULN_MODE=1
++EXPOSE 8080
++
++CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8080"]
+diff --git a/benchmarks/bv2p/ssrf_fetch/__init__.py b/benchmarks/bv2p/ssrf_fetch/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/benchmarks/bv2p/ssrf_fetch/app.py b/benchmarks/bv2p/ssrf_fetch/app.py
+new file mode 100644
+index 0000000..77ad0c8
+--- /dev/null
++++ b/benchmarks/bv2p/ssrf_fetch/app.py
+@@ -0,0 +1,32 @@
++"""B-V2P SSRF pair — Flowise HTTP-node (CVE-2026-31829). Thin FastAPI wrapper over ``core``.
++
++``VULN_MODE=1`` (vulnerable): ``POST /api/v1/node/http`` fetches **any** user-supplied URL (SSRF).
++``VULN_MODE=0`` (patched, the <=3.0.12 -> 3.0.13 fix): blocks internal/metadata targets via the
++P0 net classifier before fetching. The P3 OOB oracle's callback fires on vuln, not on patch.
++"""
++
++from __future__ import annotations
++
++from core import perform_fetch, screen_fetch
++from fastapi import FastAPI, HTTPException
++from pydantic import BaseModel
++
++
++app = FastAPI()
++
++
++class FetchBody(BaseModel):
++    url: str
++
++
++@app.post("/api/v1/node/http")
++def http_node(body: FetchBody) -> dict[str, object]:
++    allowed, reason = screen_fetch(body.url)
++    if not allowed:
++        raise HTTPException(status_code=400, detail={"status": "blocked", "reason": reason})
++    return {
++        "status": "fetched",
++        "url": body.url,
++        "reason": reason,
++        "upstream_status": perform_fetch(body.url),
++    }
+diff --git a/benchmarks/bv2p/ssrf_fetch/core.py b/benchmarks/bv2p/ssrf_fetch/core.py
+new file mode 100644
+index 0000000..4ac0e19
+--- /dev/null
++++ b/benchmarks/bv2p/ssrf_fetch/core.py
+@@ -0,0 +1,35 @@
++"""Pure SSRF guard for the Flowise HTTP-node B-V2P pair (CVE-2026-31829).
++
++No web-framework import, so the guard is unit-testable without fastapi. ``app.py`` is the thin
++FastAPI wrapper. The patched guard reuses the P0 net classifier
++(``strix.core.net.is_internal_target``) — no primitive is re-implemented.
++"""
++
++from __future__ import annotations
++
++import os
++
++import httpx
++
++from strix.core.net import is_internal_target
++
++
++def is_vuln() -> bool:
++    return os.getenv("VULN_MODE", "1") == "1"
++
++
++def screen_fetch(url: str) -> tuple[bool, str]:
++    """Return ``(allowed, reason)``. Patched mode (the 3.0.13 fix) blocks internal/metadata SSRF."""
++    if is_vuln():
++        return True, "vuln: no SSRF guard"
++    if is_internal_target(url):
++        return False, "patched: internal/metadata target blocked"
++    return True, "patched: external target allowed"
++
++
++def perform_fetch(url: str) -> int | None:
++    """Live outbound fetch (the SSRF on the vuln deployment). Only called after the guard allows."""
++    try:
++        return httpx.get(url, timeout=5.0).status_code
++    except httpx.HTTPError:
++        return None
+diff --git a/strix/research/corpus.py b/strix/research/corpus.py
+new file mode 100644
+index 0000000..08f59be
+--- /dev/null
++++ b/strix/research/corpus.py
+@@ -0,0 +1,116 @@
++"""B-V2P benchmark corpus registry (M2) — research apparatus, quarantined (see strix.research).
++
++A Behavioral-V2P pair is the same application at a vulnerable commit and its minimal-diff
++security fix, deployed live, with a ground-truth label set ``V`` (the labeled-vulnerable
++endpoints). This module is the typed, importable index the experiments consume; the deployable
++targets themselves live under ``benchmarks/bv2p/<fixture_dir>``.
++
++Recall is reported as **recall-over-known**: ``V`` is the labeled set only, and every recall
++number carries the unknown-unknown caveat (there may be vulnerabilities not in ``V``). The
++corpus is deliberately **small-gap-biased** — the E2 primary test is a gap-stratified paired
++McNemar, which needs small-gap *discordant* pairs, not breadth.
++"""
++
++from __future__ import annotations
++
++from dataclasses import dataclass
++from typing import TYPE_CHECKING, Literal
++
++
++if TYPE_CHECKING:
++    from collections.abc import Sequence
++
++
++Primitive = Literal["idor", "bfla", "ssrf", "xxe", "race", "business_logic"]
++GapClass = Literal["small", "large"]
++# Which deterministic disposer confirms the pair (mirrors report.state EvidenceClass, minus "none").
++DisposerEvidence = Literal["diff", "callback", "reachability", "race_result"]
++
++
++@dataclass(frozen=True)
++class BV2PPair:
++    """One vuln/patch pair. ``vuln_endpoint`` is the ground-truth label (an element of ``V``)."""
++
++    pair_id: str
++    primitive: Primitive
++    cve: str
++    title: str
++    vuln_endpoint: str
++    disposer_evidence: DisposerEvidence
++    gap_class: GapClass
++    minimal_diff: bool
++    synthesized_patch: bool
++    fixture_dir: str
++    notes: str
++
++
++# M0 seeds (Spec F-9): the discriminator (IDOR, synthesized minimal patch) and the H1/OOB
++# showcase (SSRF). Both CVE IDs verified real. Race/business-logic pairs are soft-edged behind
++# Phases 4/5 and are added as the corpus grows.
++BV2P_CORPUS: tuple[BV2PPair, ...] = (
++    BV2PPair(
++        pair_id="openwebui-idor-memories",
++        primitive="idor",
++        cve="CVE-2024-7041",
++        title="open-webui memories IDOR (missing ownership check)",
++        vuln_endpoint="POST /api/v1/memories/{id}/update",
++        disposer_evidence="diff",
++        gap_class="small",
++        minimal_diff=True,
++        synthesized_patch=True,
++        fixture_dir="idor_memories",
++        notes=(
++            "No clean public single-commit fix exists; the patch synthesizes the one-line "
++            "ownership check (memory.user_id == caller). M0 discriminator."
++        ),
++    ),
++    BV2PPair(
++        pair_id="flowise-ssrf-http-node",
++        primitive="ssrf",
++        cve="CVE-2026-31829",
++        title="Flowise HTTP-node SSRF (unvalidated URL fetch)",
++        vuln_endpoint="POST /api/v1/node/http",
++        disposer_evidence="callback",
++        gap_class="small",
++        minimal_diff=True,
++        synthesized_patch=False,
++        fixture_dir="ssrf_fetch",
++        notes=(
++            "Real fix (<=3.0.12 -> 3.0.13). Patched mode blocks internal/metadata targets via the "
++            "P0 net classifier (strix.core.net.is_internal_target). H1/OOB-callback showcase."
++        ),
++    ),
++)
++
++
++def ground_truth_labels(pairs: Sequence[BV2PPair] = BV2P_CORPUS) -> set[str]:
++    """The labeled vulnerable-endpoint set ``V`` (recall-over-known; unknown-unknown caveat)."""
++    return {pair.vuln_endpoint for pair in pairs}
++
++
++def small_gap_pairs(pairs: Sequence[BV2PPair] = BV2P_CORPUS) -> tuple[BV2PPair, ...]:
++    return tuple(pair for pair in pairs if pair.gap_class == "small")
++
++
++@dataclass(frozen=True)
++class PowerCheck:
++    """Corpus-level power readout for the gap-stratified paired McNemar (E2 primary).
++
++    ``small_gap_count`` is the available small-gap pairs — the *ceiling* on discordant pairs; the
++    actual discordant count is an experimental outcome observed at run time. ``sufficient`` is the
++    honest gate against ``required_discordant``: with a tiny seed corpus it is expected to be
++    False, and no tight effect size may be reported until it holds.
++    """
++
++    small_gap_count: int
++    required_discordant: int
++    sufficient: bool
++
++
++def power_check(required_discordant: int, pairs: Sequence[BV2PPair] = BV2P_CORPUS) -> PowerCheck:
++    count = len(small_gap_pairs(pairs))
++    return PowerCheck(
++        small_gap_count=count,
++        required_discordant=required_discordant,
++        sufficient=count >= required_discordant,
++    )
+diff --git a/tests/test_bv2p_corpus.py b/tests/test_bv2p_corpus.py
+new file mode 100644
+index 0000000..c51aa07
+--- /dev/null
++++ b/tests/test_bv2p_corpus.py
+@@ -0,0 +1,148 @@
++"""M2 B-V2P corpus — registry + per-pair exploitability (vuln side fires, patch side does not).
++
++Disposer checks use the *real* deterministic disposers, hermetically:
++- IDOR pair -> the P2 differential engine (`strix.core.diff.diff`): the attacker's cross-user
++  request is 2xx on the vuln deployment and 4xx on the patch, so the engine flags ``gained_access``
++  across the pair and flags nothing when both sides are patched.
++- SSRF pair -> the P0 net classifier (`strix.core.net.is_internal_target`) via the fixture's
++  patched guard: internal/metadata targets are blocked, externals allowed; the vuln guard allows
++  everything. (Full OOB-callback confirmation is a live/Docker step, run on the operator's host.)
++
++The fixtures' framework-free ``core`` modules are loaded by path (``benchmarks/`` is not an
++installed package); the FastAPI ``app.py`` wrappers are exercised only in the live/Docker run.
++"""
++
++from __future__ import annotations
++
++import importlib.util
++import json
++import os
++import sys
++from pathlib import Path
++from typing import TYPE_CHECKING, Any
++from unittest import TestCase
++from unittest.mock import patch
++
++from strix.core.diff import diff
++
++
++if TYPE_CHECKING:
++    from collections.abc import Callable
++    from types import ModuleType
++from strix.research.corpus import (
++    BV2P_CORPUS,
++    ground_truth_labels,
++    power_check,
++    small_gap_pairs,
++)
++
++
++_BENCH = Path(__file__).resolve().parents[1] / "benchmarks" / "bv2p"
++
++
++def _load(rel: str, name: str) -> ModuleType:
++    spec = importlib.util.spec_from_file_location(name, _BENCH / rel)
++    if spec is None or spec.loader is None:
++        raise RuntimeError(f"cannot load {rel}")
++    module = importlib.util.module_from_spec(spec)
++    sys.modules[name] = module
++    spec.loader.exec_module(module)
++    return module
++
++
++_idor = _load("idor_memories/core.py", "bv2p_idor_core")
++_ssrf = _load("ssrf_fetch/core.py", "bv2p_ssrf_core")
++
++
++def _response_of(call: Callable[[], dict[str, object]]) -> dict[str, Any]:
++    """Run a fixture handler and shape its outcome as a diff-engine response dict."""
++    try:
++        body = call()
++    except _idor.MemoryAccessError as exc:
++        return {"status_code": exc.status_code, "headers": {}, "body": json.dumps(exc.detail)}
++    return {"status_code": 200, "headers": {}, "body": json.dumps(body, default=str)}
++
++
++class TestCorpusRegistry(TestCase):
++    def test_seeds_present_and_well_formed(self) -> None:
++        ids = {pair.pair_id for pair in BV2P_CORPUS}
++        self.assertIn("openwebui-idor-memories", ids)
++        self.assertIn("flowise-ssrf-http-node", ids)
++        for pair in BV2P_CORPUS:
++            self.assertTrue(pair.cve.startswith("CVE-"))
++            self.assertTrue(pair.vuln_endpoint)
++            self.assertIn(
++                pair.disposer_evidence, {"diff", "callback", "reachability", "race_result"}
++            )
++
++    def test_ground_truth_is_labeled_known_set(self) -> None:
++        self.assertEqual(ground_truth_labels(), {p.vuln_endpoint for p in BV2P_CORPUS})
++
++    def test_corpus_is_small_gap_biased(self) -> None:
++        self.assertEqual(set(small_gap_pairs()), set(BV2P_CORPUS))
++
++    def test_power_check_is_honest_about_tiny_n(self) -> None:
++        # The mechanism works; with the seed corpus it must report *insufficient* power for a
++        # McNemar-primary discordant requirement — no tight effect size from tiny n.
++        result = power_check(required_discordant=10)
++        self.assertEqual(result.small_gap_count, len(small_gap_pairs()))
++        self.assertFalse(result.sufficient)
++        self.assertTrue(power_check(required_discordant=1).sufficient)
++
++
++class TestIdorPair(TestCase):
++    """P2-disposer exploitability: the attacker's cross-user request flips across the pair."""
++
++    def _attacker_update(self) -> dict[str, object]:
++        # bob updates alice-owned mem-1 — the IDOR.
++        return _idor.update_memory("mem-1", "bob", "pwned")
++
++    def test_vuln_allows_cross_user_update_patch_forbids(self) -> None:
++        with patch.dict(os.environ, {"VULN_MODE": "1"}):
++            _idor.reset_state()
++            self.assertEqual(self._attacker_update()["user_id"], "alice")  # wrote alice's memory
++        with patch.dict(os.environ, {"VULN_MODE": "0"}):
++            _idor.reset_state()
++            with self.assertRaises(_idor.MemoryAccessError) as ctx:
++                self._attacker_update()
++            self.assertEqual(ctx.exception.status_code, 403)
++
++    def test_p2_diff_flags_gained_access_across_the_pair(self) -> None:
++        with patch.dict(os.environ, {"VULN_MODE": "1"}):
++            _idor.reset_state()
++            vuln_resp = _response_of(self._attacker_update)
++        with patch.dict(os.environ, {"VULN_MODE": "0"}):
++            _idor.reset_state()
++            patch_resp = _response_of(self._attacker_update)
++
++        flipped = diff(
++            [{"label": "patch", "response": patch_resp}, {"label": "vuln", "response": vuln_resp}]
++        )
++        self.assertTrue(
++            any(d.auth_signal_delta == "gained_access" for d in flipped.deltas),
++            "P2 disposer must flag gained_access on the vuln-vs-patch pair",
++        )
++
++        # Patch deployment alone: no gained_access -> the harness stays silent (no false confirm).
++        same = diff(
++            [{"label": "a", "response": patch_resp}, {"label": "b", "response": patch_resp}]
++        )
++        self.assertFalse(any(d.auth_signal_delta == "gained_access" for d in same.deltas))
++
++
++class TestSsrfPair(TestCase):
++    """P0-classifier exploitability: the patched guard blocks internal/metadata SSRF targets."""
++
++    def test_vuln_allows_everything_patch_blocks_internal(self) -> None:
++        internal = "http://169.254.169.254/latest/meta-data/"
++        external = "http://example.com/health"
++        with patch.dict(os.environ, {"VULN_MODE": "1"}):
++            self.assertTrue(_ssrf.screen_fetch(internal)[0])  # SSRF: internal fetch allowed
++        with patch.dict(os.environ, {"VULN_MODE": "0"}):
++            self.assertFalse(_ssrf.screen_fetch(internal)[0])  # patched: blocked
++            self.assertTrue(_ssrf.screen_fetch(external)[0])  # external still allowed
++
++    def test_patch_blocks_private_ranges(self) -> None:
++        with patch.dict(os.environ, {"VULN_MODE": "0"}):
++            for target in ("http://127.0.0.1:8080/", "http://10.0.0.5/", "http://localhost/x"):
++                self.assertFalse(_ssrf.screen_fetch(target)[0], f"{target} must be blocked")
