@@ -1,3 +1,5 @@
+# Build from the REPO ROOT so the strix package (for strix.core.net) is in the context:
+#   docker build -f benchmarks/bv2p/ssrf_webhook/Dockerfile -t strix-bv2p-ssrf_webhook .
 FROM python:3.12-slim
 
 WORKDIR /app
@@ -8,8 +10,11 @@ RUN pip install --no-cache-dir \
     "pydantic>=2.11.0" \
     "httpx>=0.28.0"
 
-COPY core.py .
-COPY app.py .
+COPY strix /src/strix
+ENV PYTHONPATH=/src
+
+COPY benchmarks/bv2p/ssrf_webhook/core.py .
+COPY benchmarks/bv2p/ssrf_webhook/app.py .
 
 ENV VULN_MODE=1
 EXPOSE 8080
