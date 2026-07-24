@@ -68,6 +68,9 @@
 
 ## F. Release action + post-release
 
+- [x] **Paper v1.0 camera-ready draft written** (`propose-dispose-paper-v1.0.md`, 2026-07-24).
+      All experimental results (M0, E1–E4) incorporated verbatim. 12 sections + appendices.
+      Primary result (H2a, p=0.017) and honest FN-arm limit prominently stated.
 - [ ] Post **arXiv v1** (or chosen preprint host); link the repo release tag from the paper and
       vice-versa.
 - [ ] Announce with the "verify, don't trust — here's the button" framing.
