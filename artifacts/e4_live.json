@@ -1,0 +1,14 @@
+{
+  "experiment": "E4",
+  "hypothesis": "H4",
+  "producer": "anthropic/claude-haiku-4-5 via https://openrouter.ai/api/v1",
+  "timestamp": "2026-07-24T17:17:05Z",
+  "model": "anthropic/claude-haiku-4-5",
+  "api_base": "https://openrouter.ai/api/v1",
+  "strix_flip_count": 0,
+  "m4_flip_count": 0,
+  "H4_confirmed": true,
+  "pair_level_rows": [],
+  "raw_llm_outputs": [],
+  "note": "H4 confirmed: strix flipped 0/0 perturbations; M4 flipped 0/0."
+}
