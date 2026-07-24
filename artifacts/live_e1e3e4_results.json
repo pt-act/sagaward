@@ -1,51 +1,1817 @@
 {
   "producer": "anthropic/claude-haiku-4-5 via https://openrouter.ai/api/v1",
   "pm_dispatcher": "Nyx/Eragon",
-  "timestamp": "2026-07-24T17:17:05Z",
+  "timestamp": "2026-07-24T17:25:57Z",
   "model": "anthropic/claude-haiku-4-5",
   "api_base": "https://openrouter.ai/api/v1",
   "E1": {
     "experiment": "E1",
     "hypothesis": "H1",
     "producer": "anthropic/claude-haiku-4-5 via https://openrouter.ai/api/v1",
-    "timestamp": "2026-07-24T17:15:30Z",
+    "timestamp": "2026-07-24T17:21:21Z",
     "model": "anthropic/claude-haiku-4-5",
     "api_base": "https://openrouter.ai/api/v1",
-    "summary": [],
-    "pair_level_rows": [],
+    "summary": [
+      {
+        "aggressiveness": "conservative",
+        "n_pairs": 10,
+        "pd_R_prop": 0.5,
+        "pd_Prec_gate": 1.0,
+        "pd_R_e2e": 0.5,
+        "m4_recall": 0.3,
+        "m4_confirmed_count": 3
+      },
+      {
+        "aggressiveness": "moderate",
+        "n_pairs": 10,
+        "pd_R_prop": 0.9,
+        "pd_Prec_gate": 1.0,
+        "pd_R_e2e": 0.9,
+        "m4_recall": 0.9,
+        "m4_confirmed_count": 9
+      },
+      {
+        "aggressiveness": "aggressive",
+        "n_pairs": 10,
+        "pd_R_prop": 1.0,
+        "pd_Prec_gate": 1.0,
+        "pd_R_e2e": 1.0,
+        "m4_recall": 1.0,
+        "m4_confirmed_count": 10
+      }
+    ],
+    "pair_level_rows": [
+      {
+        "pair_id": "openwebui-idor-memories",
+        "primitive": "idor",
+        "gap_class": "small",
+        "aggressiveness": "conservative",
+        "haiku_proposed": true,
+        "haiku_pd_confidence": 0.88,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "pd_fp": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.88
+      },
+      {
+        "pair_id": "openwebui-idor-memories",
+        "primitive": "idor",
+        "gap_class": "small",
+        "aggressiveness": "moderate",
+        "haiku_proposed": true,
+        "haiku_pd_confidence": 0.72,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "pd_fp": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.72
+      },
+      {
+        "pair_id": "openwebui-idor-memories",
+        "primitive": "idor",
+        "gap_class": "small",
+        "aggressiveness": "aggressive",
+        "haiku_proposed": true,
+        "haiku_pd_confidence": 0.85,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "pd_fp": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.85
+      },
+      {
+        "pair_id": "flowise-ssrf-http-node",
+        "primitive": "ssrf",
+        "gap_class": "small",
+        "aggressiveness": "conservative",
+        "haiku_proposed": true,
+        "haiku_pd_confidence": 0.88,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "pd_fp": false,
+        "m4_confirms": false,
+        "m4_confidence": 0.35
+      },
+      {
+        "pair_id": "flowise-ssrf-http-node",
+        "primitive": "ssrf",
+        "gap_class": "small",
+        "aggressiveness": "moderate",
+        "haiku_proposed": true,
+        "haiku_pd_confidence": 0.72,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "pd_fp": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.72
+      },
+      {
+        "pair_id": "flowise-ssrf-http-node",
+        "primitive": "ssrf",
+        "gap_class": "small",
+        "aggressiveness": "aggressive",
+        "haiku_proposed": true,
+        "haiku_pd_confidence": 0.85,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "pd_fp": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.85
+      },
+      {
+        "pair_id": "bfla-invoices",
+        "primitive": "bfla",
+        "gap_class": "small",
+        "aggressiveness": "conservative",
+        "haiku_proposed": false,
+        "haiku_pd_confidence": 0.15,
+        "harness_confirmed": true,
+        "pd_tp": false,
+        "pd_fp": false,
+        "m4_confirms": false,
+        "m4_confidence": 0.35
+      },
+      {
+        "pair_id": "bfla-invoices",
+        "primitive": "bfla",
+        "gap_class": "small",
+        "aggressiveness": "moderate",
+        "haiku_proposed": true,
+        "haiku_pd_confidence": 0.72,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "pd_fp": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.72
+      },
+      {
+        "pair_id": "bfla-invoices",
+        "primitive": "bfla",
+        "gap_class": "small",
+        "aggressiveness": "aggressive",
+        "haiku_proposed": true,
+        "haiku_pd_confidence": 0.72,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "pd_fp": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.72
+      },
+      {
+        "pair_id": "idor-files-download",
+        "primitive": "idor",
+        "gap_class": "small",
+        "aggressiveness": "conservative",
+        "haiku_proposed": true,
+        "haiku_pd_confidence": 0.87,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "pd_fp": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.88
+      },
+      {
+        "pair_id": "idor-files-download",
+        "primitive": "idor",
+        "gap_class": "small",
+        "aggressiveness": "moderate",
+        "haiku_proposed": true,
+        "haiku_pd_confidence": 0.72,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "pd_fp": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.72
+      },
+      {
+        "pair_id": "idor-files-download",
+        "primitive": "idor",
+        "gap_class": "small",
+        "aggressiveness": "aggressive",
+        "haiku_proposed": true,
+        "haiku_pd_confidence": 0.85,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "pd_fp": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.85
+      },
+      {
+        "pair_id": "ssrf-webhook-registration",
+        "primitive": "ssrf",
+        "gap_class": "small",
+        "aggressiveness": "conservative",
+        "haiku_proposed": false,
+        "haiku_pd_confidence": 0.15,
+        "harness_confirmed": true,
+        "pd_tp": false,
+        "pd_fp": false,
+        "m4_confirms": false,
+        "m4_confidence": 0.35
+      },
+      {
+        "pair_id": "ssrf-webhook-registration",
+        "primitive": "ssrf",
+        "gap_class": "small",
+        "aggressiveness": "moderate",
+        "haiku_proposed": true,
+        "haiku_pd_confidence": 0.72,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "pd_fp": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.72
+      },
+      {
+        "pair_id": "ssrf-webhook-registration",
+        "primitive": "ssrf",
+        "gap_class": "small",
+        "aggressiveness": "aggressive",
+        "haiku_proposed": true,
+        "haiku_pd_confidence": 0.85,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "pd_fp": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.85
+      },
+      {
+        "pair_id": "ssrf-open-redirect",
+        "primitive": "ssrf",
+        "gap_class": "small",
+        "aggressiveness": "conservative",
+        "haiku_proposed": true,
+        "haiku_pd_confidence": 0.92,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "pd_fp": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.88
+      },
+      {
+        "pair_id": "ssrf-open-redirect",
+        "primitive": "ssrf",
+        "gap_class": "small",
+        "aggressiveness": "moderate",
+        "haiku_proposed": true,
+        "haiku_pd_confidence": 0.78,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "pd_fp": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.78
+      },
+      {
+        "pair_id": "ssrf-open-redirect",
+        "primitive": "ssrf",
+        "gap_class": "small",
+        "aggressiveness": "aggressive",
+        "haiku_proposed": true,
+        "haiku_pd_confidence": 0.92,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "pd_fp": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.92
+      },
+      {
+        "pair_id": "auth-bypass-admin-panel",
+        "primitive": "bfla",
+        "gap_class": "small",
+        "aggressiveness": "conservative",
+        "haiku_proposed": true,
+        "haiku_pd_confidence": 0.88,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "pd_fp": false,
+        "m4_confirms": false,
+        "m4_confidence": 0.35
+      },
+      {
+        "pair_id": "auth-bypass-admin-panel",
+        "primitive": "bfla",
+        "gap_class": "small",
+        "aggressiveness": "moderate",
+        "haiku_proposed": true,
+        "haiku_pd_confidence": 0.72,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "pd_fp": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.72
+      },
+      {
+        "pair_id": "auth-bypass-admin-panel",
+        "primitive": "bfla",
+        "gap_class": "small",
+        "aggressiveness": "aggressive",
+        "haiku_proposed": true,
+        "haiku_pd_confidence": 0.85,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "pd_fp": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.85
+      },
+      {
+        "pair_id": "auth-bypass-password-reset",
+        "primitive": "bfla",
+        "gap_class": "small",
+        "aggressiveness": "conservative",
+        "haiku_proposed": false,
+        "haiku_pd_confidence": 0.15,
+        "harness_confirmed": true,
+        "pd_tp": false,
+        "pd_fp": false,
+        "m4_confirms": false,
+        "m4_confidence": 0.35
+      },
+      {
+        "pair_id": "auth-bypass-password-reset",
+        "primitive": "bfla",
+        "gap_class": "small",
+        "aggressiveness": "moderate",
+        "haiku_proposed": true,
+        "haiku_pd_confidence": 0.72,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "pd_fp": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.72
+      },
+      {
+        "pair_id": "auth-bypass-password-reset",
+        "primitive": "bfla",
+        "gap_class": "small",
+        "aggressiveness": "aggressive",
+        "haiku_proposed": true,
+        "haiku_pd_confidence": 0.85,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "pd_fp": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.78
+      },
+      {
+        "pair_id": "mass-assign-profile",
+        "primitive": "business_logic",
+        "gap_class": "small",
+        "aggressiveness": "conservative",
+        "haiku_proposed": false,
+        "haiku_pd_confidence": 0.15,
+        "harness_confirmed": true,
+        "pd_tp": false,
+        "pd_fp": false,
+        "m4_confirms": false,
+        "m4_confidence": 0.35
+      },
+      {
+        "pair_id": "mass-assign-profile",
+        "primitive": "business_logic",
+        "gap_class": "small",
+        "aggressiveness": "moderate",
+        "haiku_proposed": true,
+        "haiku_pd_confidence": 0.72,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "pd_fp": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.72
+      },
+      {
+        "pair_id": "mass-assign-profile",
+        "primitive": "business_logic",
+        "gap_class": "small",
+        "aggressiveness": "aggressive",
+        "haiku_proposed": true,
+        "haiku_pd_confidence": 0.72,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "pd_fp": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.72
+      },
+      {
+        "pair_id": "sqli-product-search",
+        "primitive": "business_logic",
+        "gap_class": "small",
+        "aggressiveness": "conservative",
+        "haiku_proposed": false,
+        "haiku_pd_confidence": 0.15,
+        "harness_confirmed": true,
+        "pd_tp": false,
+        "pd_fp": false,
+        "m4_confirms": false,
+        "m4_confidence": 0.15
+      },
+      {
+        "pair_id": "sqli-product-search",
+        "primitive": "business_logic",
+        "gap_class": "small",
+        "aggressiveness": "moderate",
+        "haiku_proposed": false,
+        "haiku_pd_confidence": 0.35,
+        "harness_confirmed": true,
+        "pd_tp": false,
+        "pd_fp": false,
+        "m4_confirms": false,
+        "m4_confidence": 0.35
+      },
+      {
+        "pair_id": "sqli-product-search",
+        "primitive": "business_logic",
+        "gap_class": "small",
+        "aggressiveness": "aggressive",
+        "haiku_proposed": true,
+        "haiku_pd_confidence": 0.72,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "pd_fp": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.72
+      }
+    ],
     "H1_assessment": {
-      "confirmed": null,
-      "reason": "no data"
+      "confirmed": true,
+      "pd_Prec_gate_min": 1.0,
+      "pd_Prec_gate_values": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "m4_recall_values": [
+        0.3,
+        0.9,
+        1.0
+      ],
+      "m4_recall_range": 0.7,
+      "note": "H1 confirmed: PD Prec_gate \u2265 0.9 at all aggressiveness levels."
     }
   },
   "E3": {
     "experiment": "E3",
     "hypothesis": "H3",
     "producer": "anthropic/claude-haiku-4-5 via https://openrouter.ai/api/v1",
-    "timestamp": "2026-07-24T17:16:32Z",
+    "timestamp": "2026-07-24T17:23:44Z",
     "model": "anthropic/claude-haiku-4-5",
     "api_base": "https://openrouter.ai/api/v1",
-    "summary": [],
-    "pair_level_rows": [],
+    "summary": [
+      {
+        "condition": "full",
+        "n_pairs": 10,
+        "R_prop": 1.0,
+        "Prec_gate": 1.0,
+        "R_e2e": 1.0,
+        "fn_category_R_prop": {
+          "C3": 1.0,
+          "C5": 1.0,
+          "C7": 1.0
+        }
+      },
+      {
+        "condition": "no_control",
+        "n_pairs": 10,
+        "R_prop": 1.0,
+        "Prec_gate": 1.0,
+        "R_e2e": 1.0,
+        "fn_category_R_prop": {
+          "C3": 1.0,
+          "C5": 1.0,
+          "C7": 1.0
+        }
+      },
+      {
+        "condition": "no_knowledge",
+        "n_pairs": 10,
+        "R_prop": 1.0,
+        "Prec_gate": 1.0,
+        "R_e2e": 1.0,
+        "fn_category_R_prop": {
+          "C3": 1.0,
+          "C5": 1.0,
+          "C7": 1.0
+        }
+      },
+      {
+        "condition": "no_checklist",
+        "n_pairs": 10,
+        "R_prop": 1.0,
+        "Prec_gate": 1.0,
+        "R_e2e": 1.0,
+        "fn_category_R_prop": {
+          "C3": 1.0,
+          "C5": 1.0,
+          "C7": 1.0
+        }
+      }
+    ],
+    "pair_level_rows": [
+      {
+        "pair_id": "openwebui-idor-memories",
+        "primitive": "idor",
+        "gap_class": "small",
+        "condition": "full",
+        "haiku_proposed": true,
+        "confidence": 0.72,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C5,C7"
+      },
+      {
+        "pair_id": "openwebui-idor-memories",
+        "primitive": "idor",
+        "gap_class": "small",
+        "condition": "no_control",
+        "haiku_proposed": true,
+        "confidence": 0.65,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C5,C7"
+      },
+      {
+        "pair_id": "openwebui-idor-memories",
+        "primitive": "idor",
+        "gap_class": "small",
+        "condition": "no_knowledge",
+        "haiku_proposed": true,
+        "confidence": 0.85,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C5,C7"
+      },
+      {
+        "pair_id": "openwebui-idor-memories",
+        "primitive": "idor",
+        "gap_class": "small",
+        "condition": "no_checklist",
+        "haiku_proposed": true,
+        "confidence": 0.78,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C5,C7"
+      },
+      {
+        "pair_id": "flowise-ssrf-http-node",
+        "primitive": "ssrf",
+        "gap_class": "small",
+        "condition": "full",
+        "haiku_proposed": true,
+        "confidence": 0.68,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C3"
+      },
+      {
+        "pair_id": "flowise-ssrf-http-node",
+        "primitive": "ssrf",
+        "gap_class": "small",
+        "condition": "no_control",
+        "haiku_proposed": true,
+        "confidence": 0.65,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C3"
+      },
+      {
+        "pair_id": "flowise-ssrf-http-node",
+        "primitive": "ssrf",
+        "gap_class": "small",
+        "condition": "no_knowledge",
+        "haiku_proposed": true,
+        "confidence": 0.78,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C3"
+      },
+      {
+        "pair_id": "flowise-ssrf-http-node",
+        "primitive": "ssrf",
+        "gap_class": "small",
+        "condition": "no_checklist",
+        "haiku_proposed": true,
+        "confidence": 0.72,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C3"
+      },
+      {
+        "pair_id": "bfla-invoices",
+        "primitive": "bfla",
+        "gap_class": "small",
+        "condition": "full",
+        "haiku_proposed": true,
+        "confidence": 0.72,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C3,C5"
+      },
+      {
+        "pair_id": "bfla-invoices",
+        "primitive": "bfla",
+        "gap_class": "small",
+        "condition": "no_control",
+        "haiku_proposed": true,
+        "confidence": 0.65,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C3,C5"
+      },
+      {
+        "pair_id": "bfla-invoices",
+        "primitive": "bfla",
+        "gap_class": "small",
+        "condition": "no_knowledge",
+        "haiku_proposed": true,
+        "confidence": 0.85,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C3,C5"
+      },
+      {
+        "pair_id": "bfla-invoices",
+        "primitive": "bfla",
+        "gap_class": "small",
+        "condition": "no_checklist",
+        "haiku_proposed": true,
+        "confidence": 0.78,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C3,C5"
+      },
+      {
+        "pair_id": "idor-files-download",
+        "primitive": "idor",
+        "gap_class": "small",
+        "condition": "full",
+        "haiku_proposed": true,
+        "confidence": 0.72,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C5,C7"
+      },
+      {
+        "pair_id": "idor-files-download",
+        "primitive": "idor",
+        "gap_class": "small",
+        "condition": "no_control",
+        "haiku_proposed": true,
+        "confidence": 0.65,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C5,C7"
+      },
+      {
+        "pair_id": "idor-files-download",
+        "primitive": "idor",
+        "gap_class": "small",
+        "condition": "no_knowledge",
+        "haiku_proposed": true,
+        "confidence": 0.85,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C5,C7"
+      },
+      {
+        "pair_id": "idor-files-download",
+        "primitive": "idor",
+        "gap_class": "small",
+        "condition": "no_checklist",
+        "haiku_proposed": true,
+        "confidence": 0.78,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C5,C7"
+      },
+      {
+        "pair_id": "ssrf-webhook-registration",
+        "primitive": "ssrf",
+        "gap_class": "small",
+        "condition": "full",
+        "haiku_proposed": true,
+        "confidence": 0.68,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C3"
+      },
+      {
+        "pair_id": "ssrf-webhook-registration",
+        "primitive": "ssrf",
+        "gap_class": "small",
+        "condition": "no_control",
+        "haiku_proposed": true,
+        "confidence": 0.65,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C3"
+      },
+      {
+        "pair_id": "ssrf-webhook-registration",
+        "primitive": "ssrf",
+        "gap_class": "small",
+        "condition": "no_knowledge",
+        "haiku_proposed": true,
+        "confidence": 0.78,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C3"
+      },
+      {
+        "pair_id": "ssrf-webhook-registration",
+        "primitive": "ssrf",
+        "gap_class": "small",
+        "condition": "no_checklist",
+        "haiku_proposed": true,
+        "confidence": 0.72,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C3"
+      },
+      {
+        "pair_id": "ssrf-open-redirect",
+        "primitive": "ssrf",
+        "gap_class": "small",
+        "condition": "full",
+        "haiku_proposed": true,
+        "confidence": 0.72,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C3"
+      },
+      {
+        "pair_id": "ssrf-open-redirect",
+        "primitive": "ssrf",
+        "gap_class": "small",
+        "condition": "no_control",
+        "haiku_proposed": true,
+        "confidence": 0.65,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C3"
+      },
+      {
+        "pair_id": "ssrf-open-redirect",
+        "primitive": "ssrf",
+        "gap_class": "small",
+        "condition": "no_knowledge",
+        "haiku_proposed": true,
+        "confidence": 0.85,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C3"
+      },
+      {
+        "pair_id": "ssrf-open-redirect",
+        "primitive": "ssrf",
+        "gap_class": "small",
+        "condition": "no_checklist",
+        "haiku_proposed": true,
+        "confidence": 0.72,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C3"
+      },
+      {
+        "pair_id": "auth-bypass-admin-panel",
+        "primitive": "bfla",
+        "gap_class": "small",
+        "condition": "full",
+        "haiku_proposed": true,
+        "confidence": 0.72,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C3,C5"
+      },
+      {
+        "pair_id": "auth-bypass-admin-panel",
+        "primitive": "bfla",
+        "gap_class": "small",
+        "condition": "no_control",
+        "haiku_proposed": true,
+        "confidence": 0.68,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C3,C5"
+      },
+      {
+        "pair_id": "auth-bypass-admin-panel",
+        "primitive": "bfla",
+        "gap_class": "small",
+        "condition": "no_knowledge",
+        "haiku_proposed": true,
+        "confidence": 0.85,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C3,C5"
+      },
+      {
+        "pair_id": "auth-bypass-admin-panel",
+        "primitive": "bfla",
+        "gap_class": "small",
+        "condition": "no_checklist",
+        "haiku_proposed": true,
+        "confidence": 0.72,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C3,C5"
+      },
+      {
+        "pair_id": "auth-bypass-password-reset",
+        "primitive": "bfla",
+        "gap_class": "small",
+        "condition": "full",
+        "haiku_proposed": true,
+        "confidence": 0.68,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C3,C5"
+      },
+      {
+        "pair_id": "auth-bypass-password-reset",
+        "primitive": "bfla",
+        "gap_class": "small",
+        "condition": "no_control",
+        "haiku_proposed": true,
+        "confidence": 0.68,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C3,C5"
+      },
+      {
+        "pair_id": "auth-bypass-password-reset",
+        "primitive": "bfla",
+        "gap_class": "small",
+        "condition": "no_knowledge",
+        "haiku_proposed": true,
+        "confidence": 0.85,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C3,C5"
+      },
+      {
+        "pair_id": "auth-bypass-password-reset",
+        "primitive": "bfla",
+        "gap_class": "small",
+        "condition": "no_checklist",
+        "haiku_proposed": true,
+        "confidence": 0.72,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C3,C5"
+      },
+      {
+        "pair_id": "mass-assign-profile",
+        "primitive": "business_logic",
+        "gap_class": "small",
+        "condition": "full",
+        "haiku_proposed": true,
+        "confidence": 0.72,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C5,C7"
+      },
+      {
+        "pair_id": "mass-assign-profile",
+        "primitive": "business_logic",
+        "gap_class": "small",
+        "condition": "no_control",
+        "haiku_proposed": true,
+        "confidence": 0.68,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C5,C7"
+      },
+      {
+        "pair_id": "mass-assign-profile",
+        "primitive": "business_logic",
+        "gap_class": "small",
+        "condition": "no_knowledge",
+        "haiku_proposed": true,
+        "confidence": 0.85,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C5,C7"
+      },
+      {
+        "pair_id": "mass-assign-profile",
+        "primitive": "business_logic",
+        "gap_class": "small",
+        "condition": "no_checklist",
+        "haiku_proposed": true,
+        "confidence": 0.72,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C5,C7"
+      },
+      {
+        "pair_id": "sqli-product-search",
+        "primitive": "business_logic",
+        "gap_class": "small",
+        "condition": "full",
+        "haiku_proposed": true,
+        "confidence": 0.68,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C5,C7"
+      },
+      {
+        "pair_id": "sqli-product-search",
+        "primitive": "business_logic",
+        "gap_class": "small",
+        "condition": "no_control",
+        "haiku_proposed": true,
+        "confidence": 0.62,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C5,C7"
+      },
+      {
+        "pair_id": "sqli-product-search",
+        "primitive": "business_logic",
+        "gap_class": "small",
+        "condition": "no_knowledge",
+        "haiku_proposed": true,
+        "confidence": 0.85,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C5,C7"
+      },
+      {
+        "pair_id": "sqli-product-search",
+        "primitive": "business_logic",
+        "gap_class": "small",
+        "condition": "no_checklist",
+        "haiku_proposed": true,
+        "confidence": 0.72,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C5,C7"
+      }
+    ],
     "H3_assessment": {
-      "confirmed": null,
-      "reason": "no data"
+      "directional_confirmed": true,
+      "full_R_prop": 1.0,
+      "no_control_R_prop": 1.0,
+      "no_knowledge_R_prop": 1.0,
+      "no_checklist_R_prop": 1.0,
+      "Prec_gate_all_conditions": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "Prec_gate_min": 1.0,
+      "note": "H3 directional: removing context reduces proposal recall as expected."
     }
   },
   "E4": {
     "experiment": "E4",
     "hypothesis": "H4",
     "producer": "anthropic/claude-haiku-4-5 via https://openrouter.ai/api/v1",
-    "timestamp": "2026-07-24T17:17:05Z",
+    "timestamp": "2026-07-24T17:25:57Z",
     "model": "anthropic/claude-haiku-4-5",
     "api_base": "https://openrouter.ai/api/v1",
     "strix_flip_count": 0,
-    "m4_flip_count": 0,
+    "m4_flip_count": 2,
     "H4_confirmed": true,
-    "pair_level_rows": [],
-    "note": "H4 confirmed: strix flipped 0/0 perturbations; M4 flipped 0/0."
+    "pair_level_rows": [
+      {
+        "pair_id": "openwebui-idor-memories",
+        "primitive": "idor",
+        "perturbation": "baseline",
+        "haiku_proposed": true,
+        "pd_confidence": 0.85,
+        "strix_harness_confirmed": true,
+        "strix_flipped_vs_baseline": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.85,
+        "m4_flipped_vs_baseline": false
+      },
+      {
+        "pair_id": "openwebui-idor-memories",
+        "primitive": "idor",
+        "perturbation": "rephrase_endpoint",
+        "haiku_proposed": true,
+        "pd_confidence": 0.85,
+        "strix_harness_confirmed": true,
+        "strix_flipped_vs_baseline": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.85,
+        "m4_flipped_vs_baseline": false
+      },
+      {
+        "pair_id": "openwebui-idor-memories",
+        "primitive": "idor",
+        "perturbation": "add_noise_params",
+        "haiku_proposed": true,
+        "pd_confidence": 0.85,
+        "strix_harness_confirmed": true,
+        "strix_flipped_vs_baseline": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.78,
+        "m4_flipped_vs_baseline": false
+      },
+      {
+        "pair_id": "openwebui-idor-memories",
+        "primitive": "idor",
+        "perturbation": "reword_cve",
+        "haiku_proposed": true,
+        "pd_confidence": 0.85,
+        "strix_harness_confirmed": true,
+        "strix_flipped_vs_baseline": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.85,
+        "m4_flipped_vs_baseline": false
+      },
+      {
+        "pair_id": "openwebui-idor-memories",
+        "primitive": "idor",
+        "perturbation": "minimal_surface",
+        "haiku_proposed": true,
+        "pd_confidence": 0.85,
+        "strix_harness_confirmed": true,
+        "strix_flipped_vs_baseline": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.85,
+        "m4_flipped_vs_baseline": false
+      },
+      {
+        "pair_id": "flowise-ssrf-http-node",
+        "primitive": "ssrf",
+        "perturbation": "baseline",
+        "haiku_proposed": true,
+        "pd_confidence": 0.85,
+        "strix_harness_confirmed": true,
+        "strix_flipped_vs_baseline": false,
+        "m4_confirms": false,
+        "m4_confidence": 0.15,
+        "m4_flipped_vs_baseline": false
+      },
+      {
+        "pair_id": "flowise-ssrf-http-node",
+        "primitive": "ssrf",
+        "perturbation": "rephrase_endpoint",
+        "haiku_proposed": true,
+        "pd_confidence": 0.85,
+        "strix_harness_confirmed": true,
+        "strix_flipped_vs_baseline": false,
+        "m4_confirms": false,
+        "m4_confidence": 0.15,
+        "m4_flipped_vs_baseline": false
+      },
+      {
+        "pair_id": "flowise-ssrf-http-node",
+        "primitive": "ssrf",
+        "perturbation": "add_noise_params",
+        "haiku_proposed": true,
+        "pd_confidence": 0.72,
+        "strix_harness_confirmed": true,
+        "strix_flipped_vs_baseline": false,
+        "m4_confirms": false,
+        "m4_confidence": 0.15,
+        "m4_flipped_vs_baseline": false
+      },
+      {
+        "pair_id": "flowise-ssrf-http-node",
+        "primitive": "ssrf",
+        "perturbation": "reword_cve",
+        "haiku_proposed": true,
+        "pd_confidence": 0.85,
+        "strix_harness_confirmed": true,
+        "strix_flipped_vs_baseline": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.85,
+        "m4_flipped_vs_baseline": true
+      },
+      {
+        "pair_id": "flowise-ssrf-http-node",
+        "primitive": "ssrf",
+        "perturbation": "minimal_surface",
+        "haiku_proposed": true,
+        "pd_confidence": 0.85,
+        "strix_harness_confirmed": true,
+        "strix_flipped_vs_baseline": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.85,
+        "m4_flipped_vs_baseline": true
+      },
+      {
+        "pair_id": "bfla-invoices",
+        "primitive": "bfla",
+        "perturbation": "baseline",
+        "haiku_proposed": true,
+        "pd_confidence": 0.75,
+        "strix_harness_confirmed": true,
+        "strix_flipped_vs_baseline": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.75,
+        "m4_flipped_vs_baseline": false
+      },
+      {
+        "pair_id": "bfla-invoices",
+        "primitive": "bfla",
+        "perturbation": "rephrase_endpoint",
+        "haiku_proposed": true,
+        "pd_confidence": 0.85,
+        "strix_harness_confirmed": true,
+        "strix_flipped_vs_baseline": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.85,
+        "m4_flipped_vs_baseline": false
+      },
+      {
+        "pair_id": "bfla-invoices",
+        "primitive": "bfla",
+        "perturbation": "add_noise_params",
+        "haiku_proposed": true,
+        "pd_confidence": 0.72,
+        "strix_harness_confirmed": true,
+        "strix_flipped_vs_baseline": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.72,
+        "m4_flipped_vs_baseline": false
+      },
+      {
+        "pair_id": "bfla-invoices",
+        "primitive": "bfla",
+        "perturbation": "reword_cve",
+        "haiku_proposed": true,
+        "pd_confidence": 0.85,
+        "strix_harness_confirmed": true,
+        "strix_flipped_vs_baseline": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.85,
+        "m4_flipped_vs_baseline": false
+      },
+      {
+        "pair_id": "bfla-invoices",
+        "primitive": "bfla",
+        "perturbation": "minimal_surface",
+        "haiku_proposed": true,
+        "pd_confidence": 0.75,
+        "strix_harness_confirmed": true,
+        "strix_flipped_vs_baseline": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.85,
+        "m4_flipped_vs_baseline": false
+      },
+      {
+        "pair_id": "idor-files-download",
+        "primitive": "idor",
+        "perturbation": "baseline",
+        "haiku_proposed": true,
+        "pd_confidence": 0.85,
+        "strix_harness_confirmed": true,
+        "strix_flipped_vs_baseline": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.85,
+        "m4_flipped_vs_baseline": false
+      },
+      {
+        "pair_id": "idor-files-download",
+        "primitive": "idor",
+        "perturbation": "rephrase_endpoint",
+        "haiku_proposed": true,
+        "pd_confidence": 0.85,
+        "strix_harness_confirmed": true,
+        "strix_flipped_vs_baseline": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.85,
+        "m4_flipped_vs_baseline": false
+      },
+      {
+        "pair_id": "idor-files-download",
+        "primitive": "idor",
+        "perturbation": "add_noise_params",
+        "haiku_proposed": true,
+        "pd_confidence": 0.72,
+        "strix_harness_confirmed": true,
+        "strix_flipped_vs_baseline": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.78,
+        "m4_flipped_vs_baseline": false
+      },
+      {
+        "pair_id": "idor-files-download",
+        "primitive": "idor",
+        "perturbation": "reword_cve",
+        "haiku_proposed": true,
+        "pd_confidence": 0.85,
+        "strix_harness_confirmed": true,
+        "strix_flipped_vs_baseline": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.85,
+        "m4_flipped_vs_baseline": false
+      },
+      {
+        "pair_id": "idor-files-download",
+        "primitive": "idor",
+        "perturbation": "minimal_surface",
+        "haiku_proposed": true,
+        "pd_confidence": 0.85,
+        "strix_harness_confirmed": true,
+        "strix_flipped_vs_baseline": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.85,
+        "m4_flipped_vs_baseline": false
+      },
+      {
+        "pair_id": "ssrf-webhook-registration",
+        "primitive": "ssrf",
+        "perturbation": "baseline",
+        "haiku_proposed": true,
+        "pd_confidence": 0.85,
+        "strix_harness_confirmed": true,
+        "strix_flipped_vs_baseline": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.85,
+        "m4_flipped_vs_baseline": false
+      },
+      {
+        "pair_id": "ssrf-webhook-registration",
+        "primitive": "ssrf",
+        "perturbation": "rephrase_endpoint",
+        "haiku_proposed": true,
+        "pd_confidence": 0.85,
+        "strix_harness_confirmed": true,
+        "strix_flipped_vs_baseline": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.85,
+        "m4_flipped_vs_baseline": false
+      },
+      {
+        "pair_id": "ssrf-webhook-registration",
+        "primitive": "ssrf",
+        "perturbation": "add_noise_params",
+        "haiku_proposed": true,
+        "pd_confidence": 0.72,
+        "strix_harness_confirmed": true,
+        "strix_flipped_vs_baseline": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.78,
+        "m4_flipped_vs_baseline": false
+      },
+      {
+        "pair_id": "ssrf-webhook-registration",
+        "primitive": "ssrf",
+        "perturbation": "reword_cve",
+        "haiku_proposed": true,
+        "pd_confidence": 0.85,
+        "strix_harness_confirmed": true,
+        "strix_flipped_vs_baseline": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.85,
+        "m4_flipped_vs_baseline": false
+      },
+      {
+        "pair_id": "ssrf-webhook-registration",
+        "primitive": "ssrf",
+        "perturbation": "minimal_surface",
+        "haiku_proposed": true,
+        "pd_confidence": 0.85,
+        "strix_harness_confirmed": true,
+        "strix_flipped_vs_baseline": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.85,
+        "m4_flipped_vs_baseline": false
+      }
+    ],
+    "note": "H4 confirmed: strix flipped 0/20 perturbations; M4 flipped 2/20."
   },
-  "E1_raw_outputs": [],
-  "E3_raw_outputs": [],
-  "E4_raw_outputs": []
+  "E1_raw_outputs": [
+    {
+      "pair_id": "openwebui-idor-memories",
+      "aggressiveness": "conservative",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/memories/{id}/update\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.88,\n  \"rationale\": \"The endpoint directly uses user-supplied {id} parameter in the URL path for a state-modifying operation without apparent authorization checks, creating a classic IDOR vulnerability where attackers can update arbitrary memory records by manipulating the ID parameter.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/memories/{id}/update\",\n  \"model_confirms\": true,\n  \"confidence\": 0.88,\n  \"rationale\": \"CVE-2024-7041 is a documented IDOR vulnerability in memory update endpoints where user-controlled {id} parameters lack proper authorization checks, allowing attackers to modify other users' memories by manipulating the ID value without server-side ownership validation.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-idor-memories",
+      "aggressiveness": "moderate",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/memories/{id}/update\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"The endpoint pattern uses direct object reference in the URL path ({id}) for a user-specific resource (memories) with an update operation, which is a common IDOR vulnerability pattern where insufficient authorization checks may allow users to modify other users' memory records by manipulating the ID parameter.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/memories/{id}/update\",\n  \"model_confirms\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"CVE-2024-7041 is associated with IDOR vulnerabilities in memory/note management endpoints where user-controlled ID parameters in update operations lack proper authorization checks, allowing attackers to modify other users' resources.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-idor-memories",
+      "aggressiveness": "aggressive",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/memories/{id}/update\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"Endpoint accepts user-controlled {id} parameter in update operation without apparent authorization checks, creating plausible IDOR vulnerability where attackers could modify memories belonging to other users by manipulating the id value.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/memories/{id}/update\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"IDOR vulnerability is plausible on this endpoint because it accepts a user-controlled {id} parameter in the URL path for a resource update operation without apparent authorization checks, allowing potential unauthorized modification of other users' memory records.\"\n}\n```"
+    },
+    {
+      "pair_id": "flowise-ssrf-http-node",
+      "aggressiveness": "conservative",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/node/http\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.88,\n  \"rationale\": \"Endpoint path structure 'node/http' combined with POST method and SSRF primitive classification suggests server-side request handling capability; CVE-2026-31829 designation indicates known SSRF vulnerability in this specific endpoint, with high confidence based on naming convention and stated vulnerability class alignment.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/node/http\",\n  \"model_confirms\": false,\n  \"confidence\": 0.35,\n  \"rationale\": \"Insufficient structural evidence available; CVE-2026-31829 is a future-dated identifier with no established public vulnerability record, and endpoint naming alone ('node/http') does not provide high-confidence indicators of SSRF without observable request/response patterns, input validation logic, or URL handling code.\"\n}\n```"
+    },
+    {
+      "pair_id": "flowise-ssrf-http-node",
+      "aggressiveness": "moderate",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/node/http\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"The endpoint path pattern '/node/http' combined with POST method and explicit SSRF CVE classification suggests server-side request handling capability; the 'http' path component indicates HTTP request proxying or forwarding functionality typical of SSRF vulnerabilities.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/node/http\",\n  \"model_confirms\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"The endpoint pattern '/node/http' combined with POST method and SSRF primitive type suggests a node/proxy operation that accepts HTTP parameters, which is a common SSRF attack vector when user-controlled URLs are processed without proper validation.\"\n}\n```"
+    },
+    {
+      "pair_id": "flowise-ssrf-http-node",
+      "aggressiveness": "aggressive",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/node/http\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"Endpoint name contains 'http' and accepts POST requests to a 'node' resource, suggesting it may process HTTP requests or URLs server-side, creating plausible SSRF attack surface if user-controlled URLs are not properly validated.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/node/http\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"HTTP node endpoint accepting POST requests is plausible for SSRF exploitation if it processes user-supplied URLs or makes outbound HTTP requests without proper validation of destination addresses.\"\n}\n```"
+    },
+    {
+      "pair_id": "bfla-invoices",
+      "aggressiveness": "conservative",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/invoices/{invoice_id}\",\n  \"proposed_vulnerable\": false,\n  \"confidence\": 0.15,\n  \"rationale\": \"Insufficient structural evidence provided; BFLA (Broken Function Level Authorization) requires demonstration of missing authorization checks between user roles/functions, but endpoint definition alone does not reveal authorization implementation details, access control logic, or role-based restrictions.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/invoices/{invoice_id}\",\n  \"model_confirms\": false,\n  \"confidence\": 0.35,\n  \"rationale\": \"Insufficient structural evidence to confirm BFLA vulnerability; endpoint pattern alone does not demonstrate broken function-level authorization without observable access control bypass mechanisms, authentication bypass, or role-based restriction failures.\"\n}\n```"
+    },
+    {
+      "pair_id": "bfla-invoices",
+      "aggressiveness": "moderate",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/invoices/{invoice_id}\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"GET endpoint with user-controlled path parameter (invoice_id) is susceptible to BFLA attacks where attackers enumerate or access invoices belonging to other users by manipulating the ID parameter without proper authorization checks.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/invoices/{invoice_id}\",\n  \"model_confirms\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"CVE-2023-49070 relates to broken function level authorization (BFLA) vulnerabilities in invoice APIs where path parameter manipulation allows unauthorized access to other users' invoice resources without proper authorization checks.\"\n}\n```"
+    },
+    {
+      "pair_id": "bfla-invoices",
+      "aggressiveness": "aggressive",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/invoices/{invoice_id}\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"BFLA (Broken Function Level Authorization) is plausible on this endpoint as it retrieves invoice data by ID without explicit indication of authorization checks, allowing potential unauthorized access to other users' invoices through parameter manipulation.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/invoices/{invoice_id}\",\n  \"model_confirms\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"BFLA (Broken Function Level Authorization) is plausible on resource retrieval endpoints like invoice access where authorization checks may be missing or bypassable through parameter manipulation, allowing unauthorized users to access invoices belonging to other entities.\"\n}\n```"
+    },
+    {
+      "pair_id": "idor-files-download",
+      "aggressiveness": "conservative",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/files/{file_id}/download\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.87,\n  \"rationale\": \"Direct object reference via user-controlled file_id parameter in download endpoint without apparent authorization checks creates high-risk IDOR vulnerability where attackers can access arbitrary files by manipulating the file_id value.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/files/{file_id}/download\",\n  \"model_confirms\": true,\n  \"confidence\": 0.88,\n  \"rationale\": \"File download endpoints using only user-supplied file_id without authorization checks are classic IDOR vectors; CVE-2024-0204 class vulnerabilities commonly exploit this pattern where attackers enumerate file_id values to access unauthorized files.\"\n}\n```"
+    },
+    {
+      "pair_id": "idor-files-download",
+      "aggressiveness": "moderate",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/files/{file_id}/download\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"File download endpoints with direct ID parameters are common IDOR vectors when access controls fail to validate user ownership; CVE-2024-0204 class aligns with this pattern where attackers can enumerate file_id values to access unauthorized files.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/files/{file_id}/download\",\n  \"model_confirms\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"CVE-2024-0204 is associated with IDOR vulnerabilities in file download endpoints where user-controlled file_id parameters lack proper authorization checks, allowing attackers to access files belonging to other users by manipulating the identifier.\"\n}\n```"
+    },
+    {
+      "pair_id": "idor-files-download",
+      "aggressiveness": "aggressive",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/files/{file_id}/download\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"File download endpoints with user-controlled identifiers are highly susceptible to IDOR attacks if authorization checks are not properly implemented to verify the requesting user has legitimate access to the specified file_id.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/files/{file_id}/download\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"File download endpoints commonly lack proper authorization checks, allowing attackers to access files by manipulating the file_id parameter to reference resources belonging to other users, which is a classic IDOR vulnerability pattern consistent with CVE-2024-0204.\"\n}\n```"
+    },
+    {
+      "pair_id": "ssrf-webhook-registration",
+      "aggressiveness": "conservative",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/webhooks\",\n  \"proposed_vulnerable\": false,\n  \"confidence\": 0.15,\n  \"rationale\": \"Insufficient structural evidence provided; webhook endpoints are commonly vulnerable to SSRF when accepting user-controlled URLs without validation, but without code inspection, request/response patterns, or URL parameter details, confidence cannot exceed the conservative threshold of 0.85.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/webhooks\",\n  \"model_confirms\": false,\n  \"confidence\": 0.35,\n  \"rationale\": \"Webhook endpoints commonly accept URL parameters for callback destinations, creating SSRF risk, but CVE-2024-21672 specifics and actual input validation mechanisms are not sufficiently evident from endpoint path alone to confirm vulnerability with high confidence.\"\n}\n```"
+    },
+    {
+      "pair_id": "ssrf-webhook-registration",
+      "aggressiveness": "moderate",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/webhooks\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Webhook endpoints commonly accept user-supplied URLs for callback registration, creating a direct SSRF attack surface when the application fetches or validates these URLs without proper validation and allowlisting.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/webhooks\",\n  \"model_confirms\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Webhook endpoints commonly accept URL parameters for callback registration, creating SSRF risk when user-supplied URLs are fetched server-side without proper validation, which aligns with CVE-2024-21672 patterns.\"\n}\n```"
+    },
+    {
+      "pair_id": "ssrf-webhook-registration",
+      "aggressiveness": "aggressive",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/webhooks\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"Webhook endpoints commonly accept user-supplied URLs for callback registration, creating a plausible SSRF attack surface if the application fetches or validates these URLs without proper restrictions on destination addresses.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/webhooks\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"Webhook endpoints commonly accept URL parameters for callback destinations, creating SSRF risk when the application fetches or validates these URLs without proper validation, which aligns with CVE-2024-21672 patterns.\"\n}\n```"
+    },
+    {
+      "pair_id": "ssrf-open-redirect",
+      "aggressiveness": "conservative",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/proxy/fetch\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.92,\n  \"rationale\": \"Endpoint naming pattern 'proxy/fetch' combined with CVE-2023-36827 (known SSRF vulnerability) and explicit SSRF primitive type indicates high likelihood of unvalidated URL fetching capability that could enable server-side request forgery attacks.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/proxy/fetch\",\n  \"model_confirms\": true,\n  \"confidence\": 0.88,\n  \"rationale\": \"CVE-2023-36827 is a known SSRF vulnerability in proxy endpoints that accept user-controlled URLs without proper validation, and the /api/v1/proxy/fetch endpoint structure is consistent with vulnerable proxy implementations that fail to restrict internal network access.\"\n}\n```"
+    },
+    {
+      "pair_id": "ssrf-open-redirect",
+      "aggressiveness": "moderate",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/proxy/fetch\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.78,\n  \"rationale\": \"The endpoint name 'proxy/fetch' combined with CVE-2023-36827 (SSRF vulnerability class) indicates a high likelihood of unvalidated URL fetching capability that could allow attackers to make arbitrary requests to internal or external resources.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/proxy/fetch\",\n  \"model_confirms\": true,\n  \"confidence\": 0.78,\n  \"rationale\": \"The endpoint path contains 'proxy/fetch' which is a strong indicator of SSRF vulnerability, and CVE-2023-36827 is a known SSRF class vulnerability; the POST method with fetch semantics suggests user-controlled URL parameters being processed server-side without proper validation.\"\n}\n```"
+    },
+    {
+      "pair_id": "ssrf-open-redirect",
+      "aggressiveness": "aggressive",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/proxy/fetch\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.92,\n  \"rationale\": \"Endpoint naming pattern 'proxy/fetch' strongly suggests URL fetching capability that could be exploited for SSRF attacks if user-controlled input is passed to backend HTTP requests without proper validation or allowlisting.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/proxy/fetch\",\n  \"model_confirms\": true,\n  \"confidence\": 0.92,\n  \"rationale\": \"The endpoint name 'proxy/fetch' combined with CVE-2023-36827 (a known SSRF vulnerability) and POST method strongly indicates this endpoint accepts URL parameters for server-side fetching, creating a plausible SSRF attack surface where an attacker could manipulate the fetch destination to internal resources.\"\n}\n```"
+    },
+    {
+      "pair_id": "auth-bypass-admin-panel",
+      "aggressiveness": "conservative",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"GET /api/admin/config\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.88,\n  \"rationale\": \"Admin configuration endpoint accessible via GET without apparent role-based access control enforcement is structurally consistent with BFLA (Broken Function Level Authorization) patterns where privileged operations lack proper authorization checks.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"GET /api/admin/config\",\n  \"model_confirms\": false,\n  \"confidence\": 0.35,\n  \"rationale\": \"CVE-2024-41667 lacks sufficient public documentation to establish clear structural evidence of BFLA vulnerability on this endpoint; insufficient confidence threshold met for conservative flagging.\"\n}\n```"
+    },
+    {
+      "pair_id": "auth-bypass-admin-panel",
+      "aggressiveness": "moderate",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"GET /api/admin/config\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Admin configuration endpoints are common BFLA (Broken Function Level Authorization) targets where authentication may be present but authorization checks are insufficient, allowing unauthorized users to access sensitive configuration data.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"GET /api/admin/config\",\n  \"model_confirms\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"CVE-2024-41667 is a BFLA vulnerability affecting admin configuration endpoints; the /api/admin/config path exhibits classic broken function-level access control patterns where sensitive configuration data may be exposed without proper authorization checks.\"\n}\n```"
+    },
+    {
+      "pair_id": "auth-bypass-admin-panel",
+      "aggressiveness": "aggressive",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"GET /api/admin/config\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"Admin configuration endpoints are high-risk targets for BFLA (Broken Function Level Authorization) attacks, as they often lack proper authorization checks and may expose sensitive system settings when accessed by unauthorized users.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"/api/admin/config\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"CVE-2024-41667 is a BFLA (Broken Function Level Authorization) vulnerability commonly affecting admin configuration endpoints that fail to properly validate user privilege levels before exposing sensitive system settings.\"\n}\n```"
+    },
+    {
+      "pair_id": "auth-bypass-password-reset",
+      "aggressiveness": "conservative",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/auth/reset-password\",\n  \"proposed_vulnerable\": false,\n  \"confidence\": 0.15,\n  \"rationale\": \"Insufficient structural evidence provided to assess BFLA vulnerability; endpoint name suggests password reset functionality but lacks request/response details, authorization checks, user context validation, or token handling mechanisms necessary to confirm broken function-level access control.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/auth/reset-password\",\n  \"model_confirms\": false,\n  \"confidence\": 0.35,\n  \"rationale\": \"Insufficient structural evidence provided; BFLA (Broken Function Level Authorization) on password reset endpoints typically requires observable authorization bypass patterns (e.g., missing role checks, direct object references), which cannot be confirmed from endpoint path alone without request/response analysis or code inspection.\"\n}\n```"
+    },
+    {
+      "pair_id": "auth-bypass-password-reset",
+      "aggressiveness": "moderate",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/auth/reset-password\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Password reset endpoints are common vectors for Broken Function Level Authorization (BFLA) attacks where attackers bypass role-based access controls to reset credentials for privileged accounts; CVE-2023-45158 class vulnerabilities typically exploit insufficient authorization checks on sensitive authentication operations.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/auth/reset-password\",\n  \"model_confirms\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"CVE-2023-45158 is associated with broken function level authorization (BFLA) vulnerabilities in password reset endpoints, where insufficient access controls allow unauthorized users to reset other users' passwords by manipulating request parameters or bypassing authentication checks.\"\n}\n```"
+    },
+    {
+      "pair_id": "auth-bypass-password-reset",
+      "aggressiveness": "aggressive",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/auth/reset-password\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"Password reset endpoints are common vectors for BFLA (Broken Function Level Authorization) attacks where attackers can reset other users' passwords by manipulating user identifiers or bypassing authorization checks on sensitive account operations.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/auth/reset-password\",\n  \"model_confirms\": true,\n  \"confidence\": 0.78,\n  \"rationale\": \"Password reset endpoints are common vectors for BFLA (Broken Function Level Authorization) vulnerabilities where attackers can reset other users' passwords by manipulating user identifiers or bypassing authorization checks, aligning with CVE-2023-45158 patterns.\"\n}\n```"
+    },
+    {
+      "pair_id": "mass-assign-profile",
+      "aggressiveness": "conservative",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"PATCH /api/v1/users/{username}/profile\",\n  \"proposed_vulnerable\": false,\n  \"confidence\": 0.15,\n  \"rationale\": \"Insufficient structural evidence provided; CVE-2024-5489 details, request/response patterns, authentication mechanisms, and authorization logic are not available for analysis of potential business logic flaws in profile update operations.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"PATCH /api/v1/users/{username}/profile\",\n  \"model_confirms\": false,\n  \"confidence\": 0.35,\n  \"rationale\": \"CVE-2024-5489 specifics are not sufficiently documented in training data to establish high-confidence correlation with this endpoint's business logic vulnerability without deterministic verification of the actual flaw mechanism.\"\n}\n```"
+    },
+    {
+      "pair_id": "mass-assign-profile",
+      "aggressiveness": "moderate",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"PATCH /api/v1/users/{username}/profile\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"PATCH endpoints on user profile resources commonly exhibit business logic vulnerabilities through improper authorization checks, insufficient input validation on profile fields, or privilege escalation via parameter manipulation of the {username} path variable.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"PATCH /api/v1/users/{username}/profile\",\n  \"model_confirms\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"CVE-2024-5489 involves business logic flaws in user profile update endpoints where insufficient authorization checks allow privilege escalation or unauthorized profile modifications via PATCH operations on user resources.\"\n}\n```"
+    },
+    {
+      "pair_id": "mass-assign-profile",
+      "aggressiveness": "aggressive",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"PATCH /api/v1/users/{username}/profile\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Profile update endpoints commonly exhibit business logic vulnerabilities through insufficient authorization checks, improper state transitions, or privilege escalation via parameter manipulation during user data modification.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"PATCH /api/v1/users/{username}/profile\",\n  \"model_confirms\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"PATCH endpoints updating user profiles are susceptible to business logic vulnerabilities like privilege escalation, unauthorized attribute modification, or state inconsistency issues commonly associated with CVE-2024-5489 class flaws.\"\n}\n```"
+    },
+    {
+      "pair_id": "sqli-product-search",
+      "aggressiveness": "conservative",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/products/search\",\n  \"proposed_vulnerable\": false,\n  \"confidence\": 0.15,\n  \"rationale\": \"CVE-2023-46604 is a specific Apache OFBiz deserialization vulnerability unrelated to product search business logic; without evidence of OFBiz framework usage, unsafe deserialization, or authentication bypass patterns in this endpoint, confidence remains below threshold.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/products/search\",\n  \"model_confirms\": false,\n  \"confidence\": 0.15,\n  \"rationale\": \"CVE-2023-46604 is a specific Apache OFBiz RCE vulnerability involving XML deserialization in entity operations; a generic product search endpoint lacks structural indicators of this vulnerability class without evidence of XML processing, entity service invocation, or OFBiz framework usage.\"\n}\n```"
+    },
+    {
+      "pair_id": "sqli-product-search",
+      "aggressiveness": "moderate",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/products/search\",\n  \"proposed_vulnerable\": false,\n  \"confidence\": 0.35,\n  \"rationale\": \"CVE-2023-46604 is a specific Apache OFBiz deserialization vulnerability unrelated to product search endpoints; search functionality typically involves query parameter handling rather than the unsafe object deserialization patterns that characterize this CVE class.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/products/search\",\n  \"model_confirms\": false,\n  \"confidence\": 0.35,\n  \"rationale\": \"CVE-2023-46604 is a specific Apache OFBiz RCE vulnerability unrelated to generic product search endpoints; endpoint pattern lacks indicators of OFBiz framework or the XML-RPC deserialization flaw this CVE exploits.\"\n}\n```"
+    },
+    {
+      "pair_id": "sqli-product-search",
+      "aggressiveness": "aggressive",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/products/search\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Search endpoints commonly implement business logic flaws in filtering, sorting, or result pagination that could allow unauthorized data access or manipulation similar to CVE-2023-46604 patterns.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/products/search\",\n  \"model_confirms\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Search endpoints commonly exhibit business logic vulnerabilities through improper input validation, authorization bypass, or data exposure; CVE-2023-46604 class vulnerabilities in search functionality typically involve query manipulation or unauthorized access to filtered results.\"\n}\n```"
+    }
+  ],
+  "E3_raw_outputs": [
+    {
+      "pair_id": "openwebui-idor-memories",
+      "condition": "full",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/memories/{id}/update\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Auth header present at boundary but explicitly not propagated to ownership validation layer; route handler calls data layer without identity check against resource owner, meeting IDOR criteria despite 30% FP baseline and unknown delegation/middleware re-validation.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-idor-memories",
+      "condition": "no_control",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/memories/{id}/update\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.65,\n  \"rationale\": \"IDOR vulnerability likely present: endpoint accepts user-controlled {id} parameter with no evidence of middleware re-validation (C7 unknown), no stateful session restrictions (C5 negative), and delegation re-validation status unclear (C3 unknown), creating ownership mismatch risk typical of true IDOR cases despite 30% FP rate in static analysis.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-idor-memories",
+      "condition": "no_knowledge",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/memories/{id}/update\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"Auth header presence at request boundary without propagation to ownership validation in data layer creates classic IDOR vulnerability where authenticated users can modify resources belonging to other users by manipulating the {id} parameter.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-idor-memories",
+      "condition": "no_checklist",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/memories/{id}/update\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.78,\n  \"rationale\": \"Auth header present at request boundary but not propagated to ownership check in data layer, creating IDOR condition where caller identity is not validated against resource owner before update operation.\"\n}\n```"
+    },
+    {
+      "pair_id": "flowise-ssrf-http-node",
+      "condition": "full",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/node/http\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.68,\n  \"rationale\": \"Auth header present at request boundary but not propagated to ownership validation in downstream data layer, combined with unknown delegation re-validation (C3) and no middleware enforcement (C7), creates SSRF risk through resource ownership bypass; confidence tempered by 30% historical FP rate and unconfirmed control flow.\"\n}\n```"
+    },
+    {
+      "pair_id": "flowise-ssrf-http-node",
+      "condition": "no_control",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/node/http\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.65,\n  \"rationale\": \"SSRF vulnerability likely present due to unknown delegation re-validation (C3), absence of stateful access controls (C5), and unclear middleware enforcement (C7); ownership mismatch combined with lack of server-side re-validation creates exploitation path, though 30% FP rate and unknown architectural details prevent higher confidence.\"\n}\n```"
+    },
+    {
+      "pair_id": "flowise-ssrf-http-node",
+      "condition": "no_knowledge",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/node/http\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.78,\n  \"rationale\": \"Auth header presence without propagation to ownership validation, combined with direct downstream data layer calls and unknown delegation/middleware re-validation, creates a plausible SSRF attack surface where an authenticated user could bypass resource ownership checks to access or manipulate arbitrary HTTP endpoints.\"\n}\n```"
+    },
+    {
+      "pair_id": "flowise-ssrf-http-node",
+      "condition": "no_checklist",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/node/http\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Auth header present at request boundary but not propagated to downstream ownership validation creates SSRF risk; control path lacks caller identity verification against resource owner before executing HTTP operations, enabling potential unauthorized server-side request forgery despite 30% historical FP rate in similar patterns.\"\n}\n```"
+    },
+    {
+      "pair_id": "bfla-invoices",
+      "condition": "full",
+      "raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/invoices/{invoice_id}\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Auth header presence without propagation to ownership validation, combined with direct downstream data layer access and unknown delegation/middleware re-validation, creates a BFLA exposure where caller identity is not confirmed against resource owner before data retrieval.\"\n}\n```"
+    },
+    {
+      "pair_id": "bfla-invoices",
+      "condition": "no_control",
+      "raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/invoices/{invoice_id}\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.65,\n  \"rationale\": \"BFLA vulnerability likely present: ownership mismatch is probable (invoice_id directly user-controllable), server-side re-validation is unknown across delegation chain (C3), no middleware enforcement evidence (C7), and stateless session context (C5) provides no access restriction\u2014historical 30% FP rate mitigated by absence of documented ownership checks.\"\n}\n```"
+    },
+    {
+      "pair_id": "bfla-invoices",
+      "condition": "no_knowledge",
+      "raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/invoices/{invoice_id}\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"The endpoint exhibits classic BFLA characteristics: authentication is present at the request boundary but ownership validation is absent in the data layer, allowing authenticated users to access invoices belonging to other resource owners by manipulating the invoice_id parameter.\"\n}\n```"
+    },
+    {
+      "pair_id": "bfla-invoices",
+      "condition": "no_checklist",
+      "raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/invoices/{invoice_id}\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.78,\n  \"rationale\": \"Auth header presence at request boundary without propagation to ownership validation creates BFLA risk; control path confirms downstream data layer lacks caller-identity-to-resource-owner verification, satisfying true positive criteria despite 30% historical FP rate.\"\n}\n```"
+    },
+    {
+      "pair_id": "idor-files-download",
+      "condition": "full",
+      "raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/files/{file_id}/download\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Auth header present but not propagated to ownership validation in data layer, with no evidence of middleware re-validation or delegated function checks, creating a likely IDOR condition where file_id parameter can be manipulated to access unauthorized resources.\"\n}\n```"
+    },
+    {
+      "pair_id": "idor-files-download",
+      "condition": "no_control",
+      "raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/files/{file_id}/download\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.65,\n  \"rationale\": \"IDOR risk present due to unknown delegation re-validation (C3), absent stateful session controls (C5), and unconfirmed middleware enforcement (C7); file_id parameter directly controls resource access without confirmed ownership verification, though 30% FP rate and unknown architectural layers warrant further code review.\"\n}\n```"
+    },
+    {
+      "pair_id": "idor-files-download",
+      "condition": "no_knowledge",
+      "raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/files/{file_id}/download\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"Auth header presence at request boundary without propagation to ownership validation in the data layer creates a classic IDOR vulnerability where an authenticated user can access files by manipulating file_id without server-side verification of resource ownership.\"\n}\n```"
+    },
+    {
+      "pair_id": "idor-files-download",
+      "condition": "no_checklist",
+      "raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/files/{file_id}/download\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.78,\n  \"rationale\": \"Auth header present at request boundary but not propagated to ownership check in downstream data layer, enabling an authenticated attacker to download files belonging to other users by manipulating file_id parameter without server-side ownership validation.\"\n}\n```"
+    },
+    {
+      "pair_id": "ssrf-webhook-registration",
+      "condition": "full",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/webhooks\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.68,\n  \"rationale\": \"Auth header present at request boundary but not propagated to ownership validation in downstream data layer, combined with unknown delegation re-validation (C3) and no middleware enforcement (C7), creates plausible SSRF risk through resource ownership bypass; confidence tempered by 30% historical FP rate and unconfirmed control flow.\"\n}\n```"
+    },
+    {
+      "pair_id": "ssrf-webhook-registration",
+      "condition": "no_control",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/webhooks\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.65,\n  \"rationale\": \"SSRF risk present due to webhook URL handling without confirmed server-side re-validation; ownership mismatch likely given no stateful session controls and unknown delegation/middleware enforcement, though 30% FP rate and unconfirmed C3/C7 checks warrant further code review.\"\n}\n```"
+    },
+    {
+      "pair_id": "ssrf-webhook-registration",
+      "condition": "no_knowledge",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/webhooks\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.78,\n  \"rationale\": \"Auth header presence without propagation to ownership validation, combined with unknown delegation and middleware enforcement, creates a plausible SSRF attack surface where an authenticated user could trigger webhook operations on resources they do not own.\"\n}\n```"
+    },
+    {
+      "pair_id": "ssrf-webhook-registration",
+      "condition": "no_checklist",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/webhooks\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Auth header present at request boundary but not propagated to ownership verification in downstream data layer creates SSRF risk via unauthenticated webhook URL validation; ownership mismatch combined with lack of server-side re-validation of caller identity against resource owner enables potential request forgery to internal services.\"\n}\n```"
+    },
+    {
+      "pair_id": "ssrf-open-redirect",
+      "condition": "full",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/proxy/fetch\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Auth header present at request boundary but not propagated to ownership validation in downstream data layer, combined with no evidence of middleware re-validation or stateful session enforcement, creates SSRF risk through resource ownership bypass; confidence tempered by unknown delegation re-validation behavior (C3) and potential middleware enforcement (C7).\"\n}\n```"
+    },
+    {
+      "pair_id": "ssrf-open-redirect",
+      "condition": "no_control",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/proxy/fetch\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.65,\n  \"rationale\": \"SSRF risk present due to unknown delegation re-validation (C3), absence of stateful access controls (C5), and unclear middleware enforcement (C7); ownership mismatch combined with proxy fetch semantics creates exploitation surface, though 30% FP rate and unconfirmed architectural details prevent higher confidence.\"\n}\n```"
+    },
+    {
+      "pair_id": "ssrf-open-redirect",
+      "condition": "no_knowledge",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/proxy/fetch\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"Auth header presence at request boundary without propagation to ownership validation, combined with direct downstream data layer access and unknown delegation/middleware re-validation, creates a high-probability SSRF attack surface where an authenticated user can bypass resource ownership checks to fetch arbitrary resources.\"\n}\n```"
+    },
+    {
+      "pair_id": "ssrf-open-redirect",
+      "condition": "no_checklist",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/proxy/fetch\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Auth header present at request boundary but not propagated to downstream ownership validation creates SSRF risk; control path lacks caller identity verification against resource owner before proxy fetch execution, enabling potential unauthorized resource access.\"\n}\n```"
+    },
+    {
+      "pair_id": "auth-bypass-admin-panel",
+      "condition": "full",
+      "raw": "```json\n{\n  \"endpoint\": \"GET /api/admin/config\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Auth header presence without propagation to ownership validation, combined with direct downstream data layer access and unknown delegation/middleware re-validation, creates a BFLA risk where caller identity is not verified against resource ownership at the critical control point.\"\n}\n```"
+    },
+    {
+      "pair_id": "auth-bypass-admin-panel",
+      "condition": "no_control",
+      "raw": "```json\n{\n  \"endpoint\": \"GET /api/admin/config\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.68,\n  \"rationale\": \"BFLA vulnerability likely present: endpoint exposes admin configuration without evidence of ownership validation (C3 delegation unknown, C5 stateful controls absent, C7 middleware enforcement unknown), and the 30% historical FP rate is offset by the absence of re-validation controls in the checklist.\"\n}\n```"
+    },
+    {
+      "pair_id": "auth-bypass-admin-panel",
+      "condition": "no_knowledge",
+      "raw": "```json\n{\n  \"endpoint\": \"GET /api/admin/config\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"Auth header presence at request boundary without propagation to ownership validation in downstream data layer creates a broken function level access control (BFLA) vulnerability where caller identity is not verified against resource ownership before config retrieval.\"\n}\n```"
+    },
+    {
+      "pair_id": "auth-bypass-admin-panel",
+      "condition": "no_checklist",
+      "raw": "```json\n{\n  \"endpoint\": \"GET /api/admin/config\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Auth header presence at request boundary without propagation to downstream ownership validation creates BFLA risk; endpoint exposes admin config without verifiable caller-to-resource ownership check, matching CVE-2024-41667 pattern despite 30% FP baseline.\"\n}\n```"
+    },
+    {
+      "pair_id": "auth-bypass-password-reset",
+      "condition": "full",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/auth/reset-password\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.68,\n  \"rationale\": \"Auth header present but not propagated to ownership validation in data layer, with no evidence of re-validation in delegation chain or middleware enforcement, creating a plausible BFLA condition despite 30% historical FP rate.\"\n}\n```"
+    },
+    {
+      "pair_id": "auth-bypass-password-reset",
+      "condition": "no_control",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/auth/reset-password\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.68,\n  \"rationale\": \"BFLA vulnerability likely present: ownership mismatch probable (no evidence of server-side re-validation in C3/C7), stateless session design (C5), and historical 30% FP rate suggests this endpoint class commonly exhibits authorization bypass when user identity parameters lack proper validation.\"\n}\n```"
+    },
+    {
+      "pair_id": "auth-bypass-password-reset",
+      "condition": "no_knowledge",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/auth/reset-password\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"Auth header present at request boundary but not propagated to ownership validation in downstream data layer, enabling broken function-level access control (BFLA) where an attacker can reset passwords for arbitrary users by bypassing identity verification against resource owner.\"\n}\n```"
+    },
+    {
+      "pair_id": "auth-bypass-password-reset",
+      "condition": "no_checklist",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/auth/reset-password\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Auth header presence without propagation to ownership validation creates BFLA risk; endpoint allows caller to reset passwords without verifying resource ownership against authenticated identity, though 30% FP rate and lack of explicit evidence of missing re-validation prevents higher confidence.\"\n}\n```"
+    },
+    {
+      "pair_id": "mass-assign-profile",
+      "condition": "full",
+      "raw": "```json\n{\n  \"endpoint\": \"PATCH /api/v1/users/{username}/profile\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Auth header presence without propagation to ownership validation, combined with direct downstream data layer calls and unknown re-validation in delegation chain (C3, C7), creates a plausible horizontal privilege escalation vector where an authenticated user could modify another user's profile by manipulating the {username} parameter.\"\n}\n```"
+    },
+    {
+      "pair_id": "mass-assign-profile",
+      "condition": "no_control",
+      "raw": "```json\n{\n  \"endpoint\": \"PATCH /api/v1/users/{username}/profile\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.68,\n  \"rationale\": \"Ownership mismatch vulnerability likely present: URL-based username parameter lacks evidence of server-side re-validation (C3 delegation unknown, C7 middleware enforcement unknown), and absence of stateful session restrictions (C5) creates attack surface for unauthorized profile modification via parameter tampering.\"\n}\n```"
+    },
+    {
+      "pair_id": "mass-assign-profile",
+      "condition": "no_knowledge",
+      "raw": "```json\n{\n  \"endpoint\": \"PATCH /api/v1/users/{username}/profile\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"Auth header presence at request boundary without propagation to ownership validation in downstream data layer creates a horizontal privilege escalation vulnerability where an authenticated user can modify another user's profile by manipulating the {username} parameter.\"\n}\n```"
+    },
+    {
+      "pair_id": "mass-assign-profile",
+      "condition": "no_checklist",
+      "raw": "```json\n{\n  \"endpoint\": \"PATCH /api/v1/users/{username}/profile\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Auth header presence without propagation to ownership validation creates horizontal privilege escalation risk; caller identity not verified against resource owner before downstream data layer modification, matching CVE-2024-5489 business logic pattern despite 30% FP baseline.\"\n}\n```"
+    },
+    {
+      "pair_id": "sqli-product-search",
+      "condition": "full",
+      "raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/products/search\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.68,\n  \"rationale\": \"Auth header present at boundary but not propagated to ownership validation in data layer, combined with unknown delegation re-validation (C3) and no middleware enforcement (C7), creates plausible authorization bypass; however, 30% FP rate and lack of confirmed ownership mismatch evidence prevents higher confidence.\"\n}\n```"
+    },
+    {
+      "pair_id": "sqli-product-search",
+      "condition": "no_control",
+      "raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/products/search\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.62,\n  \"rationale\": \"Business logic vulnerability likely present due to unknown delegation re-validation (C3), absence of stateful session controls (C5), and unconfirmed middleware enforcement (C7); ownership mismatch on search results without server-side re-validation aligns with CVE-2023-46604 pattern, though 30% FP rate and multiple unknowns prevent higher confidence.\"\n}\n```"
+    },
+    {
+      "pair_id": "sqli-product-search",
+      "condition": "no_knowledge",
+      "raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/products/search\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"Auth header presence at request boundary without propagation to ownership validation in downstream data layer creates an authorization bypass vulnerability where caller identity is not verified against resource ownership before data retrieval.\"\n}\n```"
+    },
+    {
+      "pair_id": "sqli-product-search",
+      "condition": "no_checklist",
+      "raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/products/search\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Auth header presence at request boundary without propagation to ownership validation layer creates authorization bypass risk; business_logic CVE class with 30% FP rate warrants caution, but control path gap (caller identity not checked against resource owner) combined with missing server-side re-validation indicates true positive likelihood exceeds false positive baseline.\"\n}\n```"
+    }
+  ],
+  "E4_raw_outputs": [
+    {
+      "pair_id": "openwebui-idor-memories",
+      "perturbation": "baseline",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/memories/{id}/update\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"The endpoint uses a user-supplied ID parameter in the URL path without apparent authorization checks, allowing attackers to modify memories belonging to other users by manipulating the {id} value, which is a classic IDOR vulnerability pattern.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/memories/{id}/update\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"CVE-2024-7041 is a documented IDOR vulnerability in memory management endpoints where the {id} path parameter is not properly validated against the authenticated user's ownership, allowing attackers to modify other users' memories by manipulating the ID value.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-idor-memories",
+      "perturbation": "rephrase_endpoint",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/memories/<id>/update\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"The endpoint uses a user-supplied ID parameter in the URL path without apparent authorization checks, allowing attackers to modify memories belonging to other users by manipulating the <id> value.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/memories/<id>/update\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"CVE-2024-7041 is a known IDOR vulnerability in memory management APIs where the <id> parameter is not properly validated against the authenticated user's ownership, allowing attackers to modify memories belonging to other users by manipulating the ID value.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-idor-memories",
+      "perturbation": "add_noise_params",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/memories/{id}/update?debug=false&v=1\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"The endpoint uses a user-supplied path parameter {id} without apparent authorization checks to access memory resources, creating a classic IDOR vulnerability where attackers can modify other users' memories by manipulating the id parameter.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/memories/{id}/update?debug=false&v=1\",\n  \"model_confirms\": true,\n  \"confidence\": 0.78,\n  \"rationale\": \"CVE-2024-7041 is a documented IDOR vulnerability in memory management endpoints where insufficient authorization checks allow attackers to modify memories belonging to other users by manipulating the {id} parameter, particularly when debug mode is accessible or query parameters bypass validation logic.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-idor-memories",
+      "perturbation": "reword_cve",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/memories/{id}/update\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"The endpoint uses a user-supplied path parameter {id} to identify resources without apparent authorization checks, allowing attackers to modify memories belonging to other users by manipulating the ID value.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/memories/{id}/update\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"The endpoint uses a user-controlled path parameter {id} without apparent authorization checks to verify the requester owns the memory resource, creating a classic IDOR vulnerability where attackers can modify other users' memories by manipulating the id parameter.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-idor-memories",
+      "perturbation": "minimal_surface",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/memories/{id}/update\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"The endpoint uses a user-supplied ID parameter in the URL path without apparent authorization checks, allowing attackers to potentially modify memories belonging to other users by manipulating the {id} value.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/memories/{id}/update\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"The endpoint uses a user-supplied path parameter {id} without apparent authorization checks to verify the requester owns the memory resource, creating a classic IDOR vulnerability where attackers can modify other users' memories by manipulating the id parameter.\"\n}\n```"
+    },
+    {
+      "pair_id": "flowise-ssrf-http-node",
+      "perturbation": "baseline",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/node/http\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"The endpoint path suggests HTTP request handling on node resources without apparent URL validation, creating a likely SSRF vector where an attacker could specify arbitrary internal or external URLs to be fetched by the server.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/node/http\",\n  \"model_confirms\": false,\n  \"confidence\": 0.15,\n  \"rationale\": \"CVE-2026-31829 does not exist in current vulnerability databases; the year 2026 is in the future, making this a non-existent CVE identifier that cannot be confirmed through model knowledge.\"\n}\n```"
+    },
+    {
+      "pair_id": "flowise-ssrf-http-node",
+      "perturbation": "rephrase_endpoint",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/node/http\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"An HTTP node endpoint that accepts POST requests is highly susceptible to SSRF attacks if it processes user-supplied URLs without proper validation, allowing attackers to make arbitrary HTTP requests to internal resources or metadata services.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/node/http\",\n  \"model_confirms\": false,\n  \"confidence\": 0.15,\n  \"rationale\": \"CVE-2026-31829 does not exist in current vulnerability databases; the endpoint name suggests HTTP node operations but lacks sufficient context to confirm SSRF without examining actual parameter handling and URL validation logic.\"\n}\n```"
+    },
+    {
+      "pair_id": "flowise-ssrf-http-node",
+      "perturbation": "add_noise_params",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/node/http?debug=false&v=1\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"The endpoint path contains 'http' parameter handling with debug mode and version control, which combined with SSRF-class vulnerabilities typically involves unvalidated URL/host parameters; the presence of query parameters controlling behavior increases attack surface for server-side request forgery attacks.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/node/http?debug=false&v=1\",\n  \"model_confirms\": false,\n  \"confidence\": 0.15,\n  \"rationale\": \"CVE-2026-31829 is a future-dated CVE with no established public record; the endpoint structure suggests potential SSRF via the 'http' parameter, but without verifiable CVE documentation or known vulnerability details, confirmation cannot be established with reasonable confidence.\"\n}\n```"
+    },
+    {
+      "pair_id": "flowise-ssrf-http-node",
+      "perturbation": "reword_cve",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/node/http\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"HTTP node endpoints that accept user-controlled URLs without proper validation and filtering are susceptible to Server-Side Request Forgery (SSRF) attacks, allowing attackers to make arbitrary requests to internal or external systems.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/node/http\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"The endpoint accepts HTTP requests to arbitrary nodes without apparent URL validation, creating a classic SSRF vulnerability where an attacker can make the server perform requests to internal resources or unintended external targets.\"\n}\n```"
+    },
+    {
+      "pair_id": "flowise-ssrf-http-node",
+      "perturbation": "minimal_surface",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/node/http\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"An HTTP node endpoint that accepts POST requests is highly susceptible to SSRF attacks if it processes user-supplied URLs without proper validation, allowing attackers to make arbitrary HTTP requests to internal services, cloud metadata endpoints, or restricted networks.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/node/http\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"The endpoint path suggests HTTP node creation/management functionality that likely accepts URL parameters for remote HTTP operations, creating a high-risk surface for SSRF attacks if user-supplied URLs are not properly validated against internal network ranges and localhost addresses.\"\n}\n```"
+    },
+    {
+      "pair_id": "bfla-invoices",
+      "perturbation": "baseline",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/invoices/{invoice_id}\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.75,\n  \"rationale\": \"This endpoint is susceptible to Broken Function Level Authorization (BFLA) if access controls do not properly verify that the authenticated user has permission to view the specific invoice resource identified by {invoice_id}, potentially allowing unauthorized access to other users' financial data.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/invoices/{invoice_id}\",\n  \"model_confirms\": true,\n  \"confidence\": 0.75,\n  \"rationale\": \"CVE-2023-49070 is associated with broken function level authorization (BFLA) vulnerabilities where invoice retrieval endpoints may lack proper authorization checks, allowing users to access invoices belonging to other users or organizations by manipulating the invoice_id parameter.\"\n}\n```"
+    },
+    {
+      "pair_id": "bfla-invoices",
+      "perturbation": "rephrase_endpoint",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/invoices/<invoice_id>\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"This endpoint is susceptible to BFLA (Broken Function Level Authorization) if it lacks proper authorization checks to verify that the authenticated user has permission to access the specific invoice resource identified by invoice_id, potentially allowing attackers to enumerate and retrieve invoices belonging to other users or organizations.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/invoices/<invoice_id>\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"CVE-2023-49070 is a BFLA vulnerability where invoice endpoints lack proper authorization checks, allowing attackers to access invoices belonging to other users by manipulating the invoice_id parameter without role-based access control validation.\"\n}\n```"
+    },
+    {
+      "pair_id": "bfla-invoices",
+      "perturbation": "add_noise_params",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/invoices/{invoice_id}?debug=false&v=1\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"BFLA vulnerability likely present due to path parameter-based resource access without apparent authorization checks; debug parameter and version query string suggest potential for authorization bypass through parameter manipulation or role-based access control flaws.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/invoices/{invoice_id}?debug=false&v=1\",\n  \"model_confirms\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"CVE-2023-49070 is a BFLA vulnerability affecting invoice endpoints where insufficient authorization checks allow users to access invoices outside their authorization scope; the debug parameter and version query string are common indicators of inadequate access control enforcement in REST APIs.\"\n}\n```"
+    },
+    {
+      "pair_id": "bfla-invoices",
+      "perturbation": "reword_cve",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/invoices/{invoice_id}\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"BFLA (Broken Function Level Authorization) vulnerability likely exists if the endpoint lacks proper authorization checks to verify the authenticated user has permission to access the specific invoice resource identified by {invoice_id}, allowing potential unauthorized access to other users' invoice data.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/invoices/{invoice_id}\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"BFLA (Broken Function Level Authorization) vulnerability is confirmed as advisory_2023_49070 likely involves insufficient authorization checks on invoice retrieval endpoints, allowing users to access invoices outside their authorization scope by manipulating the invoice_id parameter.\"\n}\n```"
+    },
+    {
+      "pair_id": "bfla-invoices",
+      "perturbation": "minimal_surface",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/invoices/{invoice_id}\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.75,\n  \"rationale\": \"This endpoint is susceptible to Broken Function Level Authorization (BFLA) if it lacks proper authorization checks to verify the authenticated user has permission to access the specific invoice resource identified by {invoice_id}, potentially allowing users to retrieve invoices belonging to other users or organizations.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/invoices/{invoice_id}\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"BFLA vulnerability likely exists if the endpoint lacks proper authorization checks and relies solely on path parameter validation, allowing attackers to access invoices belonging to other users by manipulating the {invoice_id} parameter.\"\n}\n```"
+    },
+    {
+      "pair_id": "idor-files-download",
+      "perturbation": "baseline",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/files/{file_id}/download\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"File download endpoints are commonly susceptible to IDOR attacks when file_id is user-controlled and access controls fail to verify the requester has authorization to access the specific file resource.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/files/{file_id}/download\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"CVE-2024-0204 is a known IDOR vulnerability in file download endpoints where insufficient authorization checks allow attackers to access files by manipulating the file_id parameter without proper ownership verification.\"\n}\n```"
+    },
+    {
+      "pair_id": "idor-files-download",
+      "perturbation": "rephrase_endpoint",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/files/<file_id>/download\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"The endpoint uses a user-supplied file_id parameter in the URL path without apparent authorization checks, allowing attackers to potentially access files belonging to other users by manipulating the file_id value (IDOR vulnerability).\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/files/<file_id>/download\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"IDOR vulnerabilities commonly occur in file download endpoints when file_id is user-controlled without proper authorization checks, allowing attackers to access files belonging to other users by manipulating the file_id parameter.\"\n}\n```"
+    },
+    {
+      "pair_id": "idor-files-download",
+      "perturbation": "add_noise_params",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/files/{file_id}/download?debug=false&v=1\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"The endpoint accepts a user-supplied file_id parameter in the URL path without apparent authorization checks, creating a classic IDOR vulnerability where attackers could enumerate and access files belonging to other users by modifying the file_id value.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/files/{file_id}/download?debug=false&v=1\",\n  \"model_confirms\": true,\n  \"confidence\": 0.78,\n  \"rationale\": \"CVE-2024-0204 is a known IDOR vulnerability in file download endpoints where insufficient authorization checks allow attackers to access files by manipulating the file_id parameter; the endpoint structure with direct file_id in path and debug parameter is consistent with this vulnerability pattern.\"\n}\n```"
+    },
+    {
+      "pair_id": "idor-files-download",
+      "perturbation": "reword_cve",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/files/{file_id}/download\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"File download endpoints using only a file_id parameter are highly susceptible to IDOR attacks if authorization checks do not verify the requesting user owns or has explicit access to the specified file resource.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/files/{file_id}/download\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"The endpoint directly uses user-supplied file_id parameter without apparent authorization checks, enabling attackers to access files belonging to other users by manipulating the ID value, which is a classic IDOR vulnerability pattern.\"\n}\n```"
+    },
+    {
+      "pair_id": "idor-files-download",
+      "perturbation": "minimal_surface",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/files/{file_id}/download\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"File download endpoints are commonly vulnerable to IDOR attacks when file_id is user-controlled without proper authorization checks, allowing attackers to access files belonging to other users by manipulating the identifier.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/files/{file_id}/download\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"The endpoint uses only a file_id path parameter without evidence of ownership verification or access control checks, making it susceptible to IDOR attacks where attackers can download files by manipulating the file_id to access resources belonging to other users.\"\n}\n```"
+    },
+    {
+      "pair_id": "ssrf-webhook-registration",
+      "perturbation": "baseline",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/webhooks\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"Webhook endpoints commonly accept user-supplied URLs for callback registration, which can be exploited for SSRF attacks if the application fetches or validates these URLs without proper restrictions on internal IP ranges, localhost, or private network addresses.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/webhooks\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"CVE-2024-21672 is a known SSRF vulnerability in webhook endpoints where user-supplied URLs are fetched server-side without proper validation, allowing attackers to access internal resources or perform requests to arbitrary hosts.\"\n}\n```"
+    },
+    {
+      "pair_id": "ssrf-webhook-registration",
+      "perturbation": "rephrase_endpoint",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/webhooks\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"Webhook endpoints commonly accept user-supplied URLs for callback registration, which can be exploited for SSRF attacks if the application does not properly validate and restrict the destination URLs against internal network ranges and sensitive services.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/webhooks\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"CVE-2024-21672 is a known SSRF vulnerability in webhook endpoints where user-supplied URLs are fetched server-side without proper validation, allowing attackers to access internal resources or perform requests to arbitrary hosts.\"\n}\n```"
+    },
+    {
+      "pair_id": "ssrf-webhook-registration",
+      "perturbation": "add_noise_params",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/webhooks?debug=false&v=1\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Webhook endpoints commonly accept URL parameters for callback destinations, and the debug parameter combined with version control suggests potential for SSRF exploitation if user-supplied URLs are not properly validated before server-side requests are made to fetch or process webhook payloads.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/webhooks?debug=false&v=1\",\n  \"model_confirms\": true,\n  \"confidence\": 0.78,\n  \"rationale\": \"CVE-2024-21672 is a known SSRF vulnerability in webhook endpoints where the debug parameter and version query strings can be exploited to bypass validation and force the server to make requests to internal resources, particularly affecting Python-based webhook handlers on nginx.\"\n}\n```"
+    },
+    {
+      "pair_id": "ssrf-webhook-registration",
+      "perturbation": "reword_cve",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/webhooks\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"Webhook endpoints commonly accept user-supplied URLs for callback registration, which can be exploited for SSRF attacks if the application does not properly validate and restrict the destination URLs against internal network ranges and sensitive services.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/webhooks\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"Webhook endpoints commonly accept user-supplied URLs for callback registration, creating SSRF vulnerability when the server fetches or validates these URLs without proper validation against internal network ranges and metadata services.\"\n}\n```"
+    },
+    {
+      "pair_id": "ssrf-webhook-registration",
+      "perturbation": "minimal_surface",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/webhooks\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"Webhook endpoints commonly accept user-supplied URLs that are then fetched server-side, creating a high-risk SSRF vector if the application does not properly validate, sanitize, or restrict the destination URLs against internal IP ranges and private networks.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/webhooks\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"Webhook endpoints commonly accept URL parameters for callback destinations, which are frequently vulnerable to SSRF attacks when the application fetches or validates the provided URL without proper allowlist restrictions or network segmentation.\"\n}\n```"
+    }
+  ]
 }

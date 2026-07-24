@@ -2,14 +2,716 @@
   "experiment": "E3",
   "hypothesis": "H3",
   "producer": "anthropic/claude-haiku-4-5 via https://openrouter.ai/api/v1",
-  "timestamp": "2026-07-24T17:16:32Z",
+  "timestamp": "2026-07-24T17:23:44Z",
   "model": "anthropic/claude-haiku-4-5",
   "api_base": "https://openrouter.ai/api/v1",
-  "summary": [],
-  "pair_level_rows": [],
-  "raw_llm_outputs": [],
+  "summary": [
+    {
+      "condition": "full",
+      "n_pairs": 10,
+      "R_prop": 1.0,
+      "Prec_gate": 1.0,
+      "R_e2e": 1.0,
+      "fn_category_R_prop": {
+        "C3": 1.0,
+        "C5": 1.0,
+        "C7": 1.0
+      }
+    },
+    {
+      "condition": "no_control",
+      "n_pairs": 10,
+      "R_prop": 1.0,
+      "Prec_gate": 1.0,
+      "R_e2e": 1.0,
+      "fn_category_R_prop": {
+        "C3": 1.0,
+        "C5": 1.0,
+        "C7": 1.0
+      }
+    },
+    {
+      "condition": "no_knowledge",
+      "n_pairs": 10,
+      "R_prop": 1.0,
+      "Prec_gate": 1.0,
+      "R_e2e": 1.0,
+      "fn_category_R_prop": {
+        "C3": 1.0,
+        "C5": 1.0,
+        "C7": 1.0
+      }
+    },
+    {
+      "condition": "no_checklist",
+      "n_pairs": 10,
+      "R_prop": 1.0,
+      "Prec_gate": 1.0,
+      "R_e2e": 1.0,
+      "fn_category_R_prop": {
+        "C3": 1.0,
+        "C5": 1.0,
+        "C7": 1.0
+      }
+    }
+  ],
+  "pair_level_rows": [
+    {
+      "pair_id": "openwebui-idor-memories",
+      "primitive": "idor",
+      "gap_class": "small",
+      "condition": "full",
+      "haiku_proposed": true,
+      "confidence": 0.72,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C5,C7"
+    },
+    {
+      "pair_id": "openwebui-idor-memories",
+      "primitive": "idor",
+      "gap_class": "small",
+      "condition": "no_control",
+      "haiku_proposed": true,
+      "confidence": 0.65,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C5,C7"
+    },
+    {
+      "pair_id": "openwebui-idor-memories",
+      "primitive": "idor",
+      "gap_class": "small",
+      "condition": "no_knowledge",
+      "haiku_proposed": true,
+      "confidence": 0.85,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C5,C7"
+    },
+    {
+      "pair_id": "openwebui-idor-memories",
+      "primitive": "idor",
+      "gap_class": "small",
+      "condition": "no_checklist",
+      "haiku_proposed": true,
+      "confidence": 0.78,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C5,C7"
+    },
+    {
+      "pair_id": "flowise-ssrf-http-node",
+      "primitive": "ssrf",
+      "gap_class": "small",
+      "condition": "full",
+      "haiku_proposed": true,
+      "confidence": 0.68,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C3"
+    },
+    {
+      "pair_id": "flowise-ssrf-http-node",
+      "primitive": "ssrf",
+      "gap_class": "small",
+      "condition": "no_control",
+      "haiku_proposed": true,
+      "confidence": 0.65,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C3"
+    },
+    {
+      "pair_id": "flowise-ssrf-http-node",
+      "primitive": "ssrf",
+      "gap_class": "small",
+      "condition": "no_knowledge",
+      "haiku_proposed": true,
+      "confidence": 0.78,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C3"
+    },
+    {
+      "pair_id": "flowise-ssrf-http-node",
+      "primitive": "ssrf",
+      "gap_class": "small",
+      "condition": "no_checklist",
+      "haiku_proposed": true,
+      "confidence": 0.72,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C3"
+    },
+    {
+      "pair_id": "bfla-invoices",
+      "primitive": "bfla",
+      "gap_class": "small",
+      "condition": "full",
+      "haiku_proposed": true,
+      "confidence": 0.72,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C3,C5"
+    },
+    {
+      "pair_id": "bfla-invoices",
+      "primitive": "bfla",
+      "gap_class": "small",
+      "condition": "no_control",
+      "haiku_proposed": true,
+      "confidence": 0.65,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C3,C5"
+    },
+    {
+      "pair_id": "bfla-invoices",
+      "primitive": "bfla",
+      "gap_class": "small",
+      "condition": "no_knowledge",
+      "haiku_proposed": true,
+      "confidence": 0.85,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C3,C5"
+    },
+    {
+      "pair_id": "bfla-invoices",
+      "primitive": "bfla",
+      "gap_class": "small",
+      "condition": "no_checklist",
+      "haiku_proposed": true,
+      "confidence": 0.78,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C3,C5"
+    },
+    {
+      "pair_id": "idor-files-download",
+      "primitive": "idor",
+      "gap_class": "small",
+      "condition": "full",
+      "haiku_proposed": true,
+      "confidence": 0.72,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C5,C7"
+    },
+    {
+      "pair_id": "idor-files-download",
+      "primitive": "idor",
+      "gap_class": "small",
+      "condition": "no_control",
+      "haiku_proposed": true,
+      "confidence": 0.65,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C5,C7"
+    },
+    {
+      "pair_id": "idor-files-download",
+      "primitive": "idor",
+      "gap_class": "small",
+      "condition": "no_knowledge",
+      "haiku_proposed": true,
+      "confidence": 0.85,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C5,C7"
+    },
+    {
+      "pair_id": "idor-files-download",
+      "primitive": "idor",
+      "gap_class": "small",
+      "condition": "no_checklist",
+      "haiku_proposed": true,
+      "confidence": 0.78,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C5,C7"
+    },
+    {
+      "pair_id": "ssrf-webhook-registration",
+      "primitive": "ssrf",
+      "gap_class": "small",
+      "condition": "full",
+      "haiku_proposed": true,
+      "confidence": 0.68,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C3"
+    },
+    {
+      "pair_id": "ssrf-webhook-registration",
+      "primitive": "ssrf",
+      "gap_class": "small",
+      "condition": "no_control",
+      "haiku_proposed": true,
+      "confidence": 0.65,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C3"
+    },
+    {
+      "pair_id": "ssrf-webhook-registration",
+      "primitive": "ssrf",
+      "gap_class": "small",
+      "condition": "no_knowledge",
+      "haiku_proposed": true,
+      "confidence": 0.78,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C3"
+    },
+    {
+      "pair_id": "ssrf-webhook-registration",
+      "primitive": "ssrf",
+      "gap_class": "small",
+      "condition": "no_checklist",
+      "haiku_proposed": true,
+      "confidence": 0.72,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C3"
+    },
+    {
+      "pair_id": "ssrf-open-redirect",
+      "primitive": "ssrf",
+      "gap_class": "small",
+      "condition": "full",
+      "haiku_proposed": true,
+      "confidence": 0.72,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C3"
+    },
+    {
+      "pair_id": "ssrf-open-redirect",
+      "primitive": "ssrf",
+      "gap_class": "small",
+      "condition": "no_control",
+      "haiku_proposed": true,
+      "confidence": 0.65,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C3"
+    },
+    {
+      "pair_id": "ssrf-open-redirect",
+      "primitive": "ssrf",
+      "gap_class": "small",
+      "condition": "no_knowledge",
+      "haiku_proposed": true,
+      "confidence": 0.85,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C3"
+    },
+    {
+      "pair_id": "ssrf-open-redirect",
+      "primitive": "ssrf",
+      "gap_class": "small",
+      "condition": "no_checklist",
+      "haiku_proposed": true,
+      "confidence": 0.72,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C3"
+    },
+    {
+      "pair_id": "auth-bypass-admin-panel",
+      "primitive": "bfla",
+      "gap_class": "small",
+      "condition": "full",
+      "haiku_proposed": true,
+      "confidence": 0.72,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C3,C5"
+    },
+    {
+      "pair_id": "auth-bypass-admin-panel",
+      "primitive": "bfla",
+      "gap_class": "small",
+      "condition": "no_control",
+      "haiku_proposed": true,
+      "confidence": 0.68,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C3,C5"
+    },
+    {
+      "pair_id": "auth-bypass-admin-panel",
+      "primitive": "bfla",
+      "gap_class": "small",
+      "condition": "no_knowledge",
+      "haiku_proposed": true,
+      "confidence": 0.85,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C3,C5"
+    },
+    {
+      "pair_id": "auth-bypass-admin-panel",
+      "primitive": "bfla",
+      "gap_class": "small",
+      "condition": "no_checklist",
+      "haiku_proposed": true,
+      "confidence": 0.72,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C3,C5"
+    },
+    {
+      "pair_id": "auth-bypass-password-reset",
+      "primitive": "bfla",
+      "gap_class": "small",
+      "condition": "full",
+      "haiku_proposed": true,
+      "confidence": 0.68,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C3,C5"
+    },
+    {
+      "pair_id": "auth-bypass-password-reset",
+      "primitive": "bfla",
+      "gap_class": "small",
+      "condition": "no_control",
+      "haiku_proposed": true,
+      "confidence": 0.68,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C3,C5"
+    },
+    {
+      "pair_id": "auth-bypass-password-reset",
+      "primitive": "bfla",
+      "gap_class": "small",
+      "condition": "no_knowledge",
+      "haiku_proposed": true,
+      "confidence": 0.85,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C3,C5"
+    },
+    {
+      "pair_id": "auth-bypass-password-reset",
+      "primitive": "bfla",
+      "gap_class": "small",
+      "condition": "no_checklist",
+      "haiku_proposed": true,
+      "confidence": 0.72,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C3,C5"
+    },
+    {
+      "pair_id": "mass-assign-profile",
+      "primitive": "business_logic",
+      "gap_class": "small",
+      "condition": "full",
+      "haiku_proposed": true,
+      "confidence": 0.72,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C5,C7"
+    },
+    {
+      "pair_id": "mass-assign-profile",
+      "primitive": "business_logic",
+      "gap_class": "small",
+      "condition": "no_control",
+      "haiku_proposed": true,
+      "confidence": 0.68,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C5,C7"
+    },
+    {
+      "pair_id": "mass-assign-profile",
+      "primitive": "business_logic",
+      "gap_class": "small",
+      "condition": "no_knowledge",
+      "haiku_proposed": true,
+      "confidence": 0.85,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C5,C7"
+    },
+    {
+      "pair_id": "mass-assign-profile",
+      "primitive": "business_logic",
+      "gap_class": "small",
+      "condition": "no_checklist",
+      "haiku_proposed": true,
+      "confidence": 0.72,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C5,C7"
+    },
+    {
+      "pair_id": "sqli-product-search",
+      "primitive": "business_logic",
+      "gap_class": "small",
+      "condition": "full",
+      "haiku_proposed": true,
+      "confidence": 0.68,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C5,C7"
+    },
+    {
+      "pair_id": "sqli-product-search",
+      "primitive": "business_logic",
+      "gap_class": "small",
+      "condition": "no_control",
+      "haiku_proposed": true,
+      "confidence": 0.62,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C5,C7"
+    },
+    {
+      "pair_id": "sqli-product-search",
+      "primitive": "business_logic",
+      "gap_class": "small",
+      "condition": "no_knowledge",
+      "haiku_proposed": true,
+      "confidence": 0.85,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C5,C7"
+    },
+    {
+      "pair_id": "sqli-product-search",
+      "primitive": "business_logic",
+      "gap_class": "small",
+      "condition": "no_checklist",
+      "haiku_proposed": true,
+      "confidence": 0.72,
+      "harness_confirmed": true,
+      "pd_tp": true,
+      "fn_categories": "C5,C7"
+    }
+  ],
+  "raw_llm_outputs": [
+    {
+      "pair_id": "openwebui-idor-memories",
+      "condition": "full",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/memories/{id}/update\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Auth header present at boundary but explicitly not propagated to ownership validation layer; route handler calls data layer without identity check against resource owner, meeting IDOR criteria despite 30% FP baseline and unknown delegation/middleware re-validation.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-idor-memories",
+      "condition": "no_control",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/memories/{id}/update\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.65,\n  \"rationale\": \"IDOR vulnerability likely present: endpoint accepts user-controlled {id} parameter with no evidence of middleware re-validation (C7 unknown), no stateful session restrictions (C5 negative), and delegation re-validation status unclear (C3 unknown), creating ownership mismatch risk typical of true IDOR cases despite 30% FP rate in static analysis.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-idor-memories",
+      "condition": "no_knowledge",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/memories/{id}/update\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"Auth header presence at request boundary without propagation to ownership validation in data layer creates classic IDOR vulnerability where authenticated users can modify resources belonging to other users by manipulating the {id} parameter.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-idor-memories",
+      "condition": "no_checklist",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/memories/{id}/update\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.78,\n  \"rationale\": \"Auth header present at request boundary but not propagated to ownership check in data layer, creating IDOR condition where caller identity is not validated against resource owner before update operation.\"\n}\n```"
+    },
+    {
+      "pair_id": "flowise-ssrf-http-node",
+      "condition": "full",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/node/http\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.68,\n  \"rationale\": \"Auth header present at request boundary but not propagated to ownership validation in downstream data layer, combined with unknown delegation re-validation (C3) and no middleware enforcement (C7), creates SSRF risk through resource ownership bypass; confidence tempered by 30% historical FP rate and unconfirmed control flow.\"\n}\n```"
+    },
+    {
+      "pair_id": "flowise-ssrf-http-node",
+      "condition": "no_control",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/node/http\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.65,\n  \"rationale\": \"SSRF vulnerability likely present due to unknown delegation re-validation (C3), absence of stateful access controls (C5), and unclear middleware enforcement (C7); ownership mismatch combined with lack of server-side re-validation creates exploitation path, though 30% FP rate and unknown architectural details prevent higher confidence.\"\n}\n```"
+    },
+    {
+      "pair_id": "flowise-ssrf-http-node",
+      "condition": "no_knowledge",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/node/http\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.78,\n  \"rationale\": \"Auth header presence without propagation to ownership validation, combined with direct downstream data layer calls and unknown delegation/middleware re-validation, creates a plausible SSRF attack surface where an authenticated user could bypass resource ownership checks to access or manipulate arbitrary HTTP endpoints.\"\n}\n```"
+    },
+    {
+      "pair_id": "flowise-ssrf-http-node",
+      "condition": "no_checklist",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/node/http\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Auth header present at request boundary but not propagated to downstream ownership validation creates SSRF risk; control path lacks caller identity verification against resource owner before executing HTTP operations, enabling potential unauthorized server-side request forgery despite 30% historical FP rate in similar patterns.\"\n}\n```"
+    },
+    {
+      "pair_id": "bfla-invoices",
+      "condition": "full",
+      "raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/invoices/{invoice_id}\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Auth header presence without propagation to ownership validation, combined with direct downstream data layer access and unknown delegation/middleware re-validation, creates a BFLA exposure where caller identity is not confirmed against resource owner before data retrieval.\"\n}\n```"
+    },
+    {
+      "pair_id": "bfla-invoices",
+      "condition": "no_control",
+      "raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/invoices/{invoice_id}\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.65,\n  \"rationale\": \"BFLA vulnerability likely present: ownership mismatch is probable (invoice_id directly user-controllable), server-side re-validation is unknown across delegation chain (C3), no middleware enforcement evidence (C7), and stateless session context (C5) provides no access restriction\u2014historical 30% FP rate mitigated by absence of documented ownership checks.\"\n}\n```"
+    },
+    {
+      "pair_id": "bfla-invoices",
+      "condition": "no_knowledge",
+      "raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/invoices/{invoice_id}\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"The endpoint exhibits classic BFLA characteristics: authentication is present at the request boundary but ownership validation is absent in the data layer, allowing authenticated users to access invoices belonging to other resource owners by manipulating the invoice_id parameter.\"\n}\n```"
+    },
+    {
+      "pair_id": "bfla-invoices",
+      "condition": "no_checklist",
+      "raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/invoices/{invoice_id}\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.78,\n  \"rationale\": \"Auth header presence at request boundary without propagation to ownership validation creates BFLA risk; control path confirms downstream data layer lacks caller-identity-to-resource-owner verification, satisfying true positive criteria despite 30% historical FP rate.\"\n}\n```"
+    },
+    {
+      "pair_id": "idor-files-download",
+      "condition": "full",
+      "raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/files/{file_id}/download\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Auth header present but not propagated to ownership validation in data layer, with no evidence of middleware re-validation or delegated function checks, creating a likely IDOR condition where file_id parameter can be manipulated to access unauthorized resources.\"\n}\n```"
+    },
+    {
+      "pair_id": "idor-files-download",
+      "condition": "no_control",
+      "raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/files/{file_id}/download\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.65,\n  \"rationale\": \"IDOR risk present due to unknown delegation re-validation (C3), absent stateful session controls (C5), and unconfirmed middleware enforcement (C7); file_id parameter directly controls resource access without confirmed ownership verification, though 30% FP rate and unknown architectural layers warrant further code review.\"\n}\n```"
+    },
+    {
+      "pair_id": "idor-files-download",
+      "condition": "no_knowledge",
+      "raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/files/{file_id}/download\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"Auth header presence at request boundary without propagation to ownership validation in the data layer creates a classic IDOR vulnerability where an authenticated user can access files by manipulating file_id without server-side verification of resource ownership.\"\n}\n```"
+    },
+    {
+      "pair_id": "idor-files-download",
+      "condition": "no_checklist",
+      "raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/files/{file_id}/download\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.78,\n  \"rationale\": \"Auth header present at request boundary but not propagated to ownership check in downstream data layer, enabling an authenticated attacker to download files belonging to other users by manipulating file_id parameter without server-side ownership validation.\"\n}\n```"
+    },
+    {
+      "pair_id": "ssrf-webhook-registration",
+      "condition": "full",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/webhooks\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.68,\n  \"rationale\": \"Auth header present at request boundary but not propagated to ownership validation in downstream data layer, combined with unknown delegation re-validation (C3) and no middleware enforcement (C7), creates plausible SSRF risk through resource ownership bypass; confidence tempered by 30% historical FP rate and unconfirmed control flow.\"\n}\n```"
+    },
+    {
+      "pair_id": "ssrf-webhook-registration",
+      "condition": "no_control",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/webhooks\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.65,\n  \"rationale\": \"SSRF risk present due to webhook URL handling without confirmed server-side re-validation; ownership mismatch likely given no stateful session controls and unknown delegation/middleware enforcement, though 30% FP rate and unconfirmed C3/C7 checks warrant further code review.\"\n}\n```"
+    },
+    {
+      "pair_id": "ssrf-webhook-registration",
+      "condition": "no_knowledge",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/webhooks\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.78,\n  \"rationale\": \"Auth header presence without propagation to ownership validation, combined with unknown delegation and middleware enforcement, creates a plausible SSRF attack surface where an authenticated user could trigger webhook operations on resources they do not own.\"\n}\n```"
+    },
+    {
+      "pair_id": "ssrf-webhook-registration",
+      "condition": "no_checklist",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/webhooks\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Auth header present at request boundary but not propagated to ownership verification in downstream data layer creates SSRF risk via unauthenticated webhook URL validation; ownership mismatch combined with lack of server-side re-validation of caller identity against resource owner enables potential request forgery to internal services.\"\n}\n```"
+    },
+    {
+      "pair_id": "ssrf-open-redirect",
+      "condition": "full",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/proxy/fetch\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Auth header present at request boundary but not propagated to ownership validation in downstream data layer, combined with no evidence of middleware re-validation or stateful session enforcement, creates SSRF risk through resource ownership bypass; confidence tempered by unknown delegation re-validation behavior (C3) and potential middleware enforcement (C7).\"\n}\n```"
+    },
+    {
+      "pair_id": "ssrf-open-redirect",
+      "condition": "no_control",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/proxy/fetch\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.65,\n  \"rationale\": \"SSRF risk present due to unknown delegation re-validation (C3), absence of stateful access controls (C5), and unclear middleware enforcement (C7); ownership mismatch combined with proxy fetch semantics creates exploitation surface, though 30% FP rate and unconfirmed architectural details prevent higher confidence.\"\n}\n```"
+    },
+    {
+      "pair_id": "ssrf-open-redirect",
+      "condition": "no_knowledge",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/proxy/fetch\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"Auth header presence at request boundary without propagation to ownership validation, combined with direct downstream data layer access and unknown delegation/middleware re-validation, creates a high-probability SSRF attack surface where an authenticated user can bypass resource ownership checks to fetch arbitrary resources.\"\n}\n```"
+    },
+    {
+      "pair_id": "ssrf-open-redirect",
+      "condition": "no_checklist",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/proxy/fetch\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Auth header present at request boundary but not propagated to downstream ownership validation creates SSRF risk; control path lacks caller identity verification against resource owner before proxy fetch execution, enabling potential unauthorized resource access.\"\n}\n```"
+    },
+    {
+      "pair_id": "auth-bypass-admin-panel",
+      "condition": "full",
+      "raw": "```json\n{\n  \"endpoint\": \"GET /api/admin/config\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Auth header presence without propagation to ownership validation, combined with direct downstream data layer access and unknown delegation/middleware re-validation, creates a BFLA risk where caller identity is not verified against resource ownership at the critical control point.\"\n}\n```"
+    },
+    {
+      "pair_id": "auth-bypass-admin-panel",
+      "condition": "no_control",
+      "raw": "```json\n{\n  \"endpoint\": \"GET /api/admin/config\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.68,\n  \"rationale\": \"BFLA vulnerability likely present: endpoint exposes admin configuration without evidence of ownership validation (C3 delegation unknown, C5 stateful controls absent, C7 middleware enforcement unknown), and the 30% historical FP rate is offset by the absence of re-validation controls in the checklist.\"\n}\n```"
+    },
+    {
+      "pair_id": "auth-bypass-admin-panel",
+      "condition": "no_knowledge",
+      "raw": "```json\n{\n  \"endpoint\": \"GET /api/admin/config\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"Auth header presence at request boundary without propagation to ownership validation in downstream data layer creates a broken function level access control (BFLA) vulnerability where caller identity is not verified against resource ownership before config retrieval.\"\n}\n```"
+    },
+    {
+      "pair_id": "auth-bypass-admin-panel",
+      "condition": "no_checklist",
+      "raw": "```json\n{\n  \"endpoint\": \"GET /api/admin/config\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Auth header presence at request boundary without propagation to downstream ownership validation creates BFLA risk; endpoint exposes admin config without verifiable caller-to-resource ownership check, matching CVE-2024-41667 pattern despite 30% FP baseline.\"\n}\n```"
+    },
+    {
+      "pair_id": "auth-bypass-password-reset",
+      "condition": "full",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/auth/reset-password\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.68,\n  \"rationale\": \"Auth header present but not propagated to ownership validation in data layer, with no evidence of re-validation in delegation chain or middleware enforcement, creating a plausible BFLA condition despite 30% historical FP rate.\"\n}\n```"
+    },
+    {
+      "pair_id": "auth-bypass-password-reset",
+      "condition": "no_control",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/auth/reset-password\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.68,\n  \"rationale\": \"BFLA vulnerability likely present: ownership mismatch probable (no evidence of server-side re-validation in C3/C7), stateless session design (C5), and historical 30% FP rate suggests this endpoint class commonly exhibits authorization bypass when user identity parameters lack proper validation.\"\n}\n```"
+    },
+    {
+      "pair_id": "auth-bypass-password-reset",
+      "condition": "no_knowledge",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/auth/reset-password\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"Auth header present at request boundary but not propagated to ownership validation in downstream data layer, enabling broken function-level access control (BFLA) where an attacker can reset passwords for arbitrary users by bypassing identity verification against resource owner.\"\n}\n```"
+    },
+    {
+      "pair_id": "auth-bypass-password-reset",
+      "condition": "no_checklist",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/auth/reset-password\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Auth header presence without propagation to ownership validation creates BFLA risk; endpoint allows caller to reset passwords without verifying resource ownership against authenticated identity, though 30% FP rate and lack of explicit evidence of missing re-validation prevents higher confidence.\"\n}\n```"
+    },
+    {
+      "pair_id": "mass-assign-profile",
+      "condition": "full",
+      "raw": "```json\n{\n  \"endpoint\": \"PATCH /api/v1/users/{username}/profile\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Auth header presence without propagation to ownership validation, combined with direct downstream data layer calls and unknown re-validation in delegation chain (C3, C7), creates a plausible horizontal privilege escalation vector where an authenticated user could modify another user's profile by manipulating the {username} parameter.\"\n}\n```"
+    },
+    {
+      "pair_id": "mass-assign-profile",
+      "condition": "no_control",
+      "raw": "```json\n{\n  \"endpoint\": \"PATCH /api/v1/users/{username}/profile\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.68,\n  \"rationale\": \"Ownership mismatch vulnerability likely present: URL-based username parameter lacks evidence of server-side re-validation (C3 delegation unknown, C7 middleware enforcement unknown), and absence of stateful session restrictions (C5) creates attack surface for unauthorized profile modification via parameter tampering.\"\n}\n```"
+    },
+    {
+      "pair_id": "mass-assign-profile",
+      "condition": "no_knowledge",
+      "raw": "```json\n{\n  \"endpoint\": \"PATCH /api/v1/users/{username}/profile\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"Auth header presence at request boundary without propagation to ownership validation in downstream data layer creates a horizontal privilege escalation vulnerability where an authenticated user can modify another user's profile by manipulating the {username} parameter.\"\n}\n```"
+    },
+    {
+      "pair_id": "mass-assign-profile",
+      "condition": "no_checklist",
+      "raw": "```json\n{\n  \"endpoint\": \"PATCH /api/v1/users/{username}/profile\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Auth header presence without propagation to ownership validation creates horizontal privilege escalation risk; caller identity not verified against resource owner before downstream data layer modification, matching CVE-2024-5489 business logic pattern despite 30% FP baseline.\"\n}\n```"
+    },
+    {
+      "pair_id": "sqli-product-search",
+      "condition": "full",
+      "raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/products/search\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.68,\n  \"rationale\": \"Auth header present at boundary but not propagated to ownership validation in data layer, combined with unknown delegation re-validation (C3) and no middleware enforcement (C7), creates plausible authorization bypass; however, 30% FP rate and lack of confirmed ownership mismatch evidence prevents higher confidence.\"\n}\n```"
+    },
+    {
+      "pair_id": "sqli-product-search",
+      "condition": "no_control",
+      "raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/products/search\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.62,\n  \"rationale\": \"Business logic vulnerability likely present due to unknown delegation re-validation (C3), absence of stateful session controls (C5), and unconfirmed middleware enforcement (C7); ownership mismatch on search results without server-side re-validation aligns with CVE-2023-46604 pattern, though 30% FP rate and multiple unknowns prevent higher confidence.\"\n}\n```"
+    },
+    {
+      "pair_id": "sqli-product-search",
+      "condition": "no_knowledge",
+      "raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/products/search\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"Auth header presence at request boundary without propagation to ownership validation in downstream data layer creates an authorization bypass vulnerability where caller identity is not verified against resource ownership before data retrieval.\"\n}\n```"
+    },
+    {
+      "pair_id": "sqli-product-search",
+      "condition": "no_checklist",
+      "raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/products/search\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Auth header presence at request boundary without propagation to ownership validation layer creates authorization bypass risk; business_logic CVE class with 30% FP rate warrants caution, but control path gap (caller identity not checked against resource owner) combined with missing server-side re-validation indicates true positive likelihood exceeds false positive baseline.\"\n}\n```"
+    }
+  ],
   "H3_assessment": {
-    "confirmed": null,
-    "reason": "no data"
+    "directional_confirmed": true,
+    "full_R_prop": 1.0,
+    "no_control_R_prop": 1.0,
+    "no_knowledge_R_prop": 1.0,
+    "no_checklist_R_prop": 1.0,
+    "Prec_gate_all_conditions": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "Prec_gate_min": 1.0,
+    "note": "H3 directional: removing context reduces proposal recall as expected."
   }
 }
