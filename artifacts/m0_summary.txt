@@ -1,0 +1,22 @@
+M0 — Walking Skeleton: B-V2P IDOR Pair (CVE-2024-7041)
+============================================================
+Pair: openwebui-idor-memories
+CVE:  CVE-2024-7041
+
+P2 Differential Verdict:
+  Vuln side:    status=200 → gained_access=True, verdict=confirmed, evidence_class=diff
+  Patched side: status=403 → gained_access=False, verdict=unconfirmed, evidence_class=none
+  Flip (vuln=confirmed, patched=unconfirmed): True
+
+Metrics (over M0 label set: IDOR endpoint only):
+  R_prop           = 1.000  (proposal recall over known labels)
+  Prec_gate        = 1.000  (confirmation precision)
+  R_e2e            = 1.000  (end-to-end recall)
+  funnel_efficiency= 2.000  (harness runs / confirmed)
+
+Funnel counts:
+  Labels (|V|)   = 1
+  Proposed (|P|) = 1
+  Confirmed (|C|)= 1
+  Reported (|R|) = 1
+  Harness runs   = 2 (2 runs: vuln + patched sides)

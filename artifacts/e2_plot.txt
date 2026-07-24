@@ -1,0 +1,20 @@
+E2 — Gap-Dictation: Paired McNemar
+============================================================
+Power check: small_gap_count=2, required_discordant=10, sufficient=False
+
+Per-pair results:
+------------------------------------------------------------
+  openwebui-idor-memories        gap=0.08 (small)
+    FP-arm: strix=✓, proxy=✗
+    FN-arm: strix=✓, proxy=✓
+  flowise-ssrf-http-node         gap=0.11 (small)
+    FP-arm: strix=✓, proxy=✗
+    FN-arm: strix=✓, proxy=✓
+
+FP-arm McNemar: b=2, c=0, χ²=0.500, p≈0.779
+FN-arm McNemar: b=0, c=0, χ²=0.000, p≈1.000
+
+H2a (FP win): True — strix has b=2 wins vs c=0 losses on FP-arm
+H2b (FN honest): proposer recall gap-dependent (corpus too small for tight ρ)
+NOTE: Corpus underpowered (n=2). Results are directionally consistent with H2a
+      but cannot be reported as statistically significant. More pairs needed.

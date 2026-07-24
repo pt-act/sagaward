@@ -1,0 +1,32 @@
+{
+  "pair_id": "openwebui-idor-memories",
+  "cve": "CVE-2024-7041",
+  "vuln": {
+    "status_cross_identity": 200,
+    "gained_access": true,
+    "content_changed": true,
+    "verdict": "confirmed",
+    "evidence_class": "diff"
+  },
+  "patched": {
+    "status_cross_identity": 403,
+    "gained_access": false,
+    "content_changed": false,
+    "verdict": "unconfirmed",
+    "evidence_class": "none"
+  },
+  "metrics": {
+    "R_prop": 1.0,
+    "Prec_gate": 1.0,
+    "R_e2e": 1.0,
+    "funnel_efficiency": 2.0
+  },
+  "funnel_counts": {
+    "num_labels": 1,
+    "num_proposed": 1,
+    "num_confirmed": 1,
+    "num_reported": 1,
+    "num_harness_runs": 2
+  },
+  "p2_differential_flip": true
+}

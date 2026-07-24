@@ -1,0 +1,59 @@
+{
+  "perturbations": [
+    {
+      "perturbation": "baseline",
+      "strix_verdict": "confirmed",
+      "strix_confirmed": true,
+      "proxy_confidence": 0.65,
+      "proxy_verdict": "confirmed",
+      "proxy_confirmed": true,
+      "verdict_changed_strix": false,
+      "verdict_changed_proxy": false
+    },
+    {
+      "perturbation": "header_reorder",
+      "strix_verdict": "confirmed",
+      "strix_confirmed": true,
+      "proxy_confidence": 0.53,
+      "proxy_verdict": "confirmed",
+      "proxy_confirmed": true,
+      "verdict_changed_strix": false,
+      "verdict_changed_proxy": false
+    },
+    {
+      "perturbation": "error_text_reword",
+      "strix_verdict": "confirmed",
+      "strix_confirmed": true,
+      "proxy_confidence": 0.33,
+      "proxy_verdict": "unconfirmed",
+      "proxy_confirmed": false,
+      "verdict_changed_strix": false,
+      "verdict_changed_proxy": true
+    },
+    {
+      "perturbation": "latency_jitter",
+      "strix_verdict": "confirmed",
+      "strix_confirmed": true,
+      "proxy_confidence": 0.47,
+      "proxy_verdict": "unconfirmed",
+      "proxy_confirmed": false,
+      "verdict_changed_strix": false,
+      "verdict_changed_proxy": true
+    },
+    {
+      "perturbation": "whitespace_body",
+      "strix_verdict": "confirmed",
+      "strix_confirmed": true,
+      "proxy_confidence": 0.57,
+      "proxy_verdict": "confirmed",
+      "proxy_confirmed": true,
+      "verdict_changed_strix": false,
+      "verdict_changed_proxy": false
+    }
+  ],
+  "strix_invariant": true,
+  "strix_variance_count": 0,
+  "proxy_flip_count": 2,
+  "H4_confirmed": true,
+  "note": "strix harness verdict rests on HTTP status codes, not cosmetic surface features"
+}

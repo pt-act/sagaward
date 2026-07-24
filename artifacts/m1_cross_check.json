@@ -1,0 +1,34 @@
+{
+  "summary": {
+    "r_prop": 1.0,
+    "prec_gate": 1.0,
+    "r_e2e": 1.0,
+    "funnel_efficiency": 2.0,
+    "num_labels": 1,
+    "num_proposed": 1,
+    "num_confirmed": 1,
+    "num_reported": 1,
+    "num_harness_runs": 2
+  },
+  "cross_check": {
+    "agree": true,
+    "per_metric": {
+      "r_prop": true,
+      "prec_gate": true,
+      "r_e2e": true,
+      "funnel_efficiency": true
+    },
+    "funnel": {
+      "r_prop": 1.0,
+      "prec_gate": 1.0,
+      "r_e2e": 1.0,
+      "funnel_efficiency": 2.0
+    },
+    "expected": {
+      "r_prop": 1.0,
+      "prec_gate": 1.0,
+      "r_e2e": 1.0,
+      "funnel_efficiency": 2.0
+    }
+  }
+}
