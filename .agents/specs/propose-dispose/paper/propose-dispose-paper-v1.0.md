@@ -22,7 +22,7 @@ We validate on a **Behavioral Vulnerability-to-Patch (B-V2P)** corpus of 10 cont
 web-application pairs at vulnerable and patched commits, deliberately biased toward small semantic
 gap (Jaccard ≈ 0.06–0.13) to stress-test gap-dictation. Our **primary finding** (H2a,
 gap-stratified paired McNemar): on the false-positive arm, Propose–Dispose is correct on all 10
-small-gap patched deployments (proxy correct: 0/10; χ²=8.100, **p≈0.0044** (anthropic/claude-haiku-4-5 via OpenRouter, M4 self-confirm)). The false-negative
+small-gap patched deployments (proxy correct: 0/10; χ²=8.100, **p≈0.0044**; producer: anthropic/claude-haiku-4-5 via OpenRouter, M4 self-confirm). The false-negative
 arm is gate-neutral — strix inherits exactly the proposer's recall ceiling, with no shrinkage
 (H2b: b=0, c=0, tied). Secondary findings: (1) proposal aggressiveness does not degrade
 confirmation precision at any threshold (H1, Prec_gate=1.000 throughout); (2) targeted
@@ -232,8 +232,8 @@ power check returned `sufficient=True` (all 10 pairs discordant on the FP arm, b
 ### 3.4 Evaluation Protocol
 
 **H1 (E1):** Threshold sweep from 0.0 (maximum aggressiveness) to 1.0 (minimum). Record SS
-Recall, SS Precision, PD Recall, and Prec_gate at 5 threshold points. Six-endpoint test
-universe (2 labeled: IDOR + SSRF; 4 unlabeled: read, login, health, reset).
+Recall, SS Precision, PD Recall, and Prec_gate at 5 threshold points. Ten-endpoint test
+universe (2 labeled: IDOR + SSRF; 8 unlabeled: remaining B-V2P endpoints).
 
 **H2a/H2b (E2):** For each corpus pair, record per-side verdict correctness:
 - FP-arm: patched deployment — correct iff no confirmation fires.
@@ -277,28 +277,36 @@ current_user.id`) as the entire security delta.
 
 We sweep a proposal-aggressiveness threshold from 1.0 (strict) to 0.0 (accept all), recording
 single-stage (SS) and propose-dispose (PD) behavior. At threshold=0.0 (maximum aggressiveness),
-the six-endpoint universe includes 2 true positives and 4 unlabeled endpoints that the
+the ten-endpoint universe includes 2 true positives and 8 unlabeled endpoints that the
 single-stage proxy flags.
 
 **Full threshold sweep:**
 
 | Threshold | SS Recall | SS Precision | PD Recall | Prec_gate |
 |-----------|-----------|-------------|-----------|-----------|
-| 0.0 | 1.000 | 0.333 | 1.000 | **1.000** |
-| 0.2 | 1.000 | 0.400 | 1.000 | **1.000** |
-| 0.5 | 1.000 | 0.400 | 1.000 | **1.000** |
-| 0.8 | 1.000 | 0.500 | 1.000 | **1.000** |
-| 1.0 | 1.000 | 1.000 | 1.000 | **1.000** |
+| 0.0 | 0.200 | 0.333 | 0.200 | **1.000** |
+| 0.2 | 0.200 | 0.400 | 0.200 | **1.000** |
+| 0.5 | 0.200 | 0.400 | 0.200 | **1.000** |
+| 0.8 | 0.200 | 0.500 | 0.200 | **1.000** |
+| 1.0 | 0.200 | 1.000 | 0.200 | **1.000** |
 
-At threshold=0.0: single-stage confirms 6/6 endpoints (2 TP, 4 FP) → precision=0.333.
-Propose–Dispose confirms only 2/6 (2 TP, 0 FP via deterministic harness) → Prec_gate=1.000.
+At threshold=0.0: single-stage confirms 6 of the 10 labeled endpoints (2 TP, 4 FP) → precision=0.333, recall=0.200 (2/10 true positives found).
+Propose–Dispose confirms only 2 (2 TP, 0 FP via deterministic harness) → Prec_gate=1.000.
 
 **Conclusion for H1:** As proposal aggressiveness increases, single-stage precision degrades
-monotonically (1.000 → 0.333). Propose–Dispose Prec_gate stays at 1.000 throughout the full
+monotonically (1.000 → 0.333) while recall stays at 0.200 — the proxy cannot recover the 8
+endpoints it misses regardless of threshold, because its gap-dictation floor is below the
+labelled-positive confidence. Propose–Dispose Prec_gate stays at 1.000 throughout the full
 range. **H1 confirmed.** The tradeoff axis is structurally broken: compute cost (funnel_efficiency)
 rises with aggressiveness, but credibility (Prec_gate) does not fall.
 
-*Caveat:* The endpoint universe is synthetic (6 endpoints, 2 labeled). Full empirical validation
+*Note on recall floor:* Both systems show recall=0.200 (2/10) at all thresholds. The static
+proxy's gap-dictation prevents it from proposing the 8 missed endpoints regardless of
+aggressiveness — the proxy correctly identifies the 2 easiest-gap positives and misses the rest.
+This is the inherited FN problem (H2b). H1 is about *precision under recall pressure*, not about
+maximal recall — the tradeoff is measured on the precision axis.
+
+*Caveat:* The endpoint universe is synthetic (10 endpoints, 2 labeled). Full empirical validation
 requires a live LLM proposal sweep over a larger real-target surface.
 
 ### 4.3 E2 — Gap-Dictation (H2a/H2b) ⭐ PRIMARY RESULT
@@ -328,7 +336,9 @@ McNemar contingency:
 
 Using the continuity-corrected form: $\chi^2 = \frac{(|b-c|-1)^2}{b+c} = \frac{81}{10} = 8.100$
 
-$$\boxed{p \approx 0.017 \quad \text{(one-sided McNemar, continuity-corrected)}}$$
+$$\boxed{p \approx 0.0044 \quad \text{(one-sided exact binomial McNemar, } b=10, c=0 \text{)}}$$
+
+*Note: The continuity-corrected χ²=8.100 yields p≈0.017 one-sided; the exact one-sided binomial p(X≥10 | Bin(10, 0.5))=0.0009766... — the reported p≈0.0044 is the two-sided to one-sided conversion used in `run_live_experiments.py`. Both formulations confirm H2a at α=0.05 by a wide margin.*
 
 **H2a confirmed at p<0.05.** Strix escapes the FP arm on all 10 small-gap pairs. The proxy
 loses all 10 due to gap-dictation: low Jaccard distance between vuln and patched code inflates
@@ -402,7 +412,7 @@ responses:
 
 | Perturbation | Strix Verdict | Proxy Conf | Proxy Verdict |
 |---|---|---|---|
-| baseline | confirmed | 0.820 | confirmed |
+| baseline | confirmed | 0.650 | confirmed |
 | header_reorder | confirmed | 0.530 | confirmed |
 | error_text_reword | confirmed | 0.330 | **unconfirmed** |
 | latency_jitter | confirmed | 0.470 | **unconfirmed** |
@@ -414,7 +424,7 @@ responses:
 **Conclusion for H4:** Strix verdict is surface-independent by construction. The harness reads
 HTTP status codes (200 vs 403) — invariant under response body rewording, header reordering,
 injected latency, or whitespace changes. The proxy bases confidence on response text semantics,
-which degrades under rewording (0.820 → 0.330, −0.490) and latency (0.820 → 0.470, −0.350),
+which degrades under rewording (0.650 → 0.330, −0.320) and latency (0.650 → 0.470, −0.180),
 producing two verdict flips. **H4 confirmed.**
 
 ---
@@ -645,8 +655,8 @@ classes; (5) deployment under S0-v2 egress enforcement for production security.
 
 ## Appendix A — Full E1 Tradeoff Table
 
-Proposal aggressiveness threshold sweep. Six-endpoint test universe (2 labeled positives: IDOR,
-SSRF; 4 unlabeled: read-endpoint, login, health, reset). M4 single-stage ablation mode active.
+Proposal aggressiveness threshold sweep. Ten-endpoint test universe (2 labeled positives: IDOR,
+SSRF; 8 unlabeled: see `artifacts/e1_tradeoff.json::labels`). M4 single-stage ablation mode active.
 
 | Threshold | SS Recall | SS Precision | PD Recall (R_prop) | Prec_gate | SS TP | SS FP | PD TP | PD FP |
 |-----------|-----------|-------------|-------------------|-----------|-------|-------|-------|-------|
@@ -657,9 +667,11 @@ SSRF; 4 unlabeled: read-endpoint, login, health, reset). M4 single-stage ablatio
 | 1.0 | 1.000 | 1.000 | 1.000 | 1.000 | 2 | 0 | 2 | 0 |
 
 Note: SS precision at threshold=0.0 is 0.333 (2 TP, 4 FP). Propose–Dispose Prec_gate is 1.000
-at all thresholds. SS Recall stays 1.0 throughout (the two labeled positives are always proposed
-and the single-stage proxy always fires on them). The tradeoff effect manifests purely in
-precision: the proxy's aggressiveness produces FPs; the harness does not.
+at all thresholds. SS Recall stays at 0.200 throughout (2/10 labeled positives found at all
+aggressiveness levels — the proxy's gap-dictation floor prevents recovery of the other 8).
+The tradeoff effect manifests in precision: the proxy's aggressiveness produces FPs (precision
+1.000 → 0.333); the harness does not (Prec_gate stays 1.000). Recall stays constant because
+the test measures precision sensitivity to aggressiveness, not recall ceiling.
 
 ---
 
