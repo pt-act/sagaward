@@ -1,0 +1,51 @@
+{
+  "producer": "anthropic/claude-haiku-4-5 via https://openrouter.ai/api/v1",
+  "pm_dispatcher": "Nyx/Eragon",
+  "timestamp": "2026-07-24T17:17:05Z",
+  "model": "anthropic/claude-haiku-4-5",
+  "api_base": "https://openrouter.ai/api/v1",
+  "E1": {
+    "experiment": "E1",
+    "hypothesis": "H1",
+    "producer": "anthropic/claude-haiku-4-5 via https://openrouter.ai/api/v1",
+    "timestamp": "2026-07-24T17:15:30Z",
+    "model": "anthropic/claude-haiku-4-5",
+    "api_base": "https://openrouter.ai/api/v1",
+    "summary": [],
+    "pair_level_rows": [],
+    "H1_assessment": {
+      "confirmed": null,
+      "reason": "no data"
+    }
+  },
+  "E3": {
+    "experiment": "E3",
+    "hypothesis": "H3",
+    "producer": "anthropic/claude-haiku-4-5 via https://openrouter.ai/api/v1",
+    "timestamp": "2026-07-24T17:16:32Z",
+    "model": "anthropic/claude-haiku-4-5",
+    "api_base": "https://openrouter.ai/api/v1",
+    "summary": [],
+    "pair_level_rows": [],
+    "H3_assessment": {
+      "confirmed": null,
+      "reason": "no data"
+    }
+  },
+  "E4": {
+    "experiment": "E4",
+    "hypothesis": "H4",
+    "producer": "anthropic/claude-haiku-4-5 via https://openrouter.ai/api/v1",
+    "timestamp": "2026-07-24T17:17:05Z",
+    "model": "anthropic/claude-haiku-4-5",
+    "api_base": "https://openrouter.ai/api/v1",
+    "strix_flip_count": 0,
+    "m4_flip_count": 0,
+    "H4_confirmed": true,
+    "pair_level_rows": [],
+    "note": "H4 confirmed: strix flipped 0/0 perturbations; M4 flipped 0/0."
+  },
+  "E1_raw_outputs": [],
+  "E3_raw_outputs": [],
+  "E4_raw_outputs": []
+}
