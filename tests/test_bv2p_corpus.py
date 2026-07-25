@@ -413,3 +413,116 @@ class TestSqliSearch(TestCase):
             _sqli.reset_state()
             patch_body = json.dumps({"results": attacker()})
         self.assertNotEqual(vuln_body, patch_body)
+
+
+# ── New real CVE pairs ────────────────────────────────────────────────────────
+
+class TestBflaArenaModel:
+    """CVE-2026-59225 — BFLA arena model bypass."""
+
+    def test_vuln_allows_bob_to_use_restricted_model(self):
+        from benchmarks.bv2p.bfla_arena_model.core import generate_via_arena, is_vuln
+        import os
+        os.environ["VULN_MODE"] = "1"
+        result = generate_via_arena("bob", "gpt-4o", "test", bypass_filter=True)
+        assert result["model"] == "gpt-4o"
+
+    def test_patch_denies_bob_on_restricted_model(self):
+        from benchmarks.bv2p.bfla_arena_model.core import generate_via_arena, AccessError
+        import os, importlib
+        os.environ["VULN_MODE"] = "0"
+        import benchmarks.bv2p.bfla_arena_model.core as m
+        importlib.reload(m)
+        try:
+            m.generate_via_arena("bob", "gpt-4o", "test", bypass_filter=True)
+            assert False, "should have raised AccessError"
+        except m.AccessError as e:
+            assert e.status_code == 403
+
+    def test_p2_diff_flags_gained_access(self):
+        import os, importlib
+        os.environ["VULN_MODE"] = "1"
+        import benchmarks.bv2p.bfla_arena_model.core as mv
+        importlib.reload(mv)
+        result_vuln = mv.generate_via_arena("bob", "gpt-4o", "test", bypass_filter=True)
+        gained_vuln = result_vuln.get("model") == "gpt-4o"
+
+        os.environ["VULN_MODE"] = "0"
+        importlib.reload(mv)
+        try:
+            mv.generate_via_arena("bob", "gpt-4o", "test", bypass_filter=True)
+            gained_patch = True
+        except mv.AccessError:
+            gained_patch = False
+
+        assert gained_vuln and not gained_patch
+
+
+class TestBflaKbUpload:
+    """CVE-2026-59217 — BFLA KB upload write-access bypass."""
+
+    def test_vuln_allows_bob_to_link_to_restricted_kb(self):
+        from benchmarks.bv2p.bfla_kb_upload.core import upload_file, reset_state
+        import os
+        os.environ["VULN_MODE"] = "1"
+        reset_state()
+        result = upload_file("bob", "f-test", "test.pdf", "kb-restricted")
+        assert result["linked_to"] == "kb-restricted"
+
+    def test_patch_denies_bob_linking_to_restricted_kb(self):
+        from benchmarks.bv2p.bfla_kb_upload.core import upload_file, reset_state, AccessError
+        import os
+        os.environ["VULN_MODE"] = "0"
+        reset_state()
+        try:
+            upload_file("bob", "f-test", "test.pdf", "kb-restricted")
+            assert False, "should have raised AccessError"
+        except AccessError as e:
+            assert e.status_code == 403
+
+    def test_p2_diff_flags_gained_access(self):
+        import os
+        from benchmarks.bv2p.bfla_kb_upload.core import upload_file, reset_state, AccessError
+        os.environ["VULN_MODE"] = "1"
+        reset_state()
+        result = upload_file("bob", "f-001", "evil.pdf", "kb-restricted")
+        gained_vuln = result["linked_to"] == "kb-restricted"
+
+        os.environ["VULN_MODE"] = "0"
+        reset_state()
+        try:
+            upload_file("bob", "f-001", "evil.pdf", "kb-restricted")
+            gained_patch = True
+        except AccessError:
+            gained_patch = False
+
+        assert gained_vuln and not gained_patch
+
+
+class TestPathTraversalProxy:
+    """CVE-2026-59221 — Path traversal proxy decode-cap bypass."""
+
+    def test_vuln_allows_traversal_via_double_encoded_path(self):
+        from benchmarks.bv2p.path_traversal_proxy.core import read_static_file
+        import os
+        os.environ["VULN_MODE"] = "1"
+        # Double-encoded traversal: %252e%252e → after 1 decode → %2e%2e → after 2nd → ..
+        status, _ = read_static_file("/proxy/static/%252e%252e%252fetc%252fpasswd".replace("/proxy/static",""))
+        # vuln: traversal escapes /static/ → 200
+        assert status == 200
+
+    def test_patch_blocks_double_encoded_traversal(self):
+        from benchmarks.bv2p.path_traversal_proxy.core import read_static_file
+        import os
+        os.environ["VULN_MODE"] = "0"
+        status, content = read_static_file("%252e%252e%252fetc%252fpasswd")
+        # patched: fail-closed → 400 (still-encoded) or 403 (normalized but outside /static/)
+        assert status in (400, 403)
+
+    def test_normal_static_path_still_works(self):
+        from benchmarks.bv2p.path_traversal_proxy.core import read_static_file
+        import os
+        for mode in ("0", "1"):
+            os.environ["VULN_MODE"] = mode
+            status, content = read_static_file("/static/index.html")
+            assert status == 200

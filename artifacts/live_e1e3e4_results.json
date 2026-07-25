@@ -1,43 +1,43 @@
 {
   "producer": "anthropic/claude-haiku-4-5 via https://openrouter.ai/api/v1",
   "pm_dispatcher": "Nyx/Eragon",
-  "timestamp": "2026-07-25T03:58:56Z",
+  "timestamp": "2026-07-25T04:30:25Z",
   "model": "anthropic/claude-haiku-4-5",
   "api_base": "https://openrouter.ai/api/v1",
   "E1": {
     "experiment": "E1",
     "hypothesis": "H1",
     "producer": "anthropic/claude-haiku-4-5 via https://openrouter.ai/api/v1",
-    "timestamp": "2026-07-25T03:54:43Z",
+    "timestamp": "2026-07-25T04:25:32Z",
     "model": "anthropic/claude-haiku-4-5",
     "api_base": "https://openrouter.ai/api/v1",
     "summary": [
       {
         "aggressiveness": "conservative",
-        "n_pairs": 10,
-        "pd_R_prop": 0.5,
+        "n_pairs": 13,
+        "pd_R_prop": 0.462,
         "pd_Prec_gate": 1.0,
-        "pd_R_e2e": 0.5,
-        "m4_recall": 0.3,
-        "m4_confirmed_count": 3
+        "pd_R_e2e": 0.462,
+        "m4_recall": 0.308,
+        "m4_confirmed_count": 4
       },
       {
         "aggressiveness": "moderate",
-        "n_pairs": 10,
-        "pd_R_prop": 0.9,
+        "n_pairs": 13,
+        "pd_R_prop": 0.923,
         "pd_Prec_gate": 1.0,
-        "pd_R_e2e": 0.9,
-        "m4_recall": 0.9,
-        "m4_confirmed_count": 9
+        "pd_R_e2e": 0.923,
+        "m4_recall": 0.769,
+        "m4_confirmed_count": 10
       },
       {
         "aggressiveness": "aggressive",
-        "n_pairs": 10,
+        "n_pairs": 13,
         "pd_R_prop": 1.0,
         "pd_Prec_gate": 1.0,
         "pd_R_e2e": 1.0,
         "m4_recall": 1.0,
-        "m4_confirmed_count": 10
+        "m4_confirmed_count": 13
       }
     ],
     "pair_level_rows": [
@@ -430,6 +430,123 @@
         "pd_fp": false,
         "m4_confirms": true,
         "m4_confidence": 0.72
+      },
+      {
+        "pair_id": "openwebui-bfla-arena-model",
+        "primitive": "bfla",
+        "gap_class": "small",
+        "aggressiveness": "conservative",
+        "haiku_proposed": false,
+        "haiku_pd_confidence": 0.15,
+        "harness_confirmed": true,
+        "pd_tp": false,
+        "pd_fp": false,
+        "m4_confirms": false,
+        "m4_confidence": 0.15
+      },
+      {
+        "pair_id": "openwebui-bfla-arena-model",
+        "primitive": "bfla",
+        "gap_class": "small",
+        "aggressiveness": "moderate",
+        "haiku_proposed": true,
+        "haiku_pd_confidence": 0.72,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "pd_fp": false,
+        "m4_confirms": false,
+        "m4_confidence": 0.35
+      },
+      {
+        "pair_id": "openwebui-bfla-arena-model",
+        "primitive": "bfla",
+        "gap_class": "small",
+        "aggressiveness": "aggressive",
+        "haiku_proposed": true,
+        "haiku_pd_confidence": 0.72,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "pd_fp": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.72
+      },
+      {
+        "pair_id": "openwebui-bfla-kb-upload",
+        "primitive": "bfla",
+        "gap_class": "small",
+        "aggressiveness": "conservative",
+        "haiku_proposed": false,
+        "haiku_pd_confidence": 0.15,
+        "harness_confirmed": true,
+        "pd_tp": false,
+        "pd_fp": false,
+        "m4_confirms": false,
+        "m4_confidence": 0.15
+      },
+      {
+        "pair_id": "openwebui-bfla-kb-upload",
+        "primitive": "bfla",
+        "gap_class": "small",
+        "aggressiveness": "moderate",
+        "haiku_proposed": true,
+        "haiku_pd_confidence": 0.72,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "pd_fp": false,
+        "m4_confirms": false,
+        "m4_confidence": 0.35
+      },
+      {
+        "pair_id": "openwebui-bfla-kb-upload",
+        "primitive": "bfla",
+        "gap_class": "small",
+        "aggressiveness": "aggressive",
+        "haiku_proposed": true,
+        "haiku_pd_confidence": 0.72,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "pd_fp": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.72
+      },
+      {
+        "pair_id": "openwebui-path-traversal-proxy",
+        "primitive": "ssrf",
+        "gap_class": "small",
+        "aggressiveness": "conservative",
+        "haiku_proposed": true,
+        "haiku_pd_confidence": 0.92,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "pd_fp": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.88
+      },
+      {
+        "pair_id": "openwebui-path-traversal-proxy",
+        "primitive": "ssrf",
+        "gap_class": "small",
+        "aggressiveness": "moderate",
+        "haiku_proposed": true,
+        "haiku_pd_confidence": 0.75,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "pd_fp": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.72
+      },
+      {
+        "pair_id": "openwebui-path-traversal-proxy",
+        "primitive": "ssrf",
+        "gap_class": "small",
+        "aggressiveness": "aggressive",
+        "haiku_proposed": true,
+        "haiku_pd_confidence": 0.85,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "pd_fp": false,
+        "m4_confirms": true,
+        "m4_confidence": 0.85
       }
     ],
     "H1_assessment": {
@@ -441,11 +558,11 @@
         1.0
       ],
       "m4_recall_values": [
-        0.3,
-        0.9,
+        0.308,
+        0.769,
         1.0
       ],
-      "m4_recall_range": 0.7,
+      "m4_recall_range": 0.692,
       "note": "H1 confirmed: PD Prec_gate \u2265 0.9 at all aggressiveness levels."
     }
   },
@@ -453,13 +570,13 @@
     "experiment": "E3",
     "hypothesis": "H3",
     "producer": "anthropic/claude-haiku-4-5 via https://openrouter.ai/api/v1",
-    "timestamp": "2026-07-25T03:56:56Z",
+    "timestamp": "2026-07-25T04:28:30Z",
     "model": "anthropic/claude-haiku-4-5",
     "api_base": "https://openrouter.ai/api/v1",
     "summary": [
       {
         "condition": "full",
-        "n_pairs": 10,
+        "n_pairs": 13,
         "R_prop": 1.0,
         "Prec_gate": 1.0,
         "R_e2e": 1.0,
@@ -471,7 +588,7 @@
       },
       {
         "condition": "no_control",
-        "n_pairs": 10,
+        "n_pairs": 13,
         "R_prop": 1.0,
         "Prec_gate": 1.0,
         "R_e2e": 1.0,
@@ -483,7 +600,7 @@
       },
       {
         "condition": "no_knowledge",
-        "n_pairs": 10,
+        "n_pairs": 13,
         "R_prop": 1.0,
         "Prec_gate": 1.0,
         "R_e2e": 1.0,
@@ -495,7 +612,7 @@
       },
       {
         "condition": "no_checklist",
-        "n_pairs": 10,
+        "n_pairs": 13,
         "R_prop": 1.0,
         "Prec_gate": 1.0,
         "R_e2e": 1.0,
@@ -946,6 +1063,138 @@
         "harness_confirmed": true,
         "pd_tp": true,
         "fn_categories": "C5,C7"
+      },
+      {
+        "pair_id": "openwebui-bfla-arena-model",
+        "primitive": "bfla",
+        "gap_class": "small",
+        "condition": "full",
+        "haiku_proposed": true,
+        "confidence": 0.68,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C3,C5"
+      },
+      {
+        "pair_id": "openwebui-bfla-arena-model",
+        "primitive": "bfla",
+        "gap_class": "small",
+        "condition": "no_control",
+        "haiku_proposed": true,
+        "confidence": 0.68,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C3,C5"
+      },
+      {
+        "pair_id": "openwebui-bfla-arena-model",
+        "primitive": "bfla",
+        "gap_class": "small",
+        "condition": "no_knowledge",
+        "haiku_proposed": true,
+        "confidence": 0.85,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C3,C5"
+      },
+      {
+        "pair_id": "openwebui-bfla-arena-model",
+        "primitive": "bfla",
+        "gap_class": "small",
+        "condition": "no_checklist",
+        "haiku_proposed": true,
+        "confidence": 0.72,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C3,C5"
+      },
+      {
+        "pair_id": "openwebui-bfla-kb-upload",
+        "primitive": "bfla",
+        "gap_class": "small",
+        "condition": "full",
+        "haiku_proposed": true,
+        "confidence": 0.68,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C3,C5"
+      },
+      {
+        "pair_id": "openwebui-bfla-kb-upload",
+        "primitive": "bfla",
+        "gap_class": "small",
+        "condition": "no_control",
+        "haiku_proposed": true,
+        "confidence": 0.68,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C3,C5"
+      },
+      {
+        "pair_id": "openwebui-bfla-kb-upload",
+        "primitive": "bfla",
+        "gap_class": "small",
+        "condition": "no_knowledge",
+        "haiku_proposed": true,
+        "confidence": 0.85,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C3,C5"
+      },
+      {
+        "pair_id": "openwebui-bfla-kb-upload",
+        "primitive": "bfla",
+        "gap_class": "small",
+        "condition": "no_checklist",
+        "haiku_proposed": true,
+        "confidence": 0.72,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C3,C5"
+      },
+      {
+        "pair_id": "openwebui-path-traversal-proxy",
+        "primitive": "ssrf",
+        "gap_class": "small",
+        "condition": "full",
+        "haiku_proposed": true,
+        "confidence": 0.68,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C3"
+      },
+      {
+        "pair_id": "openwebui-path-traversal-proxy",
+        "primitive": "ssrf",
+        "gap_class": "small",
+        "condition": "no_control",
+        "haiku_proposed": true,
+        "confidence": 0.65,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C3"
+      },
+      {
+        "pair_id": "openwebui-path-traversal-proxy",
+        "primitive": "ssrf",
+        "gap_class": "small",
+        "condition": "no_knowledge",
+        "haiku_proposed": true,
+        "confidence": 0.78,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C3"
+      },
+      {
+        "pair_id": "openwebui-path-traversal-proxy",
+        "primitive": "ssrf",
+        "gap_class": "small",
+        "condition": "no_checklist",
+        "haiku_proposed": true,
+        "confidence": 0.72,
+        "harness_confirmed": true,
+        "pd_tp": true,
+        "fn_categories": "C3"
       }
     ],
     "H3_assessment": {
@@ -968,7 +1217,7 @@
     "experiment": "E4",
     "hypothesis": "H4",
     "producer": "anthropic/claude-haiku-4-5 via https://openrouter.ai/api/v1",
-    "timestamp": "2026-07-25T03:58:56Z",
+    "timestamp": "2026-07-25T04:30:25Z",
     "model": "anthropic/claude-haiku-4-5",
     "api_base": "https://openrouter.ai/api/v1",
     "strix_flip_count": 0,
@@ -1458,6 +1707,60 @@
       "aggressiveness": "aggressive",
       "pd_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/products/search\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Search endpoints commonly implement business logic flaws in filtering, sorting, or result pagination that could allow unauthorized data access or manipulation similar to CVE-2023-46604 patterns.\"\n}\n```",
       "m4_raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/products/search\",\n  \"model_confirms\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Search endpoints commonly exhibit business logic vulnerabilities through improper input validation, authorization bypass, or data exposure; CVE-2023-46604 class vulnerabilities in search functionality typically involve query manipulation or unauthorized access to filtered results.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-bfla-arena-model",
+      "aggressiveness": "conservative",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/arena/complete\",\n  \"proposed_vulnerable\": false,\n  \"confidence\": 0.15,\n  \"rationale\": \"Insufficient structural evidence available; BFLA (Broken Function Level Authorization) typically requires observable authorization bypass patterns, missing access controls, or role-based enforcement gaps that cannot be determined from endpoint path alone without request/response analysis or authentication context.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/arena/complete\",\n  \"model_confirms\": false,\n  \"confidence\": 0.15,\n  \"rationale\": \"CVE-2026-59225 does not exist in current vulnerability databases; BFLA (Broken Function Level Authorization) typically requires evidence of missing authorization checks between user roles on this endpoint, which cannot be confirmed from endpoint path alone without request/response analysis or code review.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-bfla-arena-model",
+      "aggressiveness": "moderate",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/arena/complete\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"The endpoint pattern suggests a state-changing operation on a resource ('complete') that may lack proper authorization checks, making it susceptible to Broken Function Level Authorization (BFLA) attacks where users could complete arena actions beyond their privilege level.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/arena/complete\",\n  \"model_confirms\": false,\n  \"confidence\": 0.35,\n  \"rationale\": \"CVE-2026-59225 does not exist in current vulnerability databases; BFLA (Broken Function Level Authorization) typically affects resource-level endpoints rather than action-completion endpoints, and insufficient evidence correlates this specific endpoint pattern to known BFLA exploitation vectors.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-bfla-arena-model",
+      "aggressiveness": "aggressive",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/arena/complete\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"BFLA (Broken Function Level Authorization) is plausible on completion endpoints that may lack proper role/permission validation before executing state-changing operations on arena resources.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/arena/complete\",\n  \"model_confirms\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"BFLA (Broken Function Level Authorization) is plausible on completion endpoints that may lack proper role/permission validation before state-changing operations, allowing unauthorized users to complete arena activities.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-bfla-kb-upload",
+      "aggressiveness": "conservative",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/files/\",\n  \"proposed_vulnerable\": false,\n  \"confidence\": 0.15,\n  \"rationale\": \"Insufficient structural evidence available; CVE-2026-59217 does not exist in current vulnerability databases, and BFLA (Broken Function Level Authorization) detection requires observable authorization bypass patterns in request/response behavior that cannot be determined from endpoint path alone.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/files/\",\n  \"model_confirms\": false,\n  \"confidence\": 0.15,\n  \"rationale\": \"CVE-2026-59217 does not exist in current vulnerability databases; BFLA (Broken Function Level Authorization) typically requires evidence of missing authorization checks between user roles on this endpoint, which cannot be confirmed from endpoint path alone without access control logic inspection.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-bfla-kb-upload",
+      "aggressiveness": "moderate",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/files/\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"File upload endpoints (POST /api/v1/files/) are common vectors for Broken Function Level Authorization (BFLA) vulnerabilities where insufficient permission checks allow unauthorized users to upload, modify, or access files across privilege boundaries.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/files/\",\n  \"model_confirms\": false,\n  \"confidence\": 0.35,\n  \"rationale\": \"CVE-2026-59217 is a future-dated CVE with no established public record; BFLA (Broken Function Level Authorization) typically affects resource-level endpoints rather than collection POST operations, and insufficient evidence exists to confirm this specific vulnerability mapping.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-bfla-kb-upload",
+      "aggressiveness": "aggressive",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/files/\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"File upload endpoints are common vectors for BFLA (Broken Function Level Authorization) attacks where attackers bypass authorization checks to upload files with elevated privileges or to restricted locations.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/files/\",\n  \"model_confirms\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"File upload endpoints are common vectors for BFLA (Broken Function Level Authorization) vulnerabilities where authorization checks may be bypassed at the API level, particularly in v1 APIs with inconsistent permission enforcement across file operations.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-path-traversal-proxy",
+      "aggressiveness": "conservative",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"GET /proxy/static/{path}\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.92,\n  \"rationale\": \"The endpoint name 'proxy' combined with an unsanitized {path} parameter strongly indicates Server-Side Request Forgery vulnerability, as proxy endpoints typically forward requests to backend resources without proper validation of the target URL.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"GET /proxy/static/{path}\",\n  \"model_confirms\": true,\n  \"confidence\": 0.88,\n  \"rationale\": \"Endpoint naming pattern 'proxy' combined with user-controlled path parameter in static file serving context creates high-risk SSRF vulnerability where attacker can manipulate {path} to access arbitrary internal resources or external URLs.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-path-traversal-proxy",
+      "aggressiveness": "moderate",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"GET /proxy/static/{path}\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.75,\n  \"rationale\": \"The /proxy/static/{path} endpoint pattern with user-controlled path parameter combined with proxy functionality creates a high-risk SSRF attack surface where an attacker could manipulate the path to access arbitrary internal resources or external URLs.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"GET /proxy/static/{path}\",\n  \"model_confirms\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"The /proxy/static/{path} endpoint pattern with user-controlled path parameter is characteristic of SSRF vulnerabilities where proxy functionality can be abused to access internal resources; the endpoint name explicitly indicates proxying behavior which commonly leads to CVE-2026-59221 class SSRF attacks.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-path-traversal-proxy",
+      "aggressiveness": "aggressive",
+      "pd_raw": "```json\n{\n  \"endpoint\": \"GET /proxy/static/{path}\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"The /proxy/static/{path} endpoint accepts user-controlled path input and routes requests through a proxy mechanism, creating a plausible SSRF vector where an attacker could manipulate the {path} parameter to access internal resources or services.\"\n}\n```",
+      "m4_raw": "```json\n{\n  \"endpoint\": \"GET /proxy/static/{path}\",\n  \"model_confirms\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"The /proxy/static/{path} endpoint with user-controlled path parameter is highly susceptible to SSRF attacks, as proxy endpoints commonly fail to validate or restrict the destination URLs they fetch, allowing attackers to access internal resources or services.\"\n}\n```"
     }
   ],
   "E3_raw_outputs": [
@@ -1494,7 +1797,7 @@
     {
       "pair_id": "flowise-ssrf-http-node",
       "condition": "no_knowledge",
-      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/node/http\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.78,\n  \"rationale\": \"Auth header presence without propagation to ownership validation, combined with direct downstream data layer calls and unknown delegation/middleware re-validation, creates a plausible SSRF attack surface where an authenticated user could bypass resource ownership checks to access or manipulate arbitrary HTTP endpoints.\"\n}\n```"
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/node/http\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.78,\n  \"rationale\": \"Auth header present at request boundary but not propagated to ownership validation in downstream data layer creates SSRF risk; handler lacks caller identity verification against resource owner before processing HTTP requests, allowing potential unauthorized resource access.\"\n}\n```"
     },
     {
       "pair_id": "flowise-ssrf-http-node",
@@ -1660,6 +1963,66 @@
       "pair_id": "sqli-product-search",
       "condition": "no_checklist",
       "raw": "```json\n{\n  \"endpoint\": \"GET /api/v1/products/search\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Auth header presence at request boundary without propagation to ownership validation layer creates authorization bypass risk; business_logic CVE class with 30% FP rate warrants caution, but control path gap (caller identity not checked against resource owner) combined with missing server-side re-validation indicates true positive likelihood exceeds false positive baseline.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-bfla-arena-model",
+      "condition": "full",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/arena/complete\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.68,\n  \"rationale\": \"Auth header present at boundary but not propagated to ownership validation in data layer, combined with unknown delegation re-validation (C3) and no middleware enforcement evidence (C7), creates plausible BFLA condition despite 30% historical FP rate.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-bfla-arena-model",
+      "condition": "no_control",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/arena/complete\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.68,\n  \"rationale\": \"BFLA vulnerability likely present: ownership mismatch confirmed (C5 stateful session absent), C3 delegation re-validation unknown, and C7 middleware enforcement unknown create exploitation path; 30% FP rate and missing server-side re-validation evidence support true positive classification.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-bfla-arena-model",
+      "condition": "no_knowledge",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/arena/complete\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"Auth header presence without propagation to ownership validation, combined with direct downstream data layer calls and unknown delegation/middleware re-validation, creates a BFLA vulnerability where callers can complete arenas owned by other users.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-bfla-arena-model",
+      "condition": "no_checklist",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/arena/complete\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Auth header presence at request boundary without propagation to downstream ownership validation creates BFLA exposure; confidence tempered by 30% historical FP rate but elevated by explicit control-path gap between authentication and authorization checks.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-bfla-kb-upload",
+      "condition": "full",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/files/\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.68,\n  \"rationale\": \"Auth header present at boundary but not propagated to ownership validation in data layer, creating BFLA risk; however, unknown delegation and middleware re-validation paths prevent higher confidence despite control flow evidence of ownership check bypass.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-bfla-kb-upload",
+      "condition": "no_control",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/files/\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.68,\n  \"rationale\": \"BFLA vulnerability likely present: ownership mismatch confirmed, no evidence of server-side re-validation in delegation chain (C3 unknown), no stateful session restrictions (C5 negative), and middleware enforcement unclear (C7 unknown), yielding 68% confidence accounting for 30% historical FP rate and unresolved control points.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-bfla-kb-upload",
+      "condition": "no_knowledge",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/files/\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.85,\n  \"rationale\": \"Auth header present at request boundary but not propagated to ownership validation in downstream data layer, creating a broken function level access (BFLA) vulnerability where resource ownership is not verified before file operations.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-bfla-kb-upload",
+      "condition": "no_checklist",
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/files/\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Auth header presence at request boundary without propagation to downstream ownership validation creates BFLA risk; control path gap between authentication and resource-owner verification matches CVE-2026-59217 pattern, though 30% FP rate warrants server-side re-validation confirmation.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-path-traversal-proxy",
+      "condition": "full",
+      "raw": "```json\n{\n  \"endpoint\": \"GET /proxy/static/{path}\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.68,\n  \"rationale\": \"Auth header present but not propagated to ownership validation in data layer, combined with unknown delegation and middleware enforcement status, creates plausible SSRF risk through resource access without identity verification; confidence tempered by 30% historical FP rate and unconfirmed C3/C7 controls.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-path-traversal-proxy",
+      "condition": "no_control",
+      "raw": "```json\n{\n  \"endpoint\": \"GET /proxy/static/{path}\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.65,\n  \"rationale\": \"Proxy endpoint with user-controlled path parameter lacks evidence of ownership validation or re-validation in delegation chain (C3, C7 unknown), combined with no stateful access controls (C5), creating SSRF risk despite 30% FP baseline.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-path-traversal-proxy",
+      "condition": "no_knowledge",
+      "raw": "```json\n{\n  \"endpoint\": \"GET /proxy/static/{path}\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.78,\n  \"rationale\": \"Auth header presence at request boundary without propagation to ownership validation, combined with downstream data layer access without caller identity verification, creates an SSRF attack surface where an authenticated user can proxy requests to arbitrary resources without ownership checks.\"\n}\n```"
+    },
+    {
+      "pair_id": "openwebui-path-traversal-proxy",
+      "condition": "no_checklist",
+      "raw": "```json\n{\n  \"endpoint\": \"GET /proxy/static/{path}\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Auth header present at request boundary but not propagated to downstream ownership validation creates SSRF risk; proxy pattern combined with missing identity propagation enables unauthorized resource access despite 30% historical FP rate.\"\n}\n```"
     }
   ],
   "E4_raw_outputs": [
