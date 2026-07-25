@@ -1,4 +1,4 @@
-# Completion Report — propose-dispose-validation (F-PD-B) — round 1
+# Completion Report — propose-dispose-validation (F-PD-B) — round 2 FINAL
 
 ## Header
 
@@ -7,9 +7,11 @@ spec_id:        propose-dispose-validation
 feature:        F-PD-B  (type: research, non-gating)
 producer:       claude-sonnet-4-6 (Nyx / Eragon PM session)
 started:        2026-07-24T07:00:00Z   (session start — context includes prior coder work)
-completed:      2026-07-24T11:01:57Z   (f7fc15d pushed)
+round_1_closed: 2026-07-24T11:01:57Z   (f7fc15d pushed)
+round_2_closed: 2026-07-25T05:36:00Z   (36af62b + 268b164 pushed)
+validator:      operator (pt-act / RA) — APPROVED, cycle closed
 branch:         new
-commits (this session, chronological):
+commits (round 1, chronological):
   6b84e04  .agents temp commit (.agents/ framework bootstrapped)
   4bd431f  .agents temp commit (.agents/ memory_bank + specs populated)
   a69602c  feat(research): B-V2P corpus n=10, E1-E4 complete, H2a p=0.017, paper v1.0
@@ -17,7 +19,16 @@ commits (this session, chronological):
   c95e833  feat(research): live E2 result — H2a confirmed p=0.0044 (real haiku API calls)
   d377423  fix(research): address validator issues — model provenance, p-value, E1/E3/E4 labelling
   f7fc15d  fix(paper): update checklist script reference to run_live_experiments.py
+commits (round 2, chronological):
+  5b814d8  feat(research): E1/E3/E4 live LLM experiments — haiku via OpenRouter
+  717c5d6  feat(research): live E1/E3/E4 experiments — haiku + Docker harness
+  ac01643  feat(research): live E1/E3/E4 — real haiku API + Docker containers
+  155ed54  feat(research): expand corpus to 13 pairs (3 real CVEs) + live harness probes
+  31ef9dc  feat(research): expand corpus to 13 pairs (5 real CVEs) + live E1/E2/E3/E4 results
+  36af62b  docs(validation): update completion report with n=13 E1/E2/E3/E4 live results
+  268b164  chore: no-op cosmetic check (paper footer test count — false positive)
 prior_reports:  none (first implementation round for this spec)
+see_also:       validation/resolution-report-round2.md
 depends_on:     propose-dispose-instrumentation (funnel + assembler, TG1-only COMPLETE)
                 Phase 0–3 (P0 impact_gate, P1 diff, P2 OOB, P3 reachability — all COMPLETE)
 ```
@@ -365,15 +376,24 @@ All completable task boxes in `tasks.md` are ticked as of `a69602c`. Remaining o
 
 ## §E — Handoff Notes
 
-- **Gate:** `uv run pytest tests/ -q` → **568 passed, 4 skipped, 19 subtests, 0 failures**
-- **Live E2 result (final, n=13):**
+**VALIDATOR VERDICT: APPROVED — cycle closed (2026-07-25T05:36:00Z)**
+
+- **Gate:** `uv run pytest tests/ -q` → **577 passed, 4 skipped, 0 failures**
+- **Live results (final, n=13, all experiments live):**
   - Producer: `anthropic/claude-haiku-4-5` via `openrouter.ai`
-  - FP-arm: `b=13, c=0, χ²=11.077, p≈0.0009` — **H2a CONFIRMED**
-  - FN-arm: `b=0, c=1, p=1.0` — **honest tie** (path_traversal_proxy harness unconfirmed: decode-cap edge case)
+  - E1 H1: Prec_gate=1.0 all aggressiveness levels — **CONFIRMED**
+  - E2 H2a: `b=13, c=0, χ²=11.077, p≈0.0009` — **H2a CONFIRMED**
+  - E2 H2b: `b=0, c=1, p=1.0` — **honest tie** (path_traversal edge case, DEV-7 backlog)
+  - E3 H3: R_prop=1.0 all conditions — **honest null, Prec_gate=1.0 structural**
+  - E4 H4: strix 0/20 flips, M4 2/20 flips — **CONFIRMED**
   - Raw responses verbatim in `artifacts/live_experiment_results.json`
-- **Paper:** `.agents/specs/propose-dispose/paper/propose-dispose-paper-v1.0.md` — ready for human review
-- **One operator action required:** set `Status: LOCKED` in `.agents/specs/propose-dispose/specs/propose-dispose-validation/planning/E2-preregistration.md` to close DEV-6
-- **Branch state:** `new` @ `f7fc15d` — clean, pushed to `pt-act/strix`
+- **Paper:** `.agents/specs/propose-dispose/paper/propose-dispose-paper-v1.0.md` — **publication-ready**
+- **Resolution report:** `validation/resolution-report-round2.md`
+- **Branch state:** `new` @ `268b164` — clean, pushed to `pt-act/strix`
+- **Two standing items (non-blocking):**
+  - DEV-6: operator must set `Status: LOCKED` in `E2-preregistration.md` before any future confirmatory E2 claim
+  - DEV-7: path_traversal_proxy harness probe edge case — backlog PD-VAL-7
+- **v1-release-checklist remaining (producer work):** HOLD LINE, REPRODUCE.md, pre-registration lock, legal framing, no-imported-magnitudes audit
 - **Commit log (this spec session):**
   ```
   f7fc15d  fix(paper): update checklist script reference to run_live_experiments.py
