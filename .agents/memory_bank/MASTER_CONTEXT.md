@@ -66,3 +66,19 @@
 10. Reuse-over-reimplement is a hard rule — every phase builds on prior primitives (P1 diff/identity, P2 OOB, P3 inventory, P4 race); no second differ, no new evidence class without explicit need (active since 2026-06-14).
 11. `manifest.yml` is gitignored execution state, not version-controlled source (2026-06-14, ARCH #5).
 12. Phase 0 foundation hardening was the first implementation priority; impact gate + pure validators precede all evidence-producing phases — now complete (2026-06-14, ARCH #4).
+
+## 2026-07-25 Update — Round 2 Complete
+
+### Final State
+- **Spec:** propose-dispose-validation (F-PD-B) — COMPLETE, round 2 APPROVED
+- **Corpus:** 13 B-V2P pairs (5 real CVEs, 8 synthesized), all small-gap (Jaccard 0.06–0.13)
+- **Real CVEs:** CVE-2024-7041, CVE-2026-31829, CVE-2026-59225, CVE-2026-59217, CVE-2026-59221
+- **All experiments live** (real haiku via OpenRouter + real Docker containers):
+  - E1 H1: Prec_gate=1.0 all aggressiveness levels ✅
+  - E2 H2a: b=13, c=0, χ²=11.077, p≈0.0009 ✅
+  - E2 H2b: b=0, c=1, p=1.0 (honest tie, path_traversal edge case)
+  - E3 H3: R_prop=1.0 all conditions (honest null) ✅
+  - E4 H4: strix 0/20 flips, M4 2/20 flips ✅
+- **Paper:** publication-ready, REPRODUCE.md written, E2-preregistration LOCKED
+- **Tests:** 577 passed / 4 skipped / 0 failures
+- **HEAD:** `c1ad815` on `pt-act/strix:new`

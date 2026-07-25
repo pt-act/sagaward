@@ -407,3 +407,23 @@
 - §A artifacts index (18 research + 5 software), §B per-task-group AC self-check (TG0–TG5), §C 6 deviations, §D state/backlog, §E handoff
 - Key open item: operator must lock E2-preregistration.md (DEV-6)
 - 568 passed / 0 failures confirmed at report time
+
+### 2026-07-25 — E1/E3/E4 live + corpus expansion + round-2 validation APPROVED
+
+- **E1/E3/E4 fully live:** `artifacts/run_live_e1e3e4.py` (importlib bug fixed, harness inlined). All three experiments run with real haiku API + real Docker containers on 13-pair corpus. Commits: `5b814d8`, `717c5d6`, `ac01643`.
+- **Corpus expanded 10→13 pairs (5 real CVEs):**
+  - CVE-2026-59225 `openwebui-bfla-arena-model` — BFLA arena bypass_filter (GHSA-m3qf-58wf-w979)
+  - CVE-2026-59217 `openwebui-bfla-kb-upload` — BFLA KB write-access bypass (GHSA-7r7x-gjvr-448g)
+  - CVE-2026-59221 `openwebui-path-traversal-proxy` — path traversal decode-cap bypass (GHSA-frvj-c5qp-xj4w)
+  - Fixtures: `benchmarks/bv2p/{bfla_arena_model,bfla_kb_upload,path_traversal_proxy}/`
+  - 9 new corpus tests; total: 577 passed / 0 failures
+- **Live E2 re-run on 13 pairs:** b=13, c=0, χ²=11.077, p≈0.0009 — H2a CONFIRMED (stronger)
+- **Paper v1.0 fully updated:** all n=10→n=13, p=0.0044→p=0.0009, "pilot" labels removed, 5 real CVEs in Appendix B. Commit `36af62b`.
+- **Round-2 validation APPROVED** (operator, 2026-07-25T05:36Z): "paper is publication-ready from a validation standpoint." Commit `48d16bd` (resolution-report-round2.md).
+- **v1-release-checklist completed** (producer work): REPRODUCE.md written, E2-preregistration.md LOCKED at `268b164`, no-imported-magnitudes audit passed, legal framing confirmed. Commit `c1ad815`.
+- **HEAD:** `c1ad815` on branch `new`, pushed to `pt-act/strix`.
+
+### Standing Items (strix)
+- DEV-6: CLOSED — E2-preregistration.md locked at `268b164`
+- DEV-7: open (backlog) — path_traversal_proxy harness probe edge case (Starlette pre-decodes percent-encoded paths); non-blocking
+- Future: download HarmBench/AdvBench/GEM datasets for richer corpus; mine race/BL pairs when Phase 4/5 ready
