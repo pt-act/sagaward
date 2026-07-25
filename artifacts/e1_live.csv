@@ -29,3 +29,12 @@ mass-assign-profile,business_logic,small,aggressive,True,0.72,True,True,False,Tr
 sqli-product-search,business_logic,small,conservative,False,0.15,True,False,False,False,0.15
 sqli-product-search,business_logic,small,moderate,False,0.35,True,False,False,False,0.35
 sqli-product-search,business_logic,small,aggressive,True,0.72,True,True,False,True,0.72
+openwebui-bfla-arena-model,bfla,small,conservative,False,0.15,True,False,False,False,0.15
+openwebui-bfla-arena-model,bfla,small,moderate,True,0.72,True,True,False,False,0.35
+openwebui-bfla-arena-model,bfla,small,aggressive,True,0.72,True,True,False,True,0.72
+openwebui-bfla-kb-upload,bfla,small,conservative,False,0.15,True,False,False,False,0.15
+openwebui-bfla-kb-upload,bfla,small,moderate,True,0.72,True,True,False,False,0.35
+openwebui-bfla-kb-upload,bfla,small,aggressive,True,0.72,True,True,False,True,0.72
+openwebui-path-traversal-proxy,ssrf,small,conservative,True,0.92,True,True,False,True,0.88
+openwebui-path-traversal-proxy,ssrf,small,moderate,True,0.75,True,True,False,True,0.72
+openwebui-path-traversal-proxy,ssrf,small,aggressive,True,0.85,True,True,False,True,0.85

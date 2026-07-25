@@ -210,6 +210,60 @@ BV2P_CORPUS: tuple[BV2PPair, ...] = (
             "privileged rows; patch parameterises query — injected metacharacters yield empty results."
         ),
     ),
+    # ── Real CVE pairs added 2026-07-25 ──────────────────────────────────────────
+    BV2PPair(
+        pair_id="openwebui-bfla-arena-model",
+        primitive="bfla",
+        cve="CVE-2026-59225",
+        title="Open WebUI Arena BFLA — model access control bypass via bypass_filter",
+        vuln_endpoint="POST /api/v1/arena/complete",
+        disposer_evidence="diff",
+        gap_class="small",
+        minimal_diff=False,
+        synthesized_patch=False,
+        fixture_dir="bfla_arena_model",
+        notes=(
+            "Real CVE. GHSA-m3qf-58wf-w979. Arena fallback dispatch called bypass_filter=True "
+            "which skipped the per-model access check. Fix: 6-line access check inserted before "
+            "bypass_filter dispatch. Probe: bob (no gpt-4o access) via bypass_filter=True. "
+            "Vuln: 200. Patched: 403."
+        ),
+    ),
+    BV2PPair(
+        pair_id="openwebui-bfla-kb-upload",
+        primitive="bfla",
+        cve="CVE-2026-59217",
+        title="Open WebUI KB Upload BFLA — write-access bypass via metadata.knowledge_id",
+        vuln_endpoint="POST /api/v1/files/",
+        disposer_evidence="diff",
+        gap_class="small",
+        minimal_diff=False,
+        synthesized_patch=False,
+        fixture_dir="bfla_kb_upload",
+        notes=(
+            "Real CVE. GHSA-7r7x-gjvr-448g. File upload accepted client-supplied metadata.knowledge_id "
+            "and auto-linked without checking write access. Fix: AccessGrants write check before link. "
+            "Probe: bob uploads to kb-restricted (admin-only). Vuln: 200. Patched: 403."
+        ),
+    ),
+    BV2PPair(
+        pair_id="openwebui-path-traversal-proxy",
+        primitive="ssrf",
+        cve="CVE-2026-59221",
+        title="Open WebUI Proxy Path Traversal — decode-cap bypass via 9x encoded traversal",
+        vuln_endpoint="GET /proxy/static/{path}",
+        disposer_evidence="diff",
+        gap_class="small",
+        minimal_diff=False,
+        synthesized_patch=False,
+        fixture_dir="path_traversal_proxy",
+        notes=(
+            "Real CVE. GHSA-frvj-c5qp-xj4w. URL-decode loop capped at N rounds but did not "
+            "check if path was still encoded after the cap — over-encoded traversal sequences bypassed "
+            "the guard. Fix: fail-closed check (unquote(path) != path → return None). "
+            "Probe: double-encoded traversal %252e%252e%252fetc%252fpasswd. Vuln: 200. Patched: 400/403."
+        ),
+    ),
 )
 
 
