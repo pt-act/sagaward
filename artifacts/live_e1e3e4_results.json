@@ -1,14 +1,14 @@
 {
   "producer": "anthropic/claude-haiku-4-5 via https://openrouter.ai/api/v1",
   "pm_dispatcher": "Nyx/Eragon",
-  "timestamp": "2026-07-25T04:30:25Z",
+  "timestamp": "2026-07-25T04:44:12Z",
   "model": "anthropic/claude-haiku-4-5",
   "api_base": "https://openrouter.ai/api/v1",
   "E1": {
     "experiment": "E1",
     "hypothesis": "H1",
     "producer": "anthropic/claude-haiku-4-5 via https://openrouter.ai/api/v1",
-    "timestamp": "2026-07-25T04:25:32Z",
+    "timestamp": "2026-07-25T04:39:31Z",
     "model": "anthropic/claude-haiku-4-5",
     "api_base": "https://openrouter.ai/api/v1",
     "summary": [
@@ -570,7 +570,7 @@
     "experiment": "E3",
     "hypothesis": "H3",
     "producer": "anthropic/claude-haiku-4-5 via https://openrouter.ai/api/v1",
-    "timestamp": "2026-07-25T04:28:30Z",
+    "timestamp": "2026-07-25T04:42:19Z",
     "model": "anthropic/claude-haiku-4-5",
     "api_base": "https://openrouter.ai/api/v1",
     "summary": [
@@ -1217,7 +1217,7 @@
     "experiment": "E4",
     "hypothesis": "H4",
     "producer": "anthropic/claude-haiku-4-5 via https://openrouter.ai/api/v1",
-    "timestamp": "2026-07-25T04:30:25Z",
+    "timestamp": "2026-07-25T04:44:12Z",
     "model": "anthropic/claude-haiku-4-5",
     "api_base": "https://openrouter.ai/api/v1",
     "strix_flip_count": 0,
@@ -1767,7 +1767,7 @@
     {
       "pair_id": "openwebui-idor-memories",
       "condition": "full",
-      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/memories/{id}/update\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Auth header present at boundary but explicitly not propagated to ownership validation layer; route handler calls data layer without identity check against resource owner, creating IDOR exposure despite ~30% FP baseline for this class.\"\n}\n```"
+      "raw": "```json\n{\n  \"endpoint\": \"POST /api/v1/memories/{id}/update\",\n  \"proposed_vulnerable\": true,\n  \"confidence\": 0.72,\n  \"rationale\": \"Auth header present at boundary but explicitly not propagated to ownership validation layer; route handler calls data layer without identity check against resource owner, meeting IDOR criteria despite 30% FP baseline and unknown delegation/middleware re-validation.\"\n}\n```"
     },
     {
       "pair_id": "openwebui-idor-memories",

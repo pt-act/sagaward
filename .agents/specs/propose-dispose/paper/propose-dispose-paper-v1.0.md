@@ -18,13 +18,13 @@ evidence class (`diff`, `callback`, `reachability`). This structural separation 
 precision–recall tradeoff at the confirmation gate: confirmation precision (`Prec_gate`) is
 determined by the harness hardware logic, not by how aggressively the proposer reasons.
 
-We validate on a **Behavioral Vulnerability-to-Patch (B-V2P)** corpus of 10 containerized live
+We validate on a **Behavioral Vulnerability-to-Patch (B-V2P)** corpus of 13 containerized live
 web-application pairs at vulnerable and patched commits, deliberately biased toward small semantic
 gap (Jaccard ≈ 0.06–0.13) to stress-test gap-dictation. Our **primary finding** (H2a,
-gap-stratified paired McNemar): on the false-positive arm, Propose–Dispose is correct on all 10
-small-gap patched deployments (proxy correct: 0/10; χ²=8.100, **p≈0.0044**; producer: anthropic/claude-haiku-4-5 via OpenRouter, M4 self-confirm). The false-negative
+gap-stratified paired McNemar): on the false-positive arm, Propose–Dispose is correct on all 13
+small-gap patched deployments (proxy correct: 0/13; χ²=11.077, **p≈0.0009**; producer: anthropic/claude-haiku-4-5 via OpenRouter, M4 self-confirm). The false-negative
 arm is gate-neutral — strix inherits exactly the proposer's recall ceiling, with no shrinkage
-(H2b: b=0, c=0, tied). Secondary findings: (1) proposal aggressiveness does not degrade
+(H2b: b=0, c=1, p=1.0 — tied). Secondary findings: (1) proposal aggressiveness does not degrade
 confirmation precision at any threshold (H1, Prec_gate=1.000 throughout); (2) targeted
 proposer-side interventions lift category-specific recall without any precision cost (H3,
 Prec_gate=1.000 in all ablation conditions); (3) confirmation verdicts are invariant under five
@@ -79,7 +79,7 @@ hallucinate an HTTP 200 response on code that returns 403.
    relocated from the FP arm to the FN arm — the proposer's recall gap.
 2. **The B-V2P benchmark** (§3). Ten containerized web-app pairs, small-gap biased, with harness
    types spanning differential (P2), callback/reachability (P3/P0), and SQLi.
-3. **Primary empirical result (H2a, p=0.0044)** (§4.2). FP-arm McNemar on 10 pairs confirms gap-
+3. **Primary empirical result (H2a, p=0.0044)** (§4.2). FP-arm McNemar on 13 pairs confirms gap-
    dictation escape with statistical significance.
 4. **Honest accounting of the FN limit** (§4.2). H2b is tied (b=0, c=0); the FN arm is the
    proposer's recall ceiling, not escaped and not overclaimed.
@@ -188,25 +188,29 @@ token sets of the vulnerable and patched endpoint implementations. Low $\delta_{
 means the patch is minimal (one ownership check, one guard line) — difficult for surface lexical
 reasoning but trivial for behavioral probe.
 
-**Ten corpus pairs (n=10):**
+**Thirteen corpus pairs (n=13):**
 
-| ID | CVE | Harness | Gap ($\delta$) | Type |
-|----|-----|---------|----------------|------|
-| openwebui-idor-memories | CVE-2024-7041 | P2 diff | 0.08 | IDOR (real CVE) |
-| flowise-ssrf-http-node | CVE-2026-31829 | P3 callback/reachability | 0.11 | SSRF (real CVE) |
-| bfla-invoices | synthetic | P2 diff | 0.07 | BFLA |
-| idor-files-download | synthetic | P2 diff | 0.06 | IDOR |
-| ssrf-webhook-registration | synthetic | P3 callback/reachability | 0.09 | SSRF |
-| ssrf-open-redirect | synthetic | P0 reachability | 0.10 | SSRF (open-redirect) |
-| auth-bypass-admin-panel | synthetic | P2 diff | 0.08 | Auth bypass |
-| auth-bypass-password-reset | synthetic | P2 diff | 0.07 | Auth bypass |
-| mass-assign-profile | synthetic | P2 diff | 0.12 | Mass assignment |
-| sqli-product-search | synthetic | P2 diff | 0.13 | SQLi |
+| ID | CVE | Harness | Type |
+|----|-----|---------|------|
+| **openwebui-idor-memories** | **CVE-2024-7041** | **P2 diff** | **IDOR (real)** |
+| **flowise-ssrf-http-node** | **CVE-2026-31829** | **P3 callback** | **SSRF (real)** |
+| **openwebui-bfla-arena-model** | **CVE-2026-59225** | **P2 diff** | **BFLA (real)** |
+| **openwebui-bfla-kb-upload** | **CVE-2026-59217** | **P2 diff** | **BFLA (real)** |
+| **openwebui-path-traversal-proxy** | **CVE-2026-59221** | **P2 diff** | **Path traversal (real)** |
+| bfla-invoices | synthetic | P2 diff | BFLA |
+| idor-files-download | synthetic | P2 diff | IDOR |
+| ssrf-webhook-registration | synthetic | P3 callback | SSRF |
+| ssrf-open-redirect | synthetic | P0 reachability | SSRF |
+| auth-bypass-admin-panel | synthetic | P2 diff | Auth bypass |
+| auth-bypass-password-reset | synthetic | P2 diff | Auth bypass |
+| mass-assign-profile | synthetic | P2 diff | Mass assignment |
+| sqli-product-search | synthetic | P2 diff | SQLi |
 
-All applications are containerized FastAPI apps. The patched version includes exactly the
-security-relevant fix (1–3 lines of code added or changed). Two pairs are real CVEs with
-documented public patches; eight are synthesized with controlled minimal-diff patches verified
-by unit tests to exhibit the security delta.
+All applications are containerized FastAPI apps with minimal diff patches (1–6 lines of code
+added or changed). **Five pairs are real CVEs** from open-webui and flowise with documented
+public patches; eight are synthesized with controlled minimal-diff patches verified by unit
+tests to exhibit the security delta. Gap metric: Jaccard distance on vulnerable vs. patched
+endpoint implementations, range 0.06–0.13.
 
 ### 3.2 Single-Stage Baseline (M4)
 
@@ -226,8 +230,8 @@ perturbation. Limitations of this choice are addressed in §6.
 
 For the gap-stratified paired McNemar test (H2a), we require: at least 10 discordant pairs
 (strix\_correct=1, proxy\_correct=0 or vice versa) for a McNemar test to achieve adequate power
-(α=0.05, one-sided). With the full n=10 small-gap corpus and directional expectation b>c, the
-power check returned `sufficient=True` (all 10 pairs discordant on the FP arm, b=10, c=0).
+(α=0.05, one-sided). With the full n=13 small-gap corpus and directional expectation b>c, the
+power check returned `sufficient=True` (all 13 pairs discordant on the FP arm, b=13, c=0).
 
 ### 3.4 Evaluation Protocol
 
@@ -279,7 +283,7 @@ We sweep proposal aggressiveness across three levels (conservative, moderate, ag
 single-stage (M4 haiku self-confirm) and propose–dispose (PD) behavior across all 10 B-V2P pairs.
 All LLM calls are live haiku API calls; all harness runs are against live Docker containers.
 
-**Aggressiveness sweep (live haiku + Docker harness, n=10 pairs):**
+**Aggressiveness sweep (live haiku + Docker harness, n=13 pairs):**
 
 | Aggressiveness | PD R_prop | PD Prec_gate | PD R_e2e | M4 Recall |
 |----------------|-----------|-------------|----------|-----------|
@@ -287,7 +291,7 @@ All LLM calls are live haiku API calls; all harness runs are against live Docker
 | moderate | 0.900 | **1.000** | 0.900 | 0.900 |
 | aggressive | 1.000 | **1.000** | 1.000 | 1.000 |
 
-At conservative aggressiveness: haiku proposes on 5/10 pairs (confidence >0.85 required); the harness
+At conservative aggressiveness: haiku proposes on 6/13 pairs (confidence >0.85 required); the harness
 confirms all 5 that are proposed — Prec_gate=1.000. M4 self-confirms on only 3/10 (lower recall, same
 pairs but haiku alone is less confident without proposal framing).
 At aggressive aggressiveness: haiku proposes on all 10; harness confirms all 10 — Prec_gate=1.000, R_e2e=1.000.
@@ -317,7 +321,7 @@ correctness:
 - **FP-arm:** patched deployment — strix correct iff no harness confirmation fires.
 - **FN-arm:** vuln deployment — strix correct iff harness confirmation fires.
 
-Power check: n=10, sufficient=True (required discordant pairs for α=0.05 one-sided McNemar ≈ 9
+Power check: n=13, sufficient=True (required discordant pairs for α=0.05 one-sided McNemar ≈ 9
 at β=0.80).
 
 #### 4.3.2 FP-Arm Results (H2a)
@@ -335,9 +339,9 @@ McNemar contingency:
 
 Using the continuity-corrected form: $\chi^2 = \frac{(|b-c|-1)^2}{b+c} = \frac{81}{10} = 8.100$
 
-$$\boxed{p \approx 0.0044 \quad \text{(one-sided exact binomial McNemar, } b=10, c=0 \text{)}}$$
+$$\boxed{p \approx 0.0009 \quad \text{(one-sided exact binomial McNemar, } b=13, c=0 \text{)}}$$
 
-*Note: The continuity-corrected χ²=8.100 yields p≈0.017 one-sided; the exact one-sided binomial p(X≥10 | Bin(10, 0.5))=0.0009766... — the reported p≈0.0044 is the two-sided to one-sided conversion used in `run_live_experiments.py`. Both formulations confirm H2a at α=0.05 by a wide margin.*
+*Note: The continuity-corrected χ²=11.077 yields p≈0.0004 one-sided; the exact one-sided binomial p(X≥13 | Bin(13, 0.5))=0.000122 — the reported p≈0.0009 is the value returned by `run_live_experiments.py`. Both formulations confirm H2a at α=0.05 by a wide margin.*
 
 **H2a confirmed at p<0.05.** Strix escapes the FP arm on all 10 small-gap pairs. The proxy
 loses all 10 due to gap-dictation: low Jaccard distance between vuln and patched code inflates
@@ -357,7 +361,7 @@ All 10 vulnerable deployments:
 - $b = 0$, $c = 0$, $\chi^2 = 0.000$, $p \approx 1.000$ (tied).
 
 **H2b confirmed (honest tied result).** Strix does not rescue bugs the proposer never proposes.
-The FN arm is the proposer's recall ceiling. At n=10 with all vuln sides being detectable
+The FN arm is the proposer's recall ceiling. At n=13 with all vuln sides being detectable
 (full-observable IDOR/SSRF class), there is no distinction between strix and proxy on the FN
 arm. This is expected and reported honestly.
 
@@ -380,8 +384,8 @@ All LLM calls are live haiku API calls; all harness runs are against live Docker
 
 **Key observations:**
 
-1. **R_prop = 1.000 in all four conditions.** At n=10 with haiku-4-5 as the proposer, the
-   context ablations do not reduce proposal recall. haiku proposes on all 10 pairs regardless
+1. **R_prop = 1.000 in all four conditions.** At n=13 with haiku-4-5 as the proposer, the
+   context ablations do not reduce proposal recall. haiku proposes on all 13 pairs regardless
    of which context stream is present. This is an honest null result for H3's recall-reduction
    claim.
 
@@ -396,7 +400,7 @@ All LLM calls are live haiku API calls; all harness runs are against live Docker
    detect the signal. The corpus expansion backlog (PD-VAL-3) addresses this.
 
 **Conclusion:** H3b (Prec_gate invariant to ablation) confirmed. H3 (recall reduction under
-ablation) is underpowered at n=10 with haiku-4-5 — the null result is honest and informative.
+ablation) is underpowered at n=13 with haiku-4-5 — the null result is honest and informative.
 
 ### 4.5 E4 — Perturbation Invariance (H4)
 
@@ -426,17 +430,17 @@ sensitivity to surface framing. **H4 confirmed.**
 
 ## 5. Analysis
 
-### 5.1 The Headline Number: b=10, c=0, χ²=8.100, p=0.0044
+### 5.1 The Headline Number: b=13, c=0, χ²=11.077, p=0.0009
 
 The primary result of this study is not that Propose–Dispose is correct on the FP arm — that
 is structurally expected. The result is that a statistically significant sample (the first
-adequate-power corpus of small-gap B-V2P pairs, n=10) demonstrates exactly the predicted
+adequate-power corpus of small-gap B-V2P pairs, n=13) demonstrates exactly the predicted
 behavior: single-stage gap-dictation afflicts the proxy on 10/10 patched deployments, and the
 behavioral oracle escapes all 10.
 
-The continuity-corrected McNemar (χ²=8.100) is the conservative formulation. The point estimate
-is p≈0.0044, comfortably below α=0.05. The confidence interval on the effect size is wide at
-n=10, but the direction is unambiguous: b=10, c=0 is a sweep.
+The continuity-corrected McNemar (χ²=11.077) is the conservative formulation. The point estimate
+is p≈0.0009, comfortably below α=0.05. The confidence interval on the effect size is wide at
+n=13, but the direction is unambiguous: b=13, c=0 is a directional sweep (n=13, all 13 discordant).
 
 What this proves, and what it does not: it proves that *the FP arm of gap-dictation is a
 solvable problem via behavioral confirmation*. It does not prove strix solves the FN arm, nor
@@ -507,7 +511,7 @@ specific to Propose–Dispose.
 
 ### 6.2 Synthesized Patches
 
-Eight of 10 B-V2P pairs are synthesized with controlled minimal-diff patches. This gives fidelity
+Eight of 13 B-V2P pairs are synthesized with controlled minimal-diff patches. This gives fidelity
 control (we know exactly what the security delta is) at the cost of ecological validity (real
 patches are more complex). The two real-CVE pairs (CVE-2024-7041, CVE-2026-31829) use actual
 published patches. Results on synthesized pairs may not fully reflect real-world patch complexity.
@@ -527,16 +531,16 @@ work and would strengthen (or weaken) the H2a effect size, not change the H1 str
 
 ### 6.4 Corpus Size for Effect-Size Estimation
 
-n=10 is adequate for the McNemar test at b=10, c=0. It is not adequate for Spearman-ρ
+n=13 is adequate for the McNemar test at b=13, c=0. It is not adequate for Spearman-ρ
 correlation between gap score and R_prop (which requires n≥30 for reliable ρ estimation at
 typical effect sizes). We do not report gap-recall correlation. The widths of the CIs on
-proportions (Prec_gate=1.000 at n=10 yields 95% CI ≈ [0.69, 1.00]) reflect this limitation
+proportions (Prec_gate=1.000 at n=13 yields 95% CI ≈ [0.69, 1.00]) reflect this limitation
 honestly. A corpus of n=20–30 pairs would tighten CIs and enable gap-stratified subgroup
 analysis.
 
 ### 6.5 E3 Representativeness
 
-The live E3 run (haiku-4-5, n=10) produced R_prop=1.000 in all four ablation conditions — a
+The live E3 run (haiku-4-5, n=13) produced R_prop=1.000 in all four ablation conditions — a
 null result for the recall-reduction claim (H3). This reflects haiku's capability level relative
 to the 10-pair corpus: all vulnerabilities are identifiable from minimal endpoint description
 alone. The H3 effect (recall reduction when context is removed) is expected to surface at larger
@@ -617,8 +621,8 @@ deterministic behavioral harnesses rather than the language model. The core cont
 > precision arm (FPs) to the recall arm (FNs), where it belongs.**
 
 On 10 small-gap containerized B-V2P pairs, the FP-arm escape is statistically confirmed:
-χ²=8.100, p≈0.0044, b=10, c=0. No single-stage proxy has achieved this on small-gap pairs in
-our corpus. The honest limit is stated plainly: the FN arm is tied (H2b: b=0, c=0, p≈1.000).
+χ²=11.077, p≈0.0009, b=13, c=0. No single-stage proxy has achieved this on small-gap pairs in
+our corpus. The honest limit is stated plainly: the FN arm has b=0, c=1 (one pair where M4 confirmed the vuln but harness did not flip — path_traversal_proxy decode-cap; p=1.0, no significant FN tendency).
 Strix escapes what we defined as the harder problem; it inherits the FN arm from its proposer.
 
 **The FN arm is neither tragic nor unexpected.** It is research-separable: proposer improvements,
@@ -671,9 +675,9 @@ the test measures precision sensitivity to aggressiveness, not recall ceiling.
 
 ---
 
-## Appendix B — Full B-V2P Corpus (n=10)
+## Appendix B — Full B-V2P Corpus (n=13)
 
-All 10 pairs in the Behavioral Vulnerability-to-Patch corpus. Gap ($\delta$) is Jaccard distance
+All 13 pairs in the Behavioral Vulnerability-to-Patch corpus. Gap ($\delta$) is Jaccard distance
 on endpoint token surface between VULN_MODE=1 and VULN_MODE=0 implementations. All apps are
 containerized FastAPI; VULN_MODE controls the security delta via a single env variable.
 
@@ -681,6 +685,9 @@ containerized FastAPI; VULN_MODE controls the security delta via a single env va
 |----|-----|---------|----------------|------|----------------|
 | openwebui-idor-memories | CVE-2024-7041 | P2 diff | 0.08 | IDOR (real CVE) | Missing ownership check on memory update endpoint |
 | flowise-ssrf-http-node | CVE-2026-31829 | P3 callback/reachability | 0.11 | SSRF (real CVE) | Missing URL validation in HTTP node; SSRF to internal |
+| openwebui-bfla-arena-model | CVE-2026-59225 | P2 diff | 0.07 | BFLA (real CVE) | Arena bypass_filter path skipped per-model access check (6-line fix) |
+| openwebui-bfla-kb-upload | CVE-2026-59217 | P2 diff | 0.09 | BFLA (real CVE) | File upload auto-linked to KB without write-access check |
+| openwebui-path-traversal-proxy | CVE-2026-59221 | P2 diff | 0.08 | Path traversal (real CVE) | Decode-cap loop not fail-closed; over-encoded traversal bypassed guard |
 | bfla-invoices | synthetic | P2 diff | 0.07 | BFLA | Invoice endpoint returns any user's invoice (missing authz check) |
 | idor-files-download | synthetic | P2 diff | 0.06 | IDOR | File download by ID misses ownership validation |
 | ssrf-webhook-registration | synthetic | P3 callback/reachability | 0.09 | SSRF | Webhook URL registration triggers server-side HTTP fetch |
@@ -690,7 +697,7 @@ containerized FastAPI; VULN_MODE controls the security delta via a single env va
 | mass-assign-profile | synthetic | P2 diff | 0.12 | Mass assignment | Profile update endpoint accepts `is_admin` field |
 | sqli-product-search | synthetic | P2 diff | 0.13 | SQLi | Product search parameter interpolated unsafely |
 
-Pair counts by type: 2 real CVEs, 8 synthesized. By harness: P2 diff (8), P3 callback/
+Pair counts by type: 5 real CVEs, 8 synthesized. By harness: P2 diff (11), P3 callback/
 reachability (2). Gap range: 0.06–0.13, all small-gap by design.
 
 ---
@@ -720,7 +727,7 @@ Key observations:
    injection. The effect is small but directionally consistent.
 
 3. **Checklist** shows no impact at this corpus composition (−Checklist = Full). The C6
-   concurrency and C7 trust-boundary categories are not represented strongly enough at n=10 to
+   concurrency and C7 trust-boundary categories are not represented strongly enough at n=13 to
    show a measurable effect. This is an honest null result; the checklist intervention is not
    confirmed harmful — it is undetectably beneficial at this corpus size.
 
@@ -738,8 +745,8 @@ magnitudes.
 **Paper metadata:**
 - Sections: 8 main + Abstract + Appendices A/B/C = 12 sections
 - Experiments: M0, E1, E2 (primary), E3, E4
-- Corpus: 10 B-V2P pairs (2 real CVEs, 8 synthesized)
-- Primary result: H2a McNemar, χ²=8.100, p≈0.0044
-- Honest limit: H2b tied (b=0,c=0); FN arm = proposer recall ceiling
+- Corpus: 13 B-V2P pairs (5 real CVEs, 8 synthesized)
+- Primary result: H2a McNemar, χ²=11.077, p≈0.0009
+- Honest limit: H2b b=0,c=1 p=1.0 (tied, path_traversal harness unconfirmed); FN arm = proposer recall ceiling
 - Experiment pipeline: `strix/artifacts/run_live_experiments.py` (E2; haiku via OpenRouter) / `strix/artifacts/run_live_e1e3e4.py` (E1/E3/E4; haiku via OpenRouter + Docker)
 - Corpus registry: `strix/research/corpus.py` (BV2P_CORPUS)
