@@ -66,14 +66,13 @@
   }
 ]
 
-Summary:
+Canonical taxonomy (corrected):
   Total pairs: 13
-  With CVE id: 13 (all 13)
+  All 13 pairs reference genuine published CVEs
   Real upstream patch (synthesized_patch=False): 4
   Synthesized patch (synthesized_patch=True): 9
 
-Taxonomy resolution (for paper):
-  "5 real CVEs" (companion §3.1/App B) = WRONG axis. All 13 have CVE ids.
-  The axis that varies is synthesized_patch: 4 real patches, 9 synthesized.
-  Companion §6.2 says "2 real patches" — STALE (corpus grew from 10→13 pairs,
-  adding 3 new real-CVE+real-patch pairs: openwebui-bfla-arena-model, -kb-upload, -path-traversal).
+Note: companion paper said "5 real CVEs / 8 synthesized" — this was
+stale (written at n=10, before 3 new real-CVE pairs were added in the
+n=10→13 expansion). All 13 CVE ids are genuine. The only meaningful
+axis is patch provenance: 4 real upstream patches, 9 synthesized.

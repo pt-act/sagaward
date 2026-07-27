@@ -334,11 +334,10 @@ async def _tool_corpus_status(params: dict[str, Any]) -> dict[str, Any]:
 
     pairs = BV2P_CORPUS
     total = len(pairs)
-    # Three-way taxonomy (per PM verdict round-1 Finding 1):
-    #   real_cve_count  = pairs whose vulnerability has a published CVE id
-    #   real_patch_count = pairs with the real upstream patch (synthesized_patch=False)
-    #   synthesized_patch_count = pairs with a synthesized minimal-diff patch
-    real_cve = sum(1 for p in pairs if getattr(p, "cve", None))
+    # Taxonomy (per PM verdict round-1 Finding 1, corrected round-1.1):
+    # All 13 pairs reference genuine published CVEs. The axis that varies
+    # is patch provenance: real upstream patch vs synthesized minimal-diff.
+    # The companion paper's "5 real / 8 synth" was stale (pre-n=13 expansion).
     real_patch = sum(1 for p in pairs if not p.synthesized_patch)
     synthesized = sum(1 for p in pairs if p.synthesized_patch)
 
@@ -356,7 +355,7 @@ async def _tool_corpus_status(params: dict[str, Any]) -> dict[str, Any]:
 
     return {
         "pairs": total,
-        "real_cve_count": real_cve,
+        "cve_count": total,  # all pairs reference genuine published CVEs
         "real_patch_count": real_patch,
         "synthesized_patch_count": synthesized,
         "harness_capabilities": harness_caps,
