@@ -97,7 +97,7 @@ class TestCorpusStatus:
         })
         content = json.loads(resp["result"]["content"][0]["text"])
         assert content["pairs"] == 13
-        assert content["real_cve_count"] == 13  # all 13 pairs have CVE ids
+        assert content["cve_count"] == 13  # all 13 pairs are genuine published CVEs
         assert content["real_patch_count"] == 4  # 4 pairs have real upstream patches
         assert content["synthesized_patch_count"] == 9  # 9 pairs have synthesized patches
         assert content["impact_gate"] == "on"
