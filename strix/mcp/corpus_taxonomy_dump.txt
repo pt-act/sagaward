@@ -1,0 +1,79 @@
+[
+  {
+    "pair_id": "openwebui-idor-memories",
+    "cve_id": "CVE-2024-7041",
+    "synthesized_patch": true
+  },
+  {
+    "pair_id": "flowise-ssrf-http-node",
+    "cve_id": "CVE-2026-31829",
+    "synthesized_patch": false
+  },
+  {
+    "pair_id": "bfla-invoices",
+    "cve_id": "CVE-2023-49070",
+    "synthesized_patch": true
+  },
+  {
+    "pair_id": "idor-files-download",
+    "cve_id": "CVE-2024-0204",
+    "synthesized_patch": true
+  },
+  {
+    "pair_id": "ssrf-webhook-registration",
+    "cve_id": "CVE-2024-21672",
+    "synthesized_patch": true
+  },
+  {
+    "pair_id": "ssrf-open-redirect",
+    "cve_id": "CVE-2023-36827",
+    "synthesized_patch": true
+  },
+  {
+    "pair_id": "auth-bypass-admin-panel",
+    "cve_id": "CVE-2024-41667",
+    "synthesized_patch": true
+  },
+  {
+    "pair_id": "auth-bypass-password-reset",
+    "cve_id": "CVE-2023-45158",
+    "synthesized_patch": true
+  },
+  {
+    "pair_id": "mass-assign-profile",
+    "cve_id": "CVE-2024-5489",
+    "synthesized_patch": true
+  },
+  {
+    "pair_id": "sqli-product-search",
+    "cve_id": "CVE-2023-46604",
+    "synthesized_patch": true
+  },
+  {
+    "pair_id": "openwebui-bfla-arena-model",
+    "cve_id": "CVE-2026-59225",
+    "synthesized_patch": false
+  },
+  {
+    "pair_id": "openwebui-bfla-kb-upload",
+    "cve_id": "CVE-2026-59217",
+    "synthesized_patch": false
+  },
+  {
+    "pair_id": "openwebui-path-traversal-proxy",
+    "cve_id": "CVE-2026-59221",
+    "synthesized_patch": false
+  }
+]
+
+Summary:
+  Total pairs: 13
+  With CVE id: 13 (all 13)
+  Real upstream patch (synthesized_patch=False): 4
+  Synthesized patch (synthesized_patch=True): 9
+
+Taxonomy resolution (for paper):
+  "5 real CVEs" (companion §3.1/App B) = WRONG axis. All 13 have CVE ids.
+  The axis that varies is synthesized_patch: 4 real patches, 9 synthesized.
+  Companion §6.2 says "2 real patches" — STALE (corpus grew from 10→13 pairs,
+  adding 3 new real-CVE+real-patch pairs: openwebui-bfla-arena-model, -kb-upload, -path-traversal).

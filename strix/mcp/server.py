@@ -334,7 +334,12 @@ async def _tool_corpus_status(params: dict[str, Any]) -> dict[str, Any]:
 
     pairs = BV2P_CORPUS
     total = len(pairs)
-    real_cve = sum(1 for p in pairs if not p.synthesized_patch)
+    # Three-way taxonomy (per PM verdict round-1 Finding 1):
+    #   real_cve_count  = pairs whose vulnerability has a published CVE id
+    #   real_patch_count = pairs with the real upstream patch (synthesized_patch=False)
+    #   synthesized_patch_count = pairs with a synthesized minimal-diff patch
+    real_cve = sum(1 for p in pairs if getattr(p, "cve", None))
+    real_patch = sum(1 for p in pairs if not p.synthesized_patch)
     synthesized = sum(1 for p in pairs if p.synthesized_patch)
 
     # Harness capabilities from disposer evidence types in corpus
@@ -352,7 +357,8 @@ async def _tool_corpus_status(params: dict[str, Any]) -> dict[str, Any]:
     return {
         "pairs": total,
         "real_cve_count": real_cve,
-        "synthesized_count": synthesized,
+        "real_patch_count": real_patch,
+        "synthesized_patch_count": synthesized,
         "harness_capabilities": harness_caps,
         "native_capabilities": native_caps,
         "native_capabilities_count": len(native_caps),

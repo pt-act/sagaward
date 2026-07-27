@@ -97,8 +97,9 @@ class TestCorpusStatus:
         })
         content = json.loads(resp["result"]["content"][0]["text"])
         assert content["pairs"] == 13
-        assert content["real_cve_count"] == 4
-        assert content["synthesized_count"] == 9
+        assert content["real_cve_count"] == 13  # all 13 pairs have CVE ids
+        assert content["real_patch_count"] == 4  # 4 pairs have real upstream patches
+        assert content["synthesized_patch_count"] == 9  # 9 pairs have synthesized patches
         assert content["impact_gate"] == "on"
         assert isinstance(content["harness_capabilities"], list)
         assert isinstance(content["native_capabilities"], list)
