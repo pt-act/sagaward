@@ -86,6 +86,7 @@ Thumbs.db
 *.schema.graphql
 schema.graphql
 
+.agents/
 .opencode/
 .kilo/
 .qwen/
