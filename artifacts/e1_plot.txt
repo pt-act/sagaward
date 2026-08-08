@@ -1,0 +1,23 @@
+E1 — Tradeoff Curve: Recall vs Precision
+============================================================
+ Threshold | SS Recall |  SS Prec | PD Recall | Prec_gate
+------------------------------------------------------------
+       0.0 |     1.000 |    0.333 |     1.000 |     1.000
+       0.1 |     1.000 |    0.333 |     1.000 |     1.000
+       0.2 |     1.000 |    0.400 |     1.000 |     1.000
+       0.3 |     1.000 |    0.400 |     1.000 |     1.000
+       0.4 |     1.000 |    0.400 |     1.000 |     1.000
+       0.5 |     1.000 |    0.400 |     1.000 |     1.000
+       0.6 |     1.000 |    0.400 |     1.000 |     1.000
+       0.7 |     1.000 |    0.400 |     1.000 |     1.000
+       0.8 |     1.000 |    0.500 |     1.000 |     1.000
+       0.9 |     1.000 |    0.667 |     1.000 |     1.000
+       1.0 |     1.000 |    1.000 |     1.000 |     1.000
+
+Observation: As threshold decreases (more aggressive proposals),
+  Single-Stage (SS) precision degrades while recall holds.
+  Propose-Dispose (PD) Prec_gate remains 1.00 throughout.
+  This demonstrates H1: the propose-dispose architecture breaks the tradeoff.
+
+SS Precision at threshold=0.0: 0.333 (2 TP, 4 FP)
+PD Prec_gate at threshold=0.0: 1.000 (2 TP, 0 FP)

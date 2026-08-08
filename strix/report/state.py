@@ -332,6 +332,18 @@ class ReportState:
         **confirmed** runs only; this lets the funnel capture **every** harness run (confirmed
         or unconfirmed) so ``Prec_gate`` / ``funnel_efficiency`` are unbiased.
 
+        **Funnel-completeness (structural auto-registration, 2026-07-24):** when a disposer
+        fires without a prior ``propose_vulnerability_investigation`` call (direct-filing
+        disposers such as ``auth_matrix``), no ``ProposalRecord`` exists to link against.
+        Rather than silently dropping the run (which yields an empty funnel and makes E1
+        metrics unmeasurable), we auto-register a synthetic ``ProposalRecord`` so every
+        harness run is funnel-complete by construction.  Gate neutrality is preserved: the
+        auto-record carries no ``evidence_class``, no disposition, and no report; it is
+        observability-only (same contract as a normal propose→dispose path).  The record is
+        tagged ``harnesses_selected=[harness_name]`` to distinguish it from operator-proposed
+        records in post-hoc analysis.  Explicit ``proposal_id`` always wins; endpoint-matched
+        and ambiguous-match fallbacks are tried before auto-registration.
+
         Strictly observability: it creates no report, changes no harness verdict or
         ``evidence_class``, mutates nothing outside ``funnel_log``, and **never raises** — so a
         harness's disposition is byte-identical with or without it. Returns the ``proposal_id``
@@ -347,7 +359,30 @@ class ReportState:
             if record is None:
                 record = self._match_recordable_proposal(endpoint)
             if record is None:
-                return None
+                # Structural auto-registration (2026-07-24): direct-filing disposers (e.g.
+                # auth_matrix) may bypass ``propose_vulnerability_investigation``, leaving no
+                # ProposalRecord to link against.  Silently dropping a *confirmed* run makes
+                # E1 metrics unmeasurable (Prec_gate denominator = 0).  For confirmed runs we
+                # auto-register a synthetic ProposalRecord so the funnel is complete by
+                # construction.  Unconfirmed probes with no match remain as no-ops to avoid
+                # flooding the funnel with uninformative synthetic records.
+                # Gate neutrality: the auto-record carries no evidence_class, no disposition,
+                # no report; it is observability-only (same contract as a normal propose→dispose
+                # path).  Tagged harnesses_selected=[harness_name] for post-hoc analysis.
+                if ec == "none":
+                    return None  # unconfirmed + no match → no-op (old behaviour preserved)
+                record = self.funnel_log.start_proposal(
+                    engagement_id=self.run_id,
+                    endpoint_key=endpoint or f"auto:{harness_name}",
+                    harnesses_selected=[harness_name],
+                )
+                logger.debug(
+                    "funnel auto-registered synthetic proposal for direct-filing disposer "
+                    "(harness=%s endpoint=%s proposal_id=%s)",
+                    harness_name,
+                    endpoint,
+                    record.proposal_id,
+                )
             self.funnel_log.record_harness_verdict(
                 record.proposal_id, harness_name, verdict, ec, cost_ms=cost_ms
             )

@@ -1,0 +1,11 @@
+pair_id,gap_class,gap_score,primitive,strix_fp_arm_correct,proxy_fp_arm_correct,strix_fn_arm_correct,proxy_fn_arm_correct
+openwebui-idor-memories,small,0.08,idor,True,False,True,True
+flowise-ssrf-http-node,small,0.11,ssrf,True,False,True,True
+bfla-invoices,small,0.07,bfla,True,False,True,True
+idor-files-download,small,0.06,idor,True,False,True,True
+ssrf-webhook-registration,small,0.09,ssrf,True,False,True,True
+ssrf-open-redirect,small,0.1,ssrf,True,False,True,True
+auth-bypass-admin-panel,small,0.08,bfla,True,False,True,True
+auth-bypass-password-reset,small,0.07,bfla,True,False,True,True
+mass-assign-profile,small,0.12,business_logic,True,False,True,True
+sqli-product-search,small,0.13,business_logic,True,False,True,True

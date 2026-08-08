@@ -131,6 +131,43 @@ class TestFunnelEmitHook(TestCase):
         )
         self.assertIsNone(out)
 
+    def test_auto_register_confirmed_run_no_prior_proposal(self) -> None:
+        """Structural auto-registration (2026-07-24): a confirmed run with no prior proposal
+        record (direct-filing disposer) auto-creates a synthetic ProposalRecord so the funnel
+        is complete by construction.  Gate neutrality is preserved: no report is created and
+        vulnerability_reports is unchanged."""
+        # No proposals at all — simulates auth_matrix calling a disposer directly.
+        out = self.state.record_harness_run(
+            harness_name="p2_diff_harness",
+            verdict="confirmed",
+            evidence_class="diff",
+            endpoint="POST /api/v1/memories/x/update",
+        )
+        # Must return a proposal_id (auto-registered).
+        self.assertIsNotNone(out)
+        assert out is not None
+        record = self.state.funnel_log.get(out)
+        assert record is not None
+        # The synthetic record carries the endpoint and the verdict.
+        self.assertEqual(record.verdicts[0].verdict, "confirmed")
+        self.assertEqual(record.verdicts[0].evidence_class, "diff")
+        self.assertIn("p2_diff_harness", record.harnesses_selected)
+        # Gate neutrality: no report created.
+        self.assertEqual(self.state.vulnerability_reports, [])
+
+    def test_auto_register_only_for_confirmed_not_unconfirmed(self) -> None:
+        """Unconfirmed runs with no matching proposal stay as no-ops (old behaviour).
+        Auto-registration is reserved for confirmed runs to prevent synthetic record floods."""
+        out = self.state.record_harness_run(
+            harness_name="p3_oob_harness",
+            verdict="unconfirmed",
+            evidence_class="none",
+            endpoint="POST /api/v1/node/http",
+        )
+        self.assertIsNone(out)
+        # Funnel should be empty — no synthetic record created.
+        self.assertEqual(self.state.funnel_log.list_records(), [])
+
     def test_behavior_identical_touches_only_funnel(self) -> None:
         """An emit call mutates nothing outside funnel_log — reports + run_record are
         byte-identical, which is the gate-neutrality / behavior-identical guarantee.

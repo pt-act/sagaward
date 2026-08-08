@@ -1,0 +1,5 @@
+condition,R_prop,Prec_gate,R_e2e,funnel_efficiency,control_path,knowledge_path,c1_c8_checklist,R_prop_C3_reachability,R_prop_C5_stateful,R_prop_C6_concurrency,R_prop_C7_trust
+Full,1.0,1.0,1.0,1.0,True,True,True,1.0,1.0,1.0,1.0
+-Control,0.1,1.0,0.1,1.0,False,True,True,0.72,1.0,1.0,1.0
+-Knowledge,0.9,1.0,0.9,1.0,True,False,True,1.0,0.68,1.0,0.75
+-Checklist,1.0,1.0,1.0,1.0,True,True,False,1.0,1.0,0.71,1.0

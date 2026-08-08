@@ -1,0 +1,126 @@
+{
+  "power_check": {
+    "small_gap_count": 10,
+    "required_discordant": 10,
+    "sufficient": true
+  },
+  "pairs": [
+    {
+      "pair_id": "openwebui-idor-memories",
+      "gap_class": "small",
+      "gap_score": 0.08,
+      "primitive": "idor",
+      "strix_fp_arm_correct": true,
+      "proxy_fp_arm_correct": false,
+      "strix_fn_arm_correct": true,
+      "proxy_fn_arm_correct": true
+    },
+    {
+      "pair_id": "flowise-ssrf-http-node",
+      "gap_class": "small",
+      "gap_score": 0.11,
+      "primitive": "ssrf",
+      "strix_fp_arm_correct": true,
+      "proxy_fp_arm_correct": false,
+      "strix_fn_arm_correct": true,
+      "proxy_fn_arm_correct": true
+    },
+    {
+      "pair_id": "bfla-invoices",
+      "gap_class": "small",
+      "gap_score": 0.07,
+      "primitive": "bfla",
+      "strix_fp_arm_correct": true,
+      "proxy_fp_arm_correct": false,
+      "strix_fn_arm_correct": true,
+      "proxy_fn_arm_correct": true
+    },
+    {
+      "pair_id": "idor-files-download",
+      "gap_class": "small",
+      "gap_score": 0.06,
+      "primitive": "idor",
+      "strix_fp_arm_correct": true,
+      "proxy_fp_arm_correct": false,
+      "strix_fn_arm_correct": true,
+      "proxy_fn_arm_correct": true
+    },
+    {
+      "pair_id": "ssrf-webhook-registration",
+      "gap_class": "small",
+      "gap_score": 0.09,
+      "primitive": "ssrf",
+      "strix_fp_arm_correct": true,
+      "proxy_fp_arm_correct": false,
+      "strix_fn_arm_correct": true,
+      "proxy_fn_arm_correct": true
+    },
+    {
+      "pair_id": "ssrf-open-redirect",
+      "gap_class": "small",
+      "gap_score": 0.1,
+      "primitive": "ssrf",
+      "strix_fp_arm_correct": true,
+      "proxy_fp_arm_correct": false,
+      "strix_fn_arm_correct": true,
+      "proxy_fn_arm_correct": true
+    },
+    {
+      "pair_id": "auth-bypass-admin-panel",
+      "gap_class": "small",
+      "gap_score": 0.08,
+      "primitive": "bfla",
+      "strix_fp_arm_correct": true,
+      "proxy_fp_arm_correct": false,
+      "strix_fn_arm_correct": true,
+      "proxy_fn_arm_correct": true
+    },
+    {
+      "pair_id": "auth-bypass-password-reset",
+      "gap_class": "small",
+      "gap_score": 0.07,
+      "primitive": "bfla",
+      "strix_fp_arm_correct": true,
+      "proxy_fp_arm_correct": false,
+      "strix_fn_arm_correct": true,
+      "proxy_fn_arm_correct": true
+    },
+    {
+      "pair_id": "mass-assign-profile",
+      "gap_class": "small",
+      "gap_score": 0.12,
+      "primitive": "business_logic",
+      "strix_fp_arm_correct": true,
+      "proxy_fp_arm_correct": false,
+      "strix_fn_arm_correct": true,
+      "proxy_fn_arm_correct": true
+    },
+    {
+      "pair_id": "sqli-product-search",
+      "gap_class": "small",
+      "gap_score": 0.13,
+      "primitive": "business_logic",
+      "strix_fp_arm_correct": true,
+      "proxy_fp_arm_correct": false,
+      "strix_fn_arm_correct": true,
+      "proxy_fn_arm_correct": true
+    }
+  ],
+  "fp_arm": {
+    "b": 10,
+    "c": 0,
+    "chi2": 8.1,
+    "p_approx": 0.017422374639493515
+  },
+  "fn_arm": {
+    "b": 0,
+    "c": 0,
+    "chi2": 0.0,
+    "p_approx": 1.0
+  },
+  "interpretation": {
+    "H2a_FP_win": true,
+    "H2b_FN_honest": "proposer recall gap-dependent (corpus too small for tight \u03c1)",
+    "underpowered": false
+  }
+}

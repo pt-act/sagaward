@@ -86,8 +86,8 @@ Thumbs.db
 *.schema.graphql
 schema.graphql
 
-.opencode/
 .agents/
+.opencode/
 .kilo/
 .qwen/
 # Project execution manifest — generated state, not source.

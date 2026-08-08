@@ -1,0 +1,6 @@
+perturbation,strix_verdict,strix_confirmed,proxy_confidence,proxy_verdict,proxy_confirmed
+baseline,confirmed,True,0.65,confirmed,True
+header_reorder,confirmed,True,0.53,confirmed,True
+error_text_reword,confirmed,True,0.33,unconfirmed,False
+latency_jitter,confirmed,True,0.47,unconfirmed,False
+whitespace_body,confirmed,True,0.57,confirmed,True

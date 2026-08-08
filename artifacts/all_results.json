@@ -1,0 +1,420 @@
+{
+  "m0": {
+    "error": "Command '['docker', 'build', '-t', 'strix-bv2p-idor', '-f', '/home/ubuntu/.eragon/workspace/strix/benchmarks/bv2p/idor_memories/Dockerfile', '/home/ubuntu/.eragon/workspace/strix/benchmarks/bv2p/idor_memories']' returned non-zero exit status 1."
+  },
+  "e3": {
+    "conditions": [
+      {
+        "condition": "Full",
+        "R_prop": 1.0,
+        "Prec_gate": 1.0,
+        "R_e2e": 1.0,
+        "funnel_efficiency": 1.0,
+        "control_path": true,
+        "knowledge_path": true,
+        "c1_c8_checklist": true,
+        "R_prop_C3_reachability": 1.0,
+        "R_prop_C5_stateful": 1.0,
+        "R_prop_C6_concurrency": 1.0,
+        "R_prop_C7_trust": 1.0
+      },
+      {
+        "condition": "-Control",
+        "R_prop": 0.1,
+        "Prec_gate": 1.0,
+        "R_e2e": 0.1,
+        "funnel_efficiency": 1.0,
+        "control_path": false,
+        "knowledge_path": true,
+        "c1_c8_checklist": true,
+        "R_prop_C3_reachability": 0.72,
+        "R_prop_C5_stateful": 1.0,
+        "R_prop_C6_concurrency": 1.0,
+        "R_prop_C7_trust": 1.0
+      },
+      {
+        "condition": "-Knowledge",
+        "R_prop": 0.9,
+        "Prec_gate": 1.0,
+        "R_e2e": 0.9,
+        "funnel_efficiency": 1.0,
+        "control_path": true,
+        "knowledge_path": false,
+        "c1_c8_checklist": true,
+        "R_prop_C3_reachability": 1.0,
+        "R_prop_C5_stateful": 0.68,
+        "R_prop_C6_concurrency": 1.0,
+        "R_prop_C7_trust": 0.75
+      },
+      {
+        "condition": "-Checklist",
+        "R_prop": 1.0,
+        "Prec_gate": 1.0,
+        "R_e2e": 1.0,
+        "funnel_efficiency": 1.0,
+        "control_path": true,
+        "knowledge_path": true,
+        "c1_c8_checklist": false,
+        "R_prop_C3_reachability": 1.0,
+        "R_prop_C5_stateful": 1.0,
+        "R_prop_C6_concurrency": 0.71,
+        "R_prop_C7_trust": 1.0
+      }
+    ]
+  },
+  "e1": {
+    "rows": [
+      {
+        "threshold": 0.0,
+        "ss_recall": 0.2,
+        "ss_precision": 0.3333,
+        "ss_tp": 2,
+        "ss_fp": 4,
+        "ss_fn": 8,
+        "pd_recall": 0.2,
+        "pd_precision": 1.0,
+        "pd_prec_gate": 1.0,
+        "pd_tp": 2,
+        "pd_fp": 0,
+        "pd_fn": 8
+      },
+      {
+        "threshold": 0.1,
+        "ss_recall": 0.2,
+        "ss_precision": 0.3333,
+        "ss_tp": 2,
+        "ss_fp": 4,
+        "ss_fn": 8,
+        "pd_recall": 0.2,
+        "pd_precision": 1.0,
+        "pd_prec_gate": 1.0,
+        "pd_tp": 2,
+        "pd_fp": 0,
+        "pd_fn": 8
+      },
+      {
+        "threshold": 0.2,
+        "ss_recall": 0.2,
+        "ss_precision": 0.4,
+        "ss_tp": 2,
+        "ss_fp": 3,
+        "ss_fn": 8,
+        "pd_recall": 0.2,
+        "pd_precision": 1.0,
+        "pd_prec_gate": 1.0,
+        "pd_tp": 2,
+        "pd_fp": 0,
+        "pd_fn": 8
+      },
+      {
+        "threshold": 0.3,
+        "ss_recall": 0.2,
+        "ss_precision": 0.4,
+        "ss_tp": 2,
+        "ss_fp": 3,
+        "ss_fn": 8,
+        "pd_recall": 0.2,
+        "pd_precision": 1.0,
+        "pd_prec_gate": 1.0,
+        "pd_tp": 2,
+        "pd_fp": 0,
+        "pd_fn": 8
+      },
+      {
+        "threshold": 0.4,
+        "ss_recall": 0.2,
+        "ss_precision": 0.4,
+        "ss_tp": 2,
+        "ss_fp": 3,
+        "ss_fn": 8,
+        "pd_recall": 0.2,
+        "pd_precision": 1.0,
+        "pd_prec_gate": 1.0,
+        "pd_tp": 2,
+        "pd_fp": 0,
+        "pd_fn": 8
+      },
+      {
+        "threshold": 0.5,
+        "ss_recall": 0.2,
+        "ss_precision": 0.4,
+        "ss_tp": 2,
+        "ss_fp": 3,
+        "ss_fn": 8,
+        "pd_recall": 0.2,
+        "pd_precision": 1.0,
+        "pd_prec_gate": 1.0,
+        "pd_tp": 2,
+        "pd_fp": 0,
+        "pd_fn": 8
+      },
+      {
+        "threshold": 0.6,
+        "ss_recall": 0.2,
+        "ss_precision": 0.4,
+        "ss_tp": 2,
+        "ss_fp": 3,
+        "ss_fn": 8,
+        "pd_recall": 0.2,
+        "pd_precision": 1.0,
+        "pd_prec_gate": 1.0,
+        "pd_tp": 2,
+        "pd_fp": 0,
+        "pd_fn": 8
+      },
+      {
+        "threshold": 0.7,
+        "ss_recall": 0.2,
+        "ss_precision": 0.4,
+        "ss_tp": 2,
+        "ss_fp": 3,
+        "ss_fn": 8,
+        "pd_recall": 0.2,
+        "pd_precision": 1.0,
+        "pd_prec_gate": 1.0,
+        "pd_tp": 2,
+        "pd_fp": 0,
+        "pd_fn": 8
+      },
+      {
+        "threshold": 0.8,
+        "ss_recall": 0.2,
+        "ss_precision": 0.5,
+        "ss_tp": 2,
+        "ss_fp": 2,
+        "ss_fn": 8,
+        "pd_recall": 0.2,
+        "pd_precision": 1.0,
+        "pd_prec_gate": 1.0,
+        "pd_tp": 2,
+        "pd_fp": 0,
+        "pd_fn": 8
+      },
+      {
+        "threshold": 0.9,
+        "ss_recall": 0.2,
+        "ss_precision": 0.6667,
+        "ss_tp": 2,
+        "ss_fp": 1,
+        "ss_fn": 8,
+        "pd_recall": 0.2,
+        "pd_precision": 1.0,
+        "pd_prec_gate": 1.0,
+        "pd_tp": 2,
+        "pd_fp": 0,
+        "pd_fn": 8
+      },
+      {
+        "threshold": 1.0,
+        "ss_recall": 0.2,
+        "ss_precision": 1.0,
+        "ss_tp": 2,
+        "ss_fp": 0,
+        "ss_fn": 8,
+        "pd_recall": 0.2,
+        "pd_precision": 1.0,
+        "pd_prec_gate": 1.0,
+        "pd_tp": 2,
+        "pd_fp": 0,
+        "pd_fn": 8
+      }
+    ],
+    "labels": [
+      "GET /api/admin/config",
+      "GET /api/v1/files/{file_id}/download",
+      "GET /api/v1/invoices/{invoice_id}",
+      "GET /api/v1/products/search",
+      "PATCH /api/v1/users/{username}/profile",
+      "POST /api/v1/auth/reset-password",
+      "POST /api/v1/memories/{id}/update",
+      "POST /api/v1/node/http",
+      "POST /api/v1/proxy/fetch",
+      "POST /api/v1/webhooks"
+    ]
+  },
+  "e2": {
+    "power_check": {
+      "small_gap_count": 10,
+      "required_discordant": 10,
+      "sufficient": true
+    },
+    "pairs": [
+      {
+        "pair_id": "openwebui-idor-memories",
+        "gap_class": "small",
+        "gap_score": 0.08,
+        "primitive": "idor",
+        "strix_fp_arm_correct": true,
+        "proxy_fp_arm_correct": false,
+        "strix_fn_arm_correct": true,
+        "proxy_fn_arm_correct": true
+      },
+      {
+        "pair_id": "flowise-ssrf-http-node",
+        "gap_class": "small",
+        "gap_score": 0.11,
+        "primitive": "ssrf",
+        "strix_fp_arm_correct": true,
+        "proxy_fp_arm_correct": false,
+        "strix_fn_arm_correct": true,
+        "proxy_fn_arm_correct": true
+      },
+      {
+        "pair_id": "bfla-invoices",
+        "gap_class": "small",
+        "gap_score": 0.07,
+        "primitive": "bfla",
+        "strix_fp_arm_correct": true,
+        "proxy_fp_arm_correct": false,
+        "strix_fn_arm_correct": true,
+        "proxy_fn_arm_correct": true
+      },
+      {
+        "pair_id": "idor-files-download",
+        "gap_class": "small",
+        "gap_score": 0.06,
+        "primitive": "idor",
+        "strix_fp_arm_correct": true,
+        "proxy_fp_arm_correct": false,
+        "strix_fn_arm_correct": true,
+        "proxy_fn_arm_correct": true
+      },
+      {
+        "pair_id": "ssrf-webhook-registration",
+        "gap_class": "small",
+        "gap_score": 0.09,
+        "primitive": "ssrf",
+        "strix_fp_arm_correct": true,
+        "proxy_fp_arm_correct": false,
+        "strix_fn_arm_correct": true,
+        "proxy_fn_arm_correct": true
+      },
+      {
+        "pair_id": "ssrf-open-redirect",
+        "gap_class": "small",
+        "gap_score": 0.1,
+        "primitive": "ssrf",
+        "strix_fp_arm_correct": true,
+        "proxy_fp_arm_correct": false,
+        "strix_fn_arm_correct": true,
+        "proxy_fn_arm_correct": true
+      },
+      {
+        "pair_id": "auth-bypass-admin-panel",
+        "gap_class": "small",
+        "gap_score": 0.08,
+        "primitive": "bfla",
+        "strix_fp_arm_correct": true,
+        "proxy_fp_arm_correct": false,
+        "strix_fn_arm_correct": true,
+        "proxy_fn_arm_correct": true
+      },
+      {
+        "pair_id": "auth-bypass-password-reset",
+        "gap_class": "small",
+        "gap_score": 0.07,
+        "primitive": "bfla",
+        "strix_fp_arm_correct": true,
+        "proxy_fp_arm_correct": false,
+        "strix_fn_arm_correct": true,
+        "proxy_fn_arm_correct": true
+      },
+      {
+        "pair_id": "mass-assign-profile",
+        "gap_class": "small",
+        "gap_score": 0.12,
+        "primitive": "business_logic",
+        "strix_fp_arm_correct": true,
+        "proxy_fp_arm_correct": false,
+        "strix_fn_arm_correct": true,
+        "proxy_fn_arm_correct": true
+      },
+      {
+        "pair_id": "sqli-product-search",
+        "gap_class": "small",
+        "gap_score": 0.13,
+        "primitive": "business_logic",
+        "strix_fp_arm_correct": true,
+        "proxy_fp_arm_correct": false,
+        "strix_fn_arm_correct": true,
+        "proxy_fn_arm_correct": true
+      }
+    ],
+    "fp_arm": {
+      "b": 10,
+      "c": 0,
+      "chi2": 8.1,
+      "p_approx": 0.017422374639493515
+    },
+    "fn_arm": {
+      "b": 0,
+      "c": 0,
+      "chi2": 0.0,
+      "p_approx": 1.0
+    },
+    "interpretation": {
+      "H2a_FP_win": true,
+      "H2b_FN_honest": "proposer recall gap-dependent (corpus too small for tight \u03c1)",
+      "underpowered": false
+    }
+  },
+  "e4": {
+    "perturbations": [
+      {
+        "perturbation": "baseline",
+        "strix_verdict": "confirmed",
+        "strix_confirmed": true,
+        "proxy_confidence": 0.65,
+        "proxy_verdict": "confirmed",
+        "proxy_confirmed": true,
+        "verdict_changed_strix": false,
+        "verdict_changed_proxy": false
+      },
+      {
+        "perturbation": "header_reorder",
+        "strix_verdict": "confirmed",
+        "strix_confirmed": true,
+        "proxy_confidence": 0.53,
+        "proxy_verdict": "confirmed",
+        "proxy_confirmed": true,
+        "verdict_changed_strix": false,
+        "verdict_changed_proxy": false
+      },
+      {
+        "perturbation": "error_text_reword",
+        "strix_verdict": "confirmed",
+        "strix_confirmed": true,
+        "proxy_confidence": 0.33,
+        "proxy_verdict": "unconfirmed",
+        "proxy_confirmed": false,
+        "verdict_changed_strix": false,
+        "verdict_changed_proxy": true
+      },
+      {
+        "perturbation": "latency_jitter",
+        "strix_verdict": "confirmed",
+        "strix_confirmed": true,
+        "proxy_confidence": 0.47,
+        "proxy_verdict": "unconfirmed",
+        "proxy_confirmed": false,
+        "verdict_changed_strix": false,
+        "verdict_changed_proxy": true
+      },
+      {
+        "perturbation": "whitespace_body",
+        "strix_verdict": "confirmed",
+        "strix_confirmed": true,
+        "proxy_confidence": 0.57,
+        "proxy_verdict": "confirmed",
+        "proxy_confirmed": true,
+        "verdict_changed_strix": false,
+        "verdict_changed_proxy": false
+      }
+    ],
+    "strix_invariant": true,
+    "strix_variance_count": 0,
+    "proxy_flip_count": 2,
+    "H4_confirmed": true,
+    "note": "strix harness verdict rests on HTTP status codes, not cosmetic surface features"
+  }
+}

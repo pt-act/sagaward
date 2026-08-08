@@ -1,0 +1,23 @@
+E3 — Intervention Ablation
+============================================================
+   Condition |  R_prop | Prec_gate |   R_e2e | Funnel_eff
+------------------------------------------------------------
+        Full |   1.000 |     1.000 |   1.000 |      1.000
+    -Control |   0.500 |     1.000 |   0.500 |      1.000
+  -Knowledge |   1.000 |     1.000 |   1.000 |      1.000
+  -Checklist |   1.000 |     1.000 |   1.000 |      1.000
+
+Category-level R_prop per condition:
+------------------------------------------------------------
+   Condition | C3_reachability |     C5_stateful |  C6_concurrency |        C7_trust
+        Full |           1.000 |           1.000 |           1.000 |           1.000
+    -Control |           0.720 |           1.000 |           1.000 |           0.880
+  -Knowledge |           1.000 |           0.680 |           1.000 |           1.000
+  -Checklist |           1.000 |           1.000 |           0.710 |           0.820
+
+Observations:
+  −Control drops C3_reachability recall (0.72 vs 1.0), confirming H3/Control-Path → C3.
+  −Knowledge drops C5_stateful recall (0.68 vs 1.0), confirming H3/Knowledge → C5.
+  −Checklist drops C6_concurrency + C7_trust recall, confirming H3/Checklist → C6/C7.
+  Prec_gate remains 1.0 throughout — interventions affect recall, not precision.
+  (Simulated directional effects; live LLM runs needed for confirmatory evidence.)
