@@ -91,4 +91,6 @@ schema.graphql
 .kilo/
 .qwen/
 # Project execution manifest — generated state, not source.
-manifest.yml
+manifest.ymlartifacts/rq4_synergy_*.json
+artifacts/rq4_synergy_*.jsonl
+artifacts/rq4_synergy_*.csv
