@@ -334,12 +334,15 @@ async def _tool_corpus_status(params: dict[str, Any]) -> dict[str, Any]:
 
     pairs = BV2P_CORPUS
     total = len(pairs)
-    # Taxonomy (per PM verdict round-1 Finding 1, corrected round-1.1):
-    # All 13 pairs reference genuine published CVEs. The axis that varies
-    # is patch provenance: real upstream patch vs synthesized minimal-diff.
-    # The companion paper's "5 real / 8 synth" was stale (pre-n=13 expansion).
+    # Taxonomy (per PM NVD verification corpus-cve-verification.md, 2026-08-03):
+    # Two ORTHOGONAL axes — vuln provenance (is_real_cve) and patch provenance (synthesized_patch).
+    # 5 genuine public CVEs (is_real_cve=True) / 8 synthetic-pattern fixtures (is_real_cve=False).
+    # 4 real upstream patches / 9 synthesized minimal-diff patches.
+    # The 8 synthetic pairs carry `pattern:CVE-X` and do NOT reproduce those CVEs.
+    public_cve = sum(1 for p in pairs if p.is_real_cve)
+    synthetic = sum(1 for p in pairs if not p.is_real_cve)
     real_patch = sum(1 for p in pairs if not p.synthesized_patch)
-    synthesized = sum(1 for p in pairs if p.synthesized_patch)
+    synthesized_patch = sum(1 for p in pairs if p.synthesized_patch)
 
     # Harness capabilities from disposer evidence types in corpus
     harness_caps = sorted(set(p.disposer_evidence for p in pairs))
@@ -355,9 +358,10 @@ async def _tool_corpus_status(params: dict[str, Any]) -> dict[str, Any]:
 
     return {
         "pairs": total,
-        "cve_count": total,  # all pairs reference genuine published CVEs
+        "public_cve_count": public_cve,
+        "synthetic_count": synthetic,
         "real_patch_count": real_patch,
-        "synthesized_patch_count": synthesized,
+        "synthesized_patch_count": synthesized_patch,
         "harness_capabilities": harness_caps,
         "native_capabilities": native_caps,
         "native_capabilities_count": len(native_caps),
