@@ -74,6 +74,14 @@ def configure_sdk_model_defaults(settings: Settings) -> None:
     else:
         set_default_openai_api("responses")
 
+    # Some LLM endpoints require a specific ``User-Agent`` header on every request.
+    # Set ``STRIX_LLM_USER_AGENT`` to supply one; unset, this is a no-op.
+    user_agent = os.environ.get("STRIX_LLM_USER_AGENT")
+    if user_agent:
+        import litellm
+
+        litellm.headers = {**(litellm.headers or {}), "User-Agent": user_agent}
+
 
 def _mirror_api_key_to_provider_env(model_name: str | None, api_key: str) -> None:
     if not model_name:

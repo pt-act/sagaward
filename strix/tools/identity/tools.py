@@ -7,6 +7,7 @@ redacted; raw values live only inside the SQLite store.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 from pathlib import Path
@@ -31,6 +32,13 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
+
+# Serialize identity-store access. The store is a single SQLite file per run,
+# opened/closed per call; the strix agent dispatches tools in parallel, so
+# concurrent upserts collide on the SQLite write lock ("database is locked") —
+# in practice most fail while one wins. A process-level async lock makes store
+# operations mutually exclusive (one identity store per engagement).
+_STORE_LOCK = asyncio.Lock()
 
 
 _CVSS_IDOR: dict[str, str] = {
@@ -240,11 +248,12 @@ async def _run_auth_matrix(
     run_dir: Path,
 ) -> dict[str, Any]:
     """Core auth-matrix logic, separated from the tool decorator for testability."""
-    store = _get_store(run_dir)
-    try:
-        identities = {i.role: i for i in store.list_identities(target_key)}
-    finally:
-        store.close()
+    async with _STORE_LOCK:
+        store = _get_store(run_dir)
+        try:
+            identities = {i.role: i for i in store.list_identities(target_key)}
+        finally:
+            store.close()
 
     ladder_identities = [
         identities.get(role) or _make_ladder_identity(target_key, role) for role in LADDER_ROLES
@@ -317,12 +326,13 @@ async def identity_store_upsert(
     else:
         return json.dumps({"success": False, "error": f"Unknown source: {source}"})
 
-    store = _get_store(run_dir)
-    try:
-        store.upsert_identity(identity)
-        redacted = redact_identity(identity)
-    finally:
-        store.close()
+    async with _STORE_LOCK:
+        store = _get_store(run_dir)
+        try:
+            store.upsert_identity(identity)
+            redacted = redact_identity(identity)
+        finally:
+            store.close()
 
     return json.dumps({"success": True, "identity": redacted}, default=str)
 
@@ -334,12 +344,13 @@ async def identity_store_list(
 ) -> str:
     """List all identities (with credentials redacted) for a target."""
     run_dir = _run_dir(ctx)
-    store = _get_store(run_dir)
-    try:
-        identities = store.list_identities(target_key)
-        redacted = [redact_identity(i) for i in identities]
-    finally:
-        store.close()
+    async with _STORE_LOCK:
+        store = _get_store(run_dir)
+        try:
+            identities = store.list_identities(target_key)
+            redacted = [redact_identity(i) for i in identities]
+        finally:
+            store.close()
 
     return json.dumps({"success": True, "identities": redacted}, default=str)
 

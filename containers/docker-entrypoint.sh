@@ -56,9 +56,26 @@ sleep 2
 
 echo "Caido is up — host bootstraps the guest token + project via the Python SDK."
 
-echo "Configuring system-wide proxy settings..."
+# Proxy-env + CA-trust setup below needs root (passwordless sudo). In the dev
+# image pentester has passwordless sudo; in the prod image it does NOT (sudo is
+# stripped from the agent user by design), and this entrypoint only runs as root
+# when SGL egress enforcement is active. When neither holds, these steps are a
+# convenience only — agent tools reach Caido directly via the SDK, not via
+# $http_proxy — so degrade gracefully instead of letting ``set -e`` kill the
+# container (which would take Caido down with it).
+if [ "$(id -u)" = "0" ]; then
+  SUDO=""          # already root
+elif sudo -n true 2>/dev/null; then
+  SUDO="sudo"     # passwordless sudo available (dev image)
+else
+  SUDO=""
+  PROXY_ENV_SKIP=1
+  echo "WARN: no root/passwordless-sudo (prod agent user) — skipping system-wide" \
+       "proxy env + CA trust; Caido stays up and is reached via the SDK."
+fi
 
-cat << EOF | sudo tee /etc/profile.d/proxy.sh
+if [ -z "$PROXY_ENV_SKIP" ]; then
+  cat << EOF | $SUDO tee /etc/profile.d/proxy.sh
 export http_proxy=http://127.0.0.1:${CAIDO_PORT}
 export https_proxy=http://127.0.0.1:${CAIDO_PORT}
 export HTTP_PROXY=http://127.0.0.1:${CAIDO_PORT}
@@ -69,7 +86,7 @@ export REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 EOF
 
-cat << EOF | sudo tee /etc/environment
+  cat << EOF | $SUDO tee /etc/environment
 http_proxy=http://127.0.0.1:${CAIDO_PORT}
 https_proxy=http://127.0.0.1:${CAIDO_PORT}
 HTTP_PROXY=http://127.0.0.1:${CAIDO_PORT}
@@ -78,24 +95,23 @@ ALL_PROXY=http://127.0.0.1:${CAIDO_PORT}
 NO_PROXY=localhost,127.0.0.1
 EOF
 
-cat << EOF | sudo tee /etc/wgetrc
+  cat << EOF | $SUDO tee /etc/wgetrc
 use_proxy=yes
 http_proxy=http://127.0.0.1:${CAIDO_PORT}
 https_proxy=http://127.0.0.1:${CAIDO_PORT}
 EOF
 
-echo "source /etc/profile.d/proxy.sh" >> ~/.bashrc
-echo "source /etc/profile.d/proxy.sh" >> ~/.zshrc
+  echo "source /etc/profile.d/proxy.sh" >> ~/.bashrc
+  echo "source /etc/profile.d/proxy.sh" >> ~/.zshrc
+  source /etc/profile.d/proxy.sh
+  echo "✅ System-wide proxy configuration complete"
 
-source /etc/profile.d/proxy.sh
-
-echo "✅ System-wide proxy configuration complete"
-
-echo "Adding CA to browser trust store..."
-sudo -u pentester mkdir -p /home/pentester/.pki/nssdb
-sudo -u pentester certutil -N -d sql:/home/pentester/.pki/nssdb --empty-password
-sudo -u pentester certutil -A -n "Testing Root CA" -t "C,," -i /app/certs/ca.crt -d sql:/home/pentester/.pki/nssdb
-echo "✅ CA added to browser trust store"
+  echo "Adding CA to browser trust store..."
+  sudo -u pentester mkdir -p /home/pentester/.pki/nssdb
+  sudo -u pentester certutil -N -d sql:/home/pentester/.pki/nssdb --empty-password
+  sudo -u pentester certutil -A -n "Testing Root CA" -t "C,," -i /app/certs/ca.crt -d sql:/home/pentester/.pki/nssdb
+  echo "✅ CA added to browser trust store"
+fi
 
 mkdir -p /workspace/.agent-browser-screenshots
 

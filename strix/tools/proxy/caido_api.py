@@ -42,6 +42,15 @@ _SITEMAP_PAGE_SIZE = 30
 
 _DEFAULT_CAIDO_URL = "http://127.0.0.1:48080"
 _CLIENT_CACHE: dict[str, Client] = {}
+
+# Serialize all Caido SDK access. The Caido client wraps a single gql
+# ``AIOHTTPTransport`` that is NOT safe under concurrent connect/use: the strix
+# agent dispatches tools in parallel, and two overlapping calls flip the shared
+# transport between "Transport is already connected" and "Connector is closed",
+# after which every subsequent call fails. A module-level lock makes every SDK
+# call mutually exclusive on this process's shared client(s), which is correct
+# here because there is one Caido sidecar per engagement.
+_CAIDO_LOCK = asyncio.Lock()
 _REQ_FIELD_MAP: dict[SortBy, tuple[str, str]] = {
     "timestamp": ("req", "created_at"),
     "host": ("req", "host"),
@@ -118,7 +127,8 @@ async def list_requests_with_client(
         builder = builder.scope(scope_id)
     target, field = _REQ_FIELD_MAP[sort_by]
     builder = (builder.descending if sort_order == "desc" else builder.ascending)(target, field)
-    return await builder.execute()
+    async with _CAIDO_LOCK:
+        return await builder.execute()
 
 
 async def get_request_with_client(
@@ -134,7 +144,8 @@ async def get_request_with_client(
     # "Field required" on the missing raw field. Always request both —
     # the caller picks which one to surface via ``part``.
     opts = RequestGetOptions(request_raw=True, response_raw=True)
-    return await client.request.get(request_id, opts)
+    async with _CAIDO_LOCK:
+        return await client.request.get(request_id, opts)
 
 
 def build_raw_request(
@@ -295,29 +306,30 @@ async def replay_send_raw(
     # rows per call (one without response from the create-step seed, one
     # with response from the actual send). The empty-create + send flow
     # produces exactly one dispatched request.
-    session = await client.replay.sessions.create()
-    try:
-        result = await asyncio.wait_for(
-            client.replay.send(
-                session.id,
-                ReplaySendOptions(raw=raw, connection=connection),
-            ),
-            timeout=_REPLAY_SEND_TIMEOUT_SECONDS,
-        )
-    except TimeoutError:
-        elapsed_ms = int((time.time() - started) * 1000)
-        return {
-            "session_id": str(session.id),
-            "status": "ERROR",
-            "error": (
-                f"Caido replay dispatch did not complete within "
-                f"{_REPLAY_SEND_TIMEOUT_SECONDS:.0f}s — the target may be "
-                "unroutable from the sandbox, or Caido's outbound HTTP client "
-                "is stalled; check the target host/port and retry"
-            ),
-            "elapsed_ms": elapsed_ms,
-            "response_raw": None,
-        }
+    async with _CAIDO_LOCK:
+        session = await client.replay.sessions.create()
+        try:
+            result = await asyncio.wait_for(
+                client.replay.send(
+                    session.id,
+                    ReplaySendOptions(raw=raw, connection=connection),
+                ),
+                timeout=_REPLAY_SEND_TIMEOUT_SECONDS,
+            )
+        except TimeoutError:
+            elapsed_ms = int((time.time() - started) * 1000)
+            return {
+                "session_id": str(session.id),
+                "status": "ERROR",
+                "error": (
+                    f"Caido replay dispatch did not complete within "
+                    f"{_REPLAY_SEND_TIMEOUT_SECONDS:.0f}s — the target may be "
+                    "unroutable from the sandbox, or Caido's outbound HTTP client "
+                    "is stalled; check the target host/port and retry"
+                ),
+                "elapsed_ms": elapsed_ms,
+                "response_raw": None,
+            }
     elapsed_ms = int((time.time() - started) * 1000)
     response = getattr(result.entry, "response", None)
     response_raw = getattr(response, "raw", None) if response is not None else None
@@ -331,7 +343,8 @@ async def replay_send_raw(
 
 
 async def scope_list(client: CaidoClient) -> Any:
-    return await client.scope.list()
+    async with _CAIDO_LOCK:
+        return await client.scope.list()
 
 
 async def scope_get(client: CaidoClient, scope_id: str) -> Any:

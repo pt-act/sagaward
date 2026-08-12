@@ -44,6 +44,10 @@ class IdentityStore:
         self.db_path = db_path
         db_path.parent.mkdir(parents=True, exist_ok=True)
         self._conn: sqlite3.Connection = sqlite3.connect(str(db_path), check_same_thread=False)
+        # Defense in depth against concurrent writers (the agent dispatches tools in
+        # parallel): wait up to 5s for the write lock instead of failing immediately
+        # with "database is locked". The tools-layer _STORE_LOCK is the primary guard.
+        self._conn.execute("PRAGMA busy_timeout = 5000")
         self._conn.row_factory = sqlite3.Row
         self._conn.executescript(_SCHEMA_SQL)
         self._conn.commit()

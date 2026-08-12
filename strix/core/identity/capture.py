@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from datetime import UTC, datetime
 from typing import Any
 
@@ -23,12 +24,28 @@ _AUTH_HEADER_KEYS = frozenset(
 )
 
 
+def _extra_auth_header_keys() -> frozenset[str]:
+    """Extra identity-bearing header names, from ``STRIX_AUTH_HEADERS`` (comma-separated).
+
+    Some targets authenticate via a non-standard header the built-in set does not
+    recognize (e.g. a fixture that keys identity off ``X-User-Id``). Without this,
+    such headers are dropped during capture and every replayed identity looks the
+    same, so the differential harness sees no owner-vs-non-owner delta. Set
+    ``STRIX_AUTH_HEADERS=X-User-Id`` to include them. Empty/unset is a no-op.
+    """
+    raw = os.environ.get("STRIX_AUTH_HEADERS", "")
+    return frozenset(h.strip().lower() for h in raw.split(",") if h.strip())
+
+
 def _extract_auth_headers(headers: dict[str, str]) -> dict[str, str]:
     """Pick out auth-bearing headers from a captured request."""
+    extra = _extra_auth_header_keys()
     return {
         k: v
         for k, v in headers.items()
-        if k.lower() in _AUTH_HEADER_KEYS or any(token in k.lower() for token in ("token", "auth"))
+        if k.lower() in _AUTH_HEADER_KEYS
+        or k.lower() in extra
+        or any(token in k.lower() for token in ("token", "auth"))
     }
 
 
