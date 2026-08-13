@@ -22,13 +22,13 @@ We validate on a **Behavioral Vulnerability-to-Patch (B-V2P)** corpus of 13 cont
 web-application pairs at vulnerable and patched commits, deliberately biased toward small semantic
 gap (Jaccard ≈ 0.06–0.13) to stress-test gap-dictation. Our **primary finding** (H2a,
 gap-stratified paired McNemar): on the false-positive arm, Propose–Dispose is correct on all 13
-small-gap patched deployments (proxy correct: 0/13; χ²=11.077, **p≈0.0009**; producer: anthropic/claude-haiku-4-5 via OpenRouter, M4 self-confirm). The false-negative
+small-gap patched deployments (proxy correct: 0/13; exact one-sided binomial **p=1.2×10⁻⁴**, χ²-cc=11.077 secondary; producer: anthropic/claude-haiku-4-5 via OpenRouter, M4 self-confirm). The false-negative
 arm is gate-neutral — strix inherits exactly the proposer's recall ceiling, with no shrinkage
 (H2b: b=0, c=1, p=1.0 — tied). Secondary findings: (1) proposal aggressiveness does not degrade
 confirmation precision at any threshold (H1, Prec_gate=1.000 throughout); (2) targeted
 proposer-side interventions lift category-specific recall without any precision cost (H3,
 Prec_gate=1.000 in all ablation conditions); (3) confirmation verdicts are invariant under five
-semantic-preserving perturbations while a single-stage proxy flips on 2/5 (H4).
+semantic-preserving perturbations while a single-stage proxy flips on 2/20 trials (H4).
 
 The honest contribution is asymmetric: **Propose–Dispose relocates gap-dictation from the
 precision arm (FP) to the recall arm (FN). The FP arm is escaped by construction. The FN arm
@@ -79,7 +79,7 @@ hallucinate an HTTP 200 response on code that returns 403.
    relocated from the FP arm to the FN arm — the proposer's recall gap.
 2. **The B-V2P benchmark** (§3). Thirteen containerized web-app pairs, small-gap biased, with harness
    types spanning differential (P2), callback/reachability (P3/P0), and SQLi.
-3. **Primary empirical result (H2a, p≈0.0009)** (§4.2). FP-arm McNemar on 13 pairs confirms gap-
+3. **Primary empirical result (H2a, exact binomial p=1.2×10⁻⁴)** (§4.2). FP-arm McNemar on 13 pairs confirms gap-
    dictation escape with statistical significance.
 4. **Honest accounting of the FN limit** (§4.2). H2b: b=0, c=1 (one path-traversal FN — harness probe edge case); the FN arm is the
    proposer's recall ceiling, not escaped and not overclaimed.
@@ -287,15 +287,17 @@ All LLM calls are live haiku API calls; all harness runs are against live Docker
 
 | Aggressiveness | PD R_prop | PD Prec_gate | PD R_e2e | M4 Recall |
 |----------------|-----------|-------------|----------|-----------|
-| conservative | 0.500 | **1.000** | 0.500 | 0.300 |
-| moderate | 0.900 | **1.000** | 0.900 | 0.900 |
+| conservative | 0.462 | **1.000** | 0.462 | 0.308 |
+| moderate | 0.923 | **1.000** | 0.923 | 0.769 |
 | aggressive | 1.000 | **1.000** | 1.000 | 1.000 |
 
 At conservative aggressiveness: haiku proposes on 6/13 pairs (R_prop=0.462); the harness confirms all 6 that are proposed — Prec_gate=1.000. M4 self-confirms on 4/13 (R_prop=0.308, lower recall without harness framing).
 At moderate aggressiveness: haiku proposes on 12/13 pairs (R_prop=0.923), harness confirms all 12 — Prec_gate=1.000. M4 confirms 10/13 (R_prop=0.769).
 At aggressive aggressiveness: haiku proposes on all 13 (R_prop=1.000), harness confirms all 13 — Prec_gate=1.000, R_e2e=1.000. M4 confirms all 13 (R_prop=1.000).
 
-**Conclusion for H1:** As proposal aggressiveness increases, single-stage precision degrades
+**Conclusion for H1:** *(This conclusion is measured on the **synthetic 10-endpoint precision universe** — 10 endpoints, 2 labeled-positive — not the n=13 live-harness sweep tabulated above. The two universes are kept separate: the sweep table measures R_prop/Prec_gate at n=13; the precision-degradation curve below measures the single-stage precision axis on the 10-endpoint set.)*
+
+As proposal aggressiveness increases, single-stage precision degrades
 monotonically (1.000 → 0.333) while recall stays at 0.200 — the proxy cannot recover the 8
 endpoints it misses regardless of threshold, because its gap-dictation floor is below the
 labelled-positive confidence. Propose–Dispose Prec_gate stays at 1.000 throughout the full
@@ -338,9 +340,9 @@ McNemar contingency:
 
 Using the continuity-corrected form: $\chi^2 = \frac{(|b-c|-1)^2}{b+c} = \frac{144}{13} \approx 11.077$
 
-$$\boxed{p \approx 0.0009 \quad \text{(one-sided exact binomial McNemar, } b=13, c=0 \text{)}}$$
+$$\boxed{p = 1.2\times10^{-4} \quad \text{(exact one-sided binomial McNemar, } b=13, c=0\text{)}}$$
 
-*Note: The continuity-corrected χ²=11.077 yields p≈0.0004 one-sided; the exact one-sided binomial p(X≥13 | Bin(13, 0.5))=0.000122 — the reported p≈0.0009 is the value returned by `run_live_experiments.py`. Both formulations confirm H2a at α=0.05 by a wide margin.*
+*Note: The primary test is the **exact one-sided binomial** McNemar: $p(X\ge13 \mid \mathrm{Bin}(13, 0.5)) = 0.5^{13} = 1.2\times10^{-4}$. The continuity-corrected $\chi^2 = 11.077$ is a secondary approximation, yielding a **two-sided** $p \approx 0.0009$ (one-sided $\approx 0.0004$). All three formulations confirm H2a at $\alpha=0.05$ by a wide margin; the exact binomial is reported as primary because the $\chi^2$ approximation is unstable at $n=13$.*
 
 **H2a confirmed at p<0.05.** Strix escapes the FP arm on all 13 small-gap pairs. The proxy
 loses all 13 due to gap-dictation: low Jaccard distance between vuln and patched code inflates
@@ -426,7 +428,7 @@ sensitivity to surface framing. **H4 confirmed.**
 
 ## 5. Analysis
 
-### 5.1 The Headline Number: b=13, c=0, χ²=11.077, p=0.0009
+### 5.1 The Headline Number: b=13, c=0, exact binomial p=1.2×10⁻⁴ (χ²-cc=11.077 secondary)
 
 The primary result of this study is not that Propose–Dispose is correct on the FP arm — that
 is structurally expected. The result is that a statistically significant sample (the first
@@ -434,8 +436,8 @@ adequate-power corpus of small-gap B-V2P pairs, n=13) demonstrates exactly the p
 behavior: single-stage gap-dictation afflicts the proxy on 13/13 patched deployments, and the
 behavioral oracle escapes all 13.
 
-The continuity-corrected McNemar (χ²=11.077) is the conservative formulation. The point estimate
-is p≈0.0009, comfortably below α=0.05. The confidence interval on the effect size is wide at
+The exact one-sided binomial ($p=1.2\times10^{-4}$) is the primary test; the continuity-corrected McNemar ($\chi^2=11.077$, two-sided $p\approx0.0009$) is a secondary approximation. The point estimate
+is comfortably below $\alpha=0.05$ under either. The confidence interval on the effect size is wide at
 n=13, but the direction is unambiguous: b=13, c=0 is a directional sweep (n=13, all 13 discordant).
 
 What this proves, and what it does not: it proves that *the FP arm of gap-dictation is a
@@ -446,7 +448,7 @@ genuine recall ceiling.
 
 ### 5.2 Why H4 Is Structural, Not Statistical
 
-The proxy's 2/5 flip rate under perturbation is a statistical artifact of a model whose
+The proxy's 2/20 flip rate under perturbation is a statistical artifact of a model whose
 confidence depends on surface text. But the correct framing of H4 is not "proxy degrades and
 strix does not" — it is "harness verdict is a deterministic function of HTTP status codes, which
 are orthogonal to response body text, headers, and latency."
@@ -509,7 +511,7 @@ specific to Propose–Dispose.
 
 Eight of 13 B-V2P pairs are synthesized with controlled minimal-diff patches. This gives fidelity
 control (we know exactly what the security delta is) at the cost of ecological validity (real
-patches are more complex). The two real-CVE pairs (CVE-2024-7041, CVE-2026-31829) use actual
+patches are more complex). The five real-CVE pairs (CVE-2024-7041, CVE-2026-31829, CVE-2026-59225, CVE-2026-59217, CVE-2026-59221) use actual
 published patches. Results on synthesized pairs may not fully reflect real-world patch complexity.
 In particular, multi-file patches and patches with behavioral refactoring (not just guard
 insertion) may produce different harness behavior; these cases are not represented in the current
@@ -532,7 +534,7 @@ refine (strengthen or weaken) the H2a effect size, not change the H1 structural 
 n=13 is adequate for the McNemar test at b=13, c=0. It is not adequate for Spearman-ρ
 correlation between gap score and R_prop (which requires n≥30 for reliable ρ estimation at
 typical effect sizes). We do not report gap-recall correlation. The widths of the CIs on
-proportions (Prec_gate=1.000 at n=13 yields 95% CI ≈ [0.69, 1.00]) reflect this limitation
+proportions (Prec_gate=1.000 at n=13 yields a 95% Wilson CI ≈ [0.77, 1.00]) reflect this limitation
 honestly. A corpus of n=20–30 pairs would tighten CIs and enable gap-stratified subgroup
 analysis.
 
@@ -547,7 +549,7 @@ independent of corpus size and is confirmed (H3b).
 
 ### 6.6 Adversarial Perturbations Against the Harness
 
-E4's perturbations (header reorder, error text reword, latency jitter, whitespace body) are
+E4's perturbations (rephrase_endpoint, add_noise_params, reword_cve, minimal_surface) are
 surface perturbations on response metadata. They do not test robustness against targeted
 adversarial attacks on the harness itself (e.g., manipulation of HTTP status codes, injection of
 synthetic 2xx responses). We do not claim harness invariance under adversarial conditions; we
@@ -619,7 +621,7 @@ deterministic behavioral harnesses rather than the language model. The core cont
 > precision arm (FPs) to the recall arm (FNs), where it belongs.**
 
 On 13 small-gap containerized B-V2P pairs, the FP-arm escape is statistically confirmed:
-χ²=11.077, p≈0.0009, b=13, c=0. No single-stage proxy has achieved this on small-gap pairs in
+exact one-sided binomial p=1.2×10⁻⁴ (χ²-cc=11.077, two-sided p≈0.0009 secondary), b=13, c=0. No single-stage proxy has achieved this on small-gap pairs in
 our corpus. The honest limit is stated plainly: the FN arm has b=0, c=1 (one pair where M4 confirmed the vuln but harness did not flip — path_traversal_proxy decode-cap; p=1.0, no significant FN tendency).
 Strix escapes what we defined as the harder problem; it inherits the FN arm from its proposer.
 
@@ -744,7 +746,7 @@ magnitudes.
 - Sections: 8 main + Abstract + Appendices A/B/C = 12 sections
 - Experiments: M0, E1, E2 (primary), E3, E4
 - Corpus: 13 B-V2P pairs (5 real CVEs, 8 synthesized)
-- Primary result: H2a McNemar, χ²=11.077, p≈0.0009
+- Primary result: H2a McNemar, exact one-sided binomial p=1.2×10⁻⁴ (χ²-cc=11.077, two-sided p≈0.0009 secondary)
 - Honest limit: H2b b=0,c=1 p=1.0 (tied, path_traversal harness unconfirmed); FN arm = proposer recall ceiling
 - Experiment pipeline: `strix/artifacts/run_live_experiments.py` (E2; haiku via OpenRouter) / `strix/artifacts/run_live_e1e3e4.py` (E1/E3/E4; haiku via OpenRouter + Docker)
 - Corpus registry: `strix/research/corpus.py` (BV2P_CORPUS)

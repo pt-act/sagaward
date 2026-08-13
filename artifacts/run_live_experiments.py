@@ -46,6 +46,11 @@ from strix.research.ablation.single_stage import (
 )
 
 ARTIFACTS = Path(__file__).parent
+
+# Docker invocation is host-portable: default ``docker`` (Docker Desktop / rootless / docker
+# group); set ``STRIX_DOCKER_CMD="sudo docker"`` on hosts where the user isn't in the docker
+# group. Split so a multi-word value ("sudo docker") expands correctly in argv.
+DOCKER = os.environ.get("STRIX_DOCKER_CMD", "docker").split()
 ARTIFACTS.mkdir(exist_ok=True)
 
 # Runtime provenance — resolved at startup for JSON metadata accuracy
@@ -83,15 +88,21 @@ def _llm_call(prompt: str, system: str = "", temperature: float = 0.0) -> str:
         "max_tokens": 1024,
     }).encode()
 
+    _hdrs = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://quantumreef.eragon.ai",
+        "X-Title": "strix-research",
+    }
+    # Some LLM endpoints require a specific User-Agent; set STRIX_LLM_USER_AGENT to supply one.
+    _ua = os.environ.get("STRIX_LLM_USER_AGENT")
+    if _ua:
+        _hdrs["User-Agent"] = _ua
+
     req = urllib.request.Request(
         f"{api_base}/chat/completions",
         data=payload,
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-            "HTTP-Referer": "https://quantumreef.eragon.ai",
-            "X-Title": "strix-research",
-        },
+        headers=_hdrs,
         method="POST",
     )
 
@@ -110,7 +121,7 @@ def _start_fixture(pair: BV2PPair, vuln_mode: bool) -> tuple[str, int]:
     mode = "1" if vuln_mode else "0"
 
     result = subprocess.run(
-        ["sudo", "docker", "run", "-d", "--rm",
+        [*DOCKER, "run", "-d", "--rm",
          "-e", f"VULN_MODE={mode}",
          "-p", f"{port}:8080",
          tag],
@@ -124,7 +135,7 @@ def _start_fixture(pair: BV2PPair, vuln_mode: bool) -> tuple[str, int]:
 
 
 def _stop_fixture(container_id: str) -> None:
-    subprocess.run(["sudo", "docker", "stop", container_id],
+    subprocess.run([*DOCKER, "stop", container_id],
                    capture_output=True, timeout=10)
 
 
@@ -449,11 +460,11 @@ def run_pair(pair: BV2PPair) -> PairResult:
 
     # Check image exists
     img_check = subprocess.run(
-        ["sudo", "docker", "image", "inspect", tag],
+        [*DOCKER, "image", "inspect", tag],
         capture_output=True
     )
     if img_check.returncode != 0:
-        result.error = f"Docker image {tag} not found. Run: cd benchmarks/bv2p/{pair.fixture_dir} && sudo docker build -t {tag} ."
+        result.error = f"Docker image {tag} not found. Run: cd benchmarks/bv2p/{pair.fixture_dir} && docker build -t {tag} ."
         return result
 
     print(f"\n  [{pair.pair_id}] starting fixtures...")
@@ -645,9 +656,9 @@ def main() -> None:
         sys.exit(1)
 
     # Verify Docker
-    check = subprocess.run(["sudo", "docker", "ps"], capture_output=True)
+    check = subprocess.run([*DOCKER, "ps"], capture_output=True)
     if check.returncode != 0:
-        print("[ERROR] Docker not running or sudo not available.")
+        print("[ERROR] Docker not running (set STRIX_DOCKER_CMD='sudo docker' if the user isn't in the docker group).")
         sys.exit(1)
 
     pairs = list(BV2P_CORPUS)

@@ -84,6 +84,27 @@ measurement track. Upstream behaviour is preserved unless noted under *Changed*.
   pre-registered experiments E1–E4, and a **single-stage ablation mode** that is quarantined,
   off by default, and provably unreachable from any production entrypoint.
 
+### Added — MCP wrapper, corpus provenance & research reproducibility
+- **Strix MCP wrapper** (`strix/mcp/`): exposes the engine as MCP tools over the propose–dispose
+  surface, so an external orchestrator can drive engagements while the deterministic harness
+  still owns disposition (agent proposes, harness disposes — unchanged across the boundary).
+- **RQ4 synergy measurement** (`artifacts/run_rq4_synergy.py`): arms A–F over the B-V2P corpus
+  with a **funnel-backed** `confirmed` metric — `summarize_funnel().num_confirmed` reads
+  harness verdicts from `funnel.json`, never the agent-asserted `evidence_class`. The live
+  per-leg drivers raise `NotImplementedError` pending a locked pre-registration (the confirmatory
+  path is not wired ad hoc); the exploratory dry-run is the ceiling until then. Reuses the
+  existing read-only funnel logic (no engine change, no re-run).
+
+### Changed — corpus taxonomy (honesty correction)
+- **B-V2P corpus provenance corrected to the honest 5-real / 8-synthetic-pattern split.**
+  All 13 pairs reference genuine published CVE ids, but only **5** reproduce their referenced
+  vulnerability (`is_real_cve=True`: open-webui ×4 + Flowise SSRF); the other **8** are
+  minimal-diff synthetic patterns whose referenced ids are real-but-unrelated software
+  (`is_real_cve=False`, provenance `pattern:CVE-X` + a "does not reproduce" note). Verified
+  against NVD directly. This reverts an intermediate commit that had labelled all 13 as genuine.
+  The orthogonal patch axis (4 real upstream patches / 9 synthesized) is retained;
+  `public_cve_count=5`, `synthetic_count=8`.
+
 ### Changed
 - The report layer (`strix/report/state.py`) additively links a disposer verdict / report id
   onto the matching proposal record; an emit-only hook records every harness run

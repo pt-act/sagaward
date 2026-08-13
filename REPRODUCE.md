@@ -150,11 +150,15 @@ remains at p=1.0 (tied).
 
 ## 8. Paper
 
-Main paper: `.agents/specs/propose-dispose/paper/propose-dispose-paper-v1.0.md`
+Main paper: `artifacts/propose-dispose-paper-v1.0.md` (tracked, canonical)
 
-Pre-registration: `.agents/specs/propose-dispose/specs/propose-dispose-validation/planning/E2-preregistration.md`
-(Status: LOCKED at commit `268b164` — any future confirmatory E2 round requires a new pre-registration)
+Pre-registration: held out-of-band (the E2 pre-registration lives under the gitignored
+`.agents/` tree and is not part of the public repo).
+(Status: E2 is EXPLORATORY — the pre-registration post-dates the observation, so no
+confirmatory claim is made from it. Any future confirmatory E2 round requires a new,
+tracked pre-registration committed before the run.)
 
 ---
 
-*Frozen at commit `268b164` on branch `new`. Producer: anthropic/claude-haiku-4-5 via openrouter.ai.*
+*Branch: `new`. Producer: anthropic/claude-haiku-4-5 via openrouter.ai. (SHAs prior to the
+2026-07/08 public-repo re-creation are historical — resolve by PR# + diff.)*

@@ -1,0 +1,22 @@
+{
+  "pair_id": "openwebui-idor-memories",
+  "gap_class": "small",
+  "primitive": "idor",
+  "cve": "CVE-2024-7041",
+  "pd_proposed": true,
+  "pd_proposal_confidence": 0.8,
+  "pd_harness_verdict": "confirmed",
+  "pd_evidence_class": "diff",
+  "pd_flip_confirmed": true,
+  "m4_model_confirms": true,
+  "m4_patch_confirms": true,
+  "m4_model_confidence": 0.7,
+  "strix_pd_correct_vuln": true,
+  "strix_pd_correct_patch": true,
+  "proxy_m4_correct_vuln": true,
+  "proxy_m4_correct_patch": false,
+  "error": "",
+  "proposer_model": "claude-opus-4-8",
+  "proposer_route": "agentrouter.org/v1 (router alias \u2014 exploratory, not paper-cited)",
+  "path": "experiment-pipeline (run_pair / _run_diff_harness) \u2014 NOT funnel-backed; no auth_matrix/funnel.json"
+}
