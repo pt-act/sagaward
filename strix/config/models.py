@@ -53,7 +53,12 @@ DEFAULT_MODEL_RETRY = ModelRetrySettings(
     policy=retry_policies.any(
         retry_policies.provider_suggested(),
         retry_policies.network_error(),
-        retry_policies.http_status((429, 500, 502, 503, 504)),
+        # 400 is included because some OpenAI-compatible free endpoints (b.ai
+        # deepseek) intermittently return "Invalid request body" (HTTP 400) for
+        # a well-formed request that succeeds verbatim on retry (verified 8/8).
+        # Without this a single transient 400 aborts a multi-turn scan. Real
+        # client errors will still exhaust retries and surface.
+        retry_policies.http_status((400, 408, 429, 500, 502, 503, 504)),
     ),
 )
 

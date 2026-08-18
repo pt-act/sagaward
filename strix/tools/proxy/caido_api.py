@@ -108,6 +108,23 @@ async def close_client() -> None:
     await client.aclose()
 
 
+async def reset_client() -> Client:
+    """Force-drop and rebuild the cached Caido client.
+
+    The Caido SDK wraps a single gql aiohttp transport that can wedge into a
+    "Transport is already connected" state across a burst of replay calls
+    (e.g. the 4-identity auth-matrix ladder). Rebuilding gives a clean
+    transport. Best-effort close; always returns a freshly connected client.
+    """
+    old = _CLIENT_CACHE.pop("default", None)
+    if old is not None:
+        try:
+            await old.aclose()
+        except Exception:  # noqa: BLE001
+            pass
+    return await get_client()
+
+
 async def list_requests_with_client(
     client: CaidoClient,
     *,
@@ -190,6 +207,10 @@ def parse_raw_response(raw_bytes: bytes | None) -> dict[str, Any] | None:
     """
     if not raw_bytes:
         return None
+    # Caido SDK versions differ: some return raw as str, others as bytes. The
+    # parser works on bytes, so normalize here.
+    if isinstance(raw_bytes, str):
+        raw_bytes = raw_bytes.encode("utf-8", errors="replace")
     try:
         head, _, body_bytes = raw_bytes.partition(b"\r\n\r\n")
         lines = head.decode("iso-8859-1", errors="replace").split("\r\n")
@@ -424,7 +445,8 @@ async def repeat_request(
         raise ValueError(f"Request {request_id} not found")
 
     original = result.request
-    raw_str = result.request.raw.decode("utf-8", errors="replace")
+    _raw = result.request.raw
+    raw_str = _raw.decode("utf-8", errors="replace") if isinstance(_raw, bytes) else str(_raw)
     components = parse_raw_request(raw_str)
     full_url = full_url_from_components(original, components, mods)
     modified = apply_modifications(components, mods, full_url)

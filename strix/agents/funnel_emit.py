@@ -88,12 +88,30 @@ def emit_harness_run(default_harness: str, result: Any, args_json: str) -> None:
 
     evidence_class = "none"
     verdict = "unconfirmed"
-    report = result_dict.get("report") if result_dict else None
-    if isinstance(report, dict):
-        reported_class = report.get("evidence_class")
+    # Two harness return shapes carry a confirmed verdict:
+    #   * single-report disposers embed ``report`` (dict) with an evidence_class.
+    #   * auth_matrix files per-candidate and returns ``reports`` (list) plus
+    #     ``candidates``/``finding_count``. Detect a confirmed evidence_class
+    #     from any of these so the funnel records the confirmed run (without
+    #     this, an auth_matrix IDOR is filed to vulnerabilities.json but the
+    #     funnel stays empty because ``report`` (singular) is absent).
+    candidate_reports: list[Any] = []
+    if result_dict:
+        single = result_dict.get("report")
+        if isinstance(single, dict):
+            candidate_reports.append(single)
+        multi = result_dict.get("reports")
+        if isinstance(multi, list):
+            candidate_reports.extend(r for r in multi if isinstance(r, dict))
+        candidates = result_dict.get("candidates")
+        if isinstance(candidates, list):
+            candidate_reports.extend(c for c in candidates if isinstance(c, dict))
+    for rep in candidate_reports:
+        reported_class = rep.get("evidence_class")
         if isinstance(reported_class, str) and reported_class in _EVIDENCE_TO_HARNESS:
             evidence_class = reported_class
             verdict = "confirmed"
+            break
 
     harness_name = (
         _EVIDENCE_TO_HARNESS[evidence_class] if evidence_class != "none" else default_harness

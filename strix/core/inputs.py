@@ -124,6 +124,24 @@ def make_model_settings(
         model_settings = model_settings.resolve(
             ModelSettings(reasoning=Reasoning(effort=reasoning_effort)),
         )
+    elif reasoning_effort == "none":
+        # Some OpenAI-compatible providers (e.g. b.ai deepseek "thinking mode")
+        # default reasoning ON and then REQUIRE the returned reasoning_content to
+        # be echoed back on every subsequent turn, which the chat-completions
+        # replay path does not do -> "Invalid request body" after a few turns.
+        # We must actively disable thinking. Two constraints force the exact
+        # form below:
+        #   * litellm.drop_params=True (config/models.py) DROPS a top-level
+        #     reasoning_effort for models it doesn't know as reasoners
+        #     (deepseek-v4-flash), so it never reaches the provider.
+        #   * The SDK's _get_reasoning_effort() POPS extra_body["reasoning_effort"]
+        #     and promotes it to that dropped top-level arg.
+        # extra_body["thinking"] is NOT special-cased by the SDK and NOT dropped
+        # by litellm, so it passes through raw and disables thinking mode
+        # (verified: suppresses reasoning_content via litellm.completion).
+        model_settings = model_settings.resolve(
+            ModelSettings(extra_body={"thinking": {"type": "disabled"}}),
+        )
     return model_settings
 
 

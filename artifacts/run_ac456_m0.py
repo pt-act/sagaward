@@ -47,6 +47,7 @@ def stop_fixture(cid: str) -> None:
 
 async def main(mode: int, run_name: str) -> None:
     from strix.core.runner import run_strix_scan
+    from strix.report.state import ReportState, set_global_report_state
     scan_config = {
         "scan_id": run_name,
         "run_name": run_name,
@@ -56,6 +57,16 @@ async def main(mode: int, run_name: str) -> None:
         "non_interactive": True,
         "scope_mode": "auto",
     }
+    # Identity/logic tools resolve run_dir from the GLOBAL report state (see
+    # tools/identity/tools.py:_run_dir). The CLI sets this up; a direct
+    # run_strix_scan caller must too, or identity_store_upsert/auth_matrix raise
+    # "No run_dir provided in context and no global report state available".
+    report_state = ReportState(run_name)
+    report_state.hydrate_from_run_dir()
+    report_state.set_scan_config(scan_config)
+    report_state.save_run_data()
+    set_global_report_state(report_state)
+
     cid = start_fixture(mode)
     print(f"[fixture] up cid={cid[:12]} VULN_MODE={mode}", flush=True)
     try:

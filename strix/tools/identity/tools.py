@@ -146,6 +146,16 @@ def _redacted_http_exchange(ladder_result: dict[str, Any]) -> dict[str, Any]:
     return {"replay_results": rows}
 
 
+def _as_text(body: Any) -> str:
+    """Coerce a replay/response body to text (parse_raw_response yields str,
+    other callers may yield bytes or None)."""
+    if body is None:
+        return ""
+    if isinstance(body, bytes):
+        return body.decode("utf-8", errors="replace")
+    return str(body)
+
+
 def _build_labeled_responses(ladder_result: dict[str, Any]) -> list[dict[str, Any]]:
     """Convert a ladder result into the LabeledResponse shape the diff engine expects."""
     labeled: list[dict[str, Any]] = []
@@ -157,7 +167,7 @@ def _build_labeled_responses(ladder_result: dict[str, Any]) -> list[dict[str, An
                 "response": {
                     "status_code": response.get("status_code", 0),
                     "headers": response.get("headers", []),
-                    "body": (response.get("body") or b"").decode("utf-8", errors="replace"),
+                    "body": _as_text(response.get("body")),
                 },
             }
         )
@@ -273,6 +283,7 @@ async def _run_auth_matrix(
     matrix = {
         "identities": [redact_identity(i) for i in ladder_identities],
         "results": ladder_result.get("results", []),
+        "failures": ladder_result.get("failures", []),
         "pairwise_deltas": [d.model_dump() for d in diff_result.deltas],
     }
 

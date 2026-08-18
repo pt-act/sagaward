@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
 from typing import Any
 
@@ -86,6 +87,14 @@ async def create_or_reuse(
     caido_endpoint = await session.resolve_exposed_port(_CONTAINER_CAIDO_PORT)
     host_caido_url = f"http://{caido_endpoint.host}:{caido_endpoint.port}"
     logger.debug("Caido host endpoint resolved: %s", host_caido_url)
+
+    # Host-side tools (identity replay via caido_api.get_client) resolve the
+    # Caido endpoint through caido_url() -> os.environ["STRIX_CAIDO_URL"],
+    # defaulting to the CONTAINER port 48080. The host maps 48080 to a DYNAMIC
+    # port, so without this export replay_send_raw connects to 127.0.0.1:48080
+    # and fails with "Connection refused" -> empty auth_matrix. Pin the env to
+    # the resolved host endpoint so replay reaches the live Caido sidecar.
+    os.environ["STRIX_CAIDO_URL"] = host_caido_url
 
     caido_client = await bootstrap_caido(
         session,

@@ -72,7 +72,8 @@ async def replay_as_identity(
         raise ValueError(f"Request {request_id} not found or has no raw request")
 
     original = result.request
-    raw_str = original.raw.decode("utf-8", errors="replace")
+    _raw = original.raw
+    raw_str = _raw.decode("utf-8", errors="replace") if isinstance(_raw, bytes) else str(_raw)
     components = caido_api.parse_raw_request(raw_str)
     stripped_headers = _strip_original_auth(components["headers"])
     final_headers = _overlay_identity_auth(stripped_headers, identity)
@@ -115,6 +116,21 @@ async def replay_ladder(
             result = await replay_as_identity(request_id, identity, modifications=modifications)
             results.append(result)
         except Exception as exc:  # noqa: BLE001
+            # The shared Caido gql transport can wedge ("Transport is already
+            # connected" / "Connector is closed") across a burst of ladder
+            # replays. Reset the client and retry this identity once before
+            # recording a hard failure.
+            msg = str(exc)
+            if "Transport is already connected" in msg or "Connector is closed" in msg:
+                try:
+                    await caido_api.reset_client()
+                    result = await replay_as_identity(
+                        request_id, identity, modifications=modifications
+                    )
+                    results.append(result)
+                    continue
+                except Exception as exc2:  # noqa: BLE001
+                    exc = exc2
             failures.append(
                 {
                     "identity": identity.role,
