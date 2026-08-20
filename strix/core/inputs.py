@@ -8,7 +8,11 @@ from typing import TYPE_CHECKING, Any
 from agents.model_settings import ModelSettings
 from openai.types.shared import Reasoning
 
-from strix.config.models import DEFAULT_MODEL_RETRY, model_supports_reasoning
+from strix.config.models import (
+    DEFAULT_MODEL_RETRY,
+    model_supports_reasoning,
+    request_timeout_extra_args,
+)
 
 
 if TYPE_CHECKING:
@@ -110,11 +114,13 @@ def make_model_settings(
     reasoning_effort: ReasoningEffort | None,
     *,
     model_name: str,
+    request_timeout: float | None = None,
 ) -> ModelSettings:
     model_settings = ModelSettings(
         parallel_tool_calls=False,
         retry=DEFAULT_MODEL_RETRY,
         include_usage=True,
+        extra_args=request_timeout_extra_args(request_timeout),
     )
     if (
         reasoning_effort is not None

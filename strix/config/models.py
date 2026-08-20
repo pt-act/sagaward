@@ -42,6 +42,24 @@ class StrixProvider(MultiProvider):
         return self._get_fallback_provider("litellm"), original_model_name
 
 
+def request_timeout_extra_args(timeout_s: float | None) -> dict[str, float] | None:
+    """Per-request model timeout (connect + read/inactivity) as SDK ``extra_args``.
+
+    Fork-native wiring for the existing ``LLM_TIMEOUT`` setting, which was
+    defined but never forwarded to the model call. A stalled model stream now
+    trips this timeout and is retried by ``DEFAULT_MODEL_RETRY`` (which already
+    covers 408/429/5xx + the b.ai transient 400) instead of hanging the scan
+    indefinitely. The value is forwarded to the underlying ``responses.create`` /
+    ``chat.completions.create`` / ``litellm.acompletion`` call. This adds no new
+    retry layer and does not alter the retry policy or the reasoning path.
+
+    A non-positive or unset timeout yields ``None`` (no ``extra_args`` override).
+    """
+    if not timeout_s or timeout_s <= 0:
+        return None
+    return {"timeout": float(timeout_s)}
+
+
 DEFAULT_MODEL_RETRY = ModelRetrySettings(
     max_retries=5,
     backoff=ModelRetryBackoffSettings(
