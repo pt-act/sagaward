@@ -164,6 +164,7 @@ async def run_strix_scan(
             settings.llm.reasoning_effort,
             model_name=resolved_model,
             request_timeout=settings.llm.timeout,
+            force_reasoning_effort=settings.llm.force_reasoning_effort,
         )
         run_config = RunConfig(
             model=resolved_model,

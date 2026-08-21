@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from agents.model_settings import ModelSettings
 from openai.types.shared import Reasoning
@@ -115,6 +115,7 @@ def make_model_settings(
     *,
     model_name: str,
     request_timeout: float | None = None,
+    force_reasoning_effort: bool = False,
 ) -> ModelSettings:
     model_settings = ModelSettings(
         parallel_tool_calls=False,
@@ -125,10 +126,22 @@ def make_model_settings(
     if (
         reasoning_effort is not None
         and reasoning_effort != "none"
-        and model_supports_reasoning(model_name)
+        and (model_supports_reasoning(model_name) or force_reasoning_effort)
     ):
+        # Positive reasoning effort. The SDK forwards ``reasoning.effort`` as the
+        # top-level ``reasoning_effort`` create-arg to the OpenAI-compatible
+        # client. For litellm-known reasoners this is the long-standing path.
+        # ``force_reasoning_effort`` (STRIX_FORCE_REASONING_EFFORT) additionally
+        # opts in thinking-only providers that litellm does NOT recognise as
+        # reasoners yet REQUIRE a positive effort and reject thinking:disabled
+        # (e.g. OpenCode Zen "Ox Alpha" / x-preview-f-free). It is OFF by default,
+        # so models that previously emitted no reasoning arg (e.g. z-ai/glm-5)
+        # keep byte-identical behaviour -- no silent treatment change. ``max``/
+        # ``xhigh`` are fork-only levels absent from the SDK ``Reasoning.effort``
+        # enum -> clamp to ``high`` (the accepted ceiling).
+        _sdk_effort = "high" if reasoning_effort in ("max", "xhigh") else reasoning_effort
         model_settings = model_settings.resolve(
-            ModelSettings(reasoning=Reasoning(effort=reasoning_effort)),
+            ModelSettings(reasoning=Reasoning(effort=cast("Any", _sdk_effort))),
         )
     elif reasoning_effort == "none":
         # Some OpenAI-compatible providers (e.g. b.ai deepseek "thinking mode")

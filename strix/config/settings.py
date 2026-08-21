@@ -8,7 +8,7 @@ from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-ReasoningEffort = Literal["none", "minimal", "low", "medium", "high", "xhigh"]
+ReasoningEffort = Literal["none", "minimal", "low", "medium", "high", "xhigh", "max"]
 
 _BASE_CONFIG = SettingsConfigDict(
     case_sensitive=False,
@@ -36,6 +36,9 @@ class LlmSettings(BaseSettings):
         ),
     )
     reasoning_effort: ReasoningEffort = Field(default="high", alias="STRIX_REASONING_EFFORT")
+    force_reasoning_effort: bool = Field(
+        default=False, alias="STRIX_FORCE_REASONING_EFFORT"
+    )
     timeout: int = Field(default=300, alias="LLM_TIMEOUT")
 
 
