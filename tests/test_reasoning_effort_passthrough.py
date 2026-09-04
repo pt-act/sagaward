@@ -15,9 +15,17 @@ models that previously emitted no reasoning arg (e.g. z-ai/glm-5) are byte-ident
 
 from __future__ import annotations
 
+import json
 import typing
 
-from strix.config.settings import ReasoningEffort
+import httpx
+import pytest
+from agents.model_settings import ModelSettings
+from agents.models.interface import ModelTracing
+from agents.models.openai_chatcompletions import OpenAIChatCompletionsModel
+from openai import AsyncOpenAI
+
+from strix.config.settings import LlmSettings, ReasoningEffort
 from strix.core.inputs import make_model_settings
 
 
@@ -79,3 +87,93 @@ def test_timeout_and_effort_coexist() -> None:
 def test_known_reasoner_uses_reasoning_without_flag() -> None:
     ms = make_model_settings("low", model_name=KNOWN_REASONER)
     assert ms.reasoning is not None and ms.reasoning.effort == "low"
+
+
+# ─── v0.2.0 round-2 additions (validator round-1 reconciliation) ──────────────
+
+def test_settings_load_max(monkeypatch: pytest.MonkeyPatch) -> None:
+    """AC-5 end-to-end: a Settings load with STRIX_REASONING_EFFORT=max validates."""
+    monkeypatch.setenv("STRIX_REASONING_EFFORT", "max")
+    settings = LlmSettings(_env_file=None)
+    assert settings.reasoning_effort == "max"
+
+
+def _wire_client(captured: dict[str, object]) -> AsyncOpenAI:
+    """An OpenAI AsyncClient whose transport records the request body and returns a
+    minimal valid chat completion (offline wire capture — no network)."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["body"] = json.loads(request.read())
+        return httpx.Response(
+            200,
+            json={
+                "id": "chatcmpl-wire-test",
+                "object": "chat.completion",
+                "created": 0,
+                "model": THINKING_ONLY,
+                "choices": [
+                    {
+                        "index": 0,
+                        "message": {"role": "assistant", "content": "ok"},
+                        "finish_reason": "stop",
+                    }
+                ],
+                "usage": {"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2},
+            },
+        )
+
+    return AsyncOpenAI(
+        base_url="http://wire-test.local/v1",
+        api_key="test-key",
+        http_client=httpx.AsyncClient(transport=httpx.MockTransport(handler)),
+    )
+
+
+@pytest.mark.asyncio
+async def test_wire_reasoning_effort_on_the_wire() -> None:
+    """AC-1/AC-6a (v0.2.0): through the REAL agents-SDK chat-completions path, the
+    force-flag model settings put reasoning_effort into the outgoing request body."""
+    captured: dict[str, object] = {}
+    model = OpenAIChatCompletionsModel(
+        model=THINKING_ONLY, openai_client=_wire_client(captured)
+    )
+    ms = make_model_settings("low", model_name=THINKING_ONLY, force_reasoning_effort=True)
+    await model.get_response(
+        system_instructions="s",
+        input="hi",
+        model_settings=ms,
+        tools=[],
+        output_schema=None,
+        handoffs=[],
+        tracing=ModelTracing.DISABLED,
+    )
+    body = captured["body"]  # type: ignore[index]
+    assert body["reasoning_effort"] == "low"
+    assert "allowed_openai_params" not in body
+
+
+@pytest.mark.asyncio
+async def test_superseded_v010_extra_args_form_is_rejected_by_sdk() -> None:
+    """Reconciliation guard: the superseded v0.1.0 interface (reasoning_effort inside
+    extra_args) trips the SDK's duplicate-key TypeError on the chat-completions path.
+    Documents mechanically why the SDK-native Reasoning form is the contract."""
+    captured: dict[str, object] = {}
+    model = OpenAIChatCompletionsModel(
+        model=THINKING_ONLY, openai_client=_wire_client(captured)
+    )
+    superseded = ModelSettings(
+        extra_args={
+            "reasoning_effort": "low",
+            "allowed_openai_params": ["reasoning_effort"],
+        }
+    )
+    with pytest.raises(TypeError, match="multiple values for keyword argument"):
+        await model.get_response(
+            system_instructions="s",
+            input="hi",
+            model_settings=superseded,
+            tools=[],
+            output_schema=None,
+            handoffs=[],
+            tracing=ModelTracing.DISABLED,
+        )
