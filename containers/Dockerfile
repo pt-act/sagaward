@@ -1,19 +1,40 @@
+# ---------------------------------------------------------------------------
+# Builder stage: compile the Go tools here so the Go toolchain (~225MB) and the
+# module/build caches never reach the runtime image. The resulting binaries are
+# statically linked and copied into the final stage.
+# ---------------------------------------------------------------------------
+FROM kalilinux/kali-rolling:latest AS gobuilder
+
+RUN apt-get update && \
+    apt-get install -y kali-archive-keyring && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends golang-go git ca-certificates
+
+ENV GOBIN=/out/bin
+RUN mkdir -p /out/bin && \
+    go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest && \
+    go install -v github.com/projectdiscovery/katana/cmd/katana@latest && \
+    go install -v github.com/projectdiscovery/cvemap/cmd/vulnx@latest && \
+    go install -v github.com/jaeles-project/gospider@latest && \
+    go install -v github.com/projectdiscovery/interactsh/cmd/interactsh-client@latest && \
+    go install -v golang.org/x/vuln/cmd/govulncheck@latest
+
+# ---------------------------------------------------------------------------
+# Runtime stage
+# ---------------------------------------------------------------------------
 FROM kalilinux/kali-rolling:latest
 
 LABEL description="AI Agent Penetration Testing Environment with Comprehensive Automated Tools"
 
-# Pinned tool versions for reproducible container builds.
-ARG GITLEAKS_VERSION=v8.30.1
-ARG TRUFFLEHOG_VERSION=v3.95.5
-ARG TRIVY_VERSION=v0.71.0
-ARG RUFF_VERSION=0.15.7
-ARG PYTEST_VERSION=8.3.5
-
 RUN apt-get update && \
-    apt-get install -y kali-archive-keyring sudo && \
+    apt-get install -y kali-archive-keyring && \
     apt-get update && \
     apt-get upgrade -y
 
+# The fence's isolation design (apf-isolation 0.2.5): the agent gets NO sudo.
+# Upstream's sandbox grants passwordless root escalation to pentester — that posture is exactly
+# what the fence exists to harden against (the observation-channel residual's
+# compensation: revoke sudo, harden the image's binary permissions).
 RUN useradd -m -s /bin/bash pentester && \
     touch /home/pentester/.hushlogin
 
@@ -24,17 +45,18 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     wget curl git vim nano unzip tar \
     apt-transport-https ca-certificates gnupg lsb-release \
-    build-essential software-properties-common \
-    gcc libc6-dev pkg-config libpcap-dev libssl-dev \
-    python3 python3-pip python3-dev python3-venv python3-setuptools \
-    golang-go \
+    software-properties-common \
+    gcc libc6-dev \
+    python3 python3-pip python3-venv python3-setuptools \
     net-tools dnsutils whois \
+    file xxd \
     jq parallel ripgrep grep \
-    less man-db procps htop \
+    less procps htop \
     iproute2 iputils-ping netcat-traditional \
     nmap ncat ndiff \
     sqlmap nuclei subfinder naabu ffuf \
     nodejs npm pipx \
+    golang-go \
     libcap2-bin \
     gdb \
     libnss3-tools \
@@ -43,36 +65,7 @@ RUN apt-get update && \
 
 RUN setcap cap_net_raw,cap_net_admin,cap_net_bind_service+eip $(which nmap)
 
-# Pinned Group 1 toolchain + build-time self-check (fail-fast layer).
-# Installed early so a bad pin aborts the build before the heavy Go/nuclei steps.
 USER pentester
-ENV PATH="/home/pentester/.local/bin:$PATH"
-RUN pipx install "ruff==${RUFF_VERSION}" && \
-    pipx install "pytest==${PYTEST_VERSION}"
-
-USER root
-RUN curl -sSfL "https://raw.githubusercontent.com/trufflesecurity/trufflehog/${TRUFFLEHOG_VERSION}/scripts/install.sh" | sh -s -- -b /usr/local/bin "${TRUFFLEHOG_VERSION}"
-RUN set -eux; \
-    ARCH="$(uname -m)"; \
-    case "$ARCH" in \
-        x86_64) GITLEAKS_ARCH="x64" ;; \
-        aarch64|arm64) GITLEAKS_ARCH="arm64" ;; \
-        *) echo "Unsupported architecture: $ARCH" >&2; exit 1 ;; \
-    esac; \
-    curl -fsSL "https://github.com/gitleaks/gitleaks/releases/download/${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION#v}_linux_${GITLEAKS_ARCH}.tar.gz" -o /tmp/gitleaks.tgz; \
-    tar -xzf /tmp/gitleaks.tgz -C /tmp; \
-    install -m 0755 /tmp/gitleaks /usr/local/bin/gitleaks; \
-    rm -f /tmp/gitleaks /tmp/gitleaks.tgz
-RUN curl -sfL "https://raw.githubusercontent.com/aquasecurity/trivy/${TRIVY_VERSION}/contrib/install.sh" | sh -s -- -b /usr/local/bin "${TRIVY_VERSION}"
-
-USER pentester
-RUN set -eux; \
-    gitleaks version 2>&1 | grep -F "${GITLEAKS_VERSION#v}"; \
-    trufflehog --version 2>&1 | grep -F "${TRUFFLEHOG_VERSION#v}"; \
-    trivy --version 2>&1 | grep -F "${TRIVY_VERSION#v}"; \
-    ruff --version 2>&1 | grep -F "${RUFF_VERSION}"; \
-    pytest --version 2>&1 | grep -F "${PYTEST_VERSION}"
-
 RUN openssl ecparam -name prime256v1 -genkey -noout -out /app/certs/ca.key && \
     openssl req -x509 -new -key /app/certs/ca.key \
     -out /app/certs/ca.crt \
@@ -98,13 +91,9 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/b
 
 USER pentester
 WORKDIR /tmp
-ARG INTERACTSH_CLIENT_VERSION=v1.2.4
-RUN go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest && \
-    go install -v github.com/projectdiscovery/katana/cmd/katana@latest && \
-    go install -v github.com/projectdiscovery/cvemap/cmd/vulnx@latest && \
-    go install -v github.com/jaeles-project/gospider@latest && \
-    go install -v github.com/projectdiscovery/interactsh/cmd/interactsh-client@${INTERACTSH_CLIENT_VERSION} && \
-    go install -v github.com/projectdiscovery/interactsh/cmd/interactsh-server@${INTERACTSH_CLIENT_VERSION}
+
+# Go tools are built in the gobuilder stage; copy the static binaries only.
+COPY --from=gobuilder --chown=pentester:pentester /out/bin/ /home/pentester/go/bin/
 
 RUN nuclei -update-templates
 
@@ -121,12 +110,30 @@ RUN npm install -g retire@latest && \
     npm install -g js-beautify@latest && \
     npm install -g @ast-grep/cli@latest && \
     npm install -g tree-sitter-cli@latest && \
-    npm install -g agent-browser@0.26.0
+    npm install -g agent-browser@0.26.0 && \
+    npm cache clean --force && \
+    # ast-grep ships two identical binaries (`ast-grep` and `sg`); dedupe (~52MB)
+    ln -sf ast-grep /home/pentester/.npm-global/lib/node_modules/@ast-grep/cli/sg
 
 ENV AGENT_BROWSER_EXECUTABLE_PATH=/usr/bin/chromium
 ENV AGENT_BROWSER_USER_AGENT="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
 ENV AGENT_BROWSER_ARGS="--disable-blink-features=AutomationControlled,--no-first-run,--no-default-browser-check,--lang=en-US"
 ENV AGENT_BROWSER_SCREENSHOT_DIR=/workspace/.agent-browser-screenshots
+ENV AGENT_BROWSER_IDLE_TIMEOUT_MS=180000
+USER root
+RUN set -eu; \
+    { \
+        for var in AGENT_BROWSER_EXECUTABLE_PATH AGENT_BROWSER_USER_AGENT \
+                   AGENT_BROWSER_ARGS AGENT_BROWSER_SCREENSHOT_DIR \
+                   AGENT_BROWSER_IDLE_TIMEOUT_MS; do \
+            eval "value=\${$var}"; \
+            printf 'export %s="${%s:-%s}"\n' "$var" "$var" "$value"; \
+        done; \
+    } > /tmp/agent-browser.sh; \
+    install -m 0644 /tmp/agent-browser.sh /etc/profile.d/agent-browser.sh; \
+    rm /tmp/agent-browser.sh; \
+    env -i bash -lc 'test "${AGENT_BROWSER_IDLE_TIMEOUT_MS}" = "180000"'
+USER pentester
 RUN /home/pentester/.npm-global/bin/agent-browser doctor --offline --quick
 
 RUN set -eux; \
@@ -166,7 +173,44 @@ RUN git clone https://github.com/aravind0x7/JS-Snooper.git && \
 
 USER root
 
-RUN apt-get update && apt-get install -y zaproxy wapiti
+# Install trufflehog into a pentester-owned dir on PATH so its runtime self-update
+# (which replaces the binary in place) succeeds: as non-root `pentester` it cannot
+# overwrite a root-owned binary under /usr/local/bin, which otherwise fails with
+# "cannot move binary" and aborts the scan. Pin the initial version for
+# reproducible builds; self-update then pulls fresh detectors at runtime.
+ARG TRUFFLEHOG_VERSION=3.99.2
+RUN curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /home/pentester/.local/bin "v${TRUFFLEHOG_VERSION}" && \
+    chown -R pentester:pentester /home/pentester/.local
+RUN set -eux; \
+    ARCH="$(uname -m)"; \
+    case "$ARCH" in \
+        x86_64) GITLEAKS_ARCH="x64" ;; \
+        aarch64|arm64) GITLEAKS_ARCH="arm64" ;; \
+        *) echo "Unsupported architecture: $ARCH" >&2; exit 1 ;; \
+    esac; \
+    TAG="$(curl -fsSLI -o /dev/null -w '%{url_effective}' https://github.com/gitleaks/gitleaks/releases/latest | sed 's#.*/##')"; \
+    curl -fsSL "https://github.com/gitleaks/gitleaks/releases/download/${TAG}/gitleaks_${TAG#v}_linux_${GITLEAKS_ARCH}.tar.gz" -o /tmp/gitleaks.tgz; \
+    tar -xzf /tmp/gitleaks.tgz -C /tmp; \
+    install -m 0755 /tmp/gitleaks /usr/local/bin/gitleaks; \
+    rm -f /tmp/gitleaks /tmp/gitleaks.tgz
+
+ARG TRIVY_VERSION=0.76.1
+ARG TRIVY_SHA256_X86=c7cbe3137fb8a48a17574bede3dd6beb16742d1e9772929940fc90082c39d9c0
+ARG TRIVY_SHA256_AARCH64=e174dff2a6dba5e3ae41f8d0537a6324405bd08132497340304c6b20e0f16a1f
+RUN set -eux; \
+    case "$(uname -m)" in \
+        x86_64) TRIVY_ARCH="64bit"; TRIVY_SHA256="${TRIVY_SHA256_X86}" ;; \
+        aarch64|arm64) TRIVY_ARCH="ARM64"; TRIVY_SHA256="${TRIVY_SHA256_AARCH64}" ;; \
+        *) echo "Unsupported architecture: $(uname -m)" >&2; exit 1 ;; \
+    esac; \
+    curl -fsSL "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-${TRIVY_ARCH}.tar.gz" -o /tmp/trivy.tgz; \
+    echo "${TRIVY_SHA256}  /tmp/trivy.tgz" | sha256sum -c -; \
+    tar -xzf /tmp/trivy.tgz -C /tmp trivy; \
+    install -m 0755 /tmp/trivy /usr/local/bin/trivy; \
+    rm -f /tmp/trivy /tmp/trivy.tgz; \
+    trivy --version
+
+RUN apt-get install -y wapiti
 
 # CVE-2026-111497: out-of-bounds write in the brotli decoder, fixed in brotli
 # 1.2.1 / Debian 1.2.0-4.1. kali-rolling still ships 1.2.0-4, and node, curl and
@@ -184,10 +228,44 @@ RUN set -eux; \
     test "$(dpkg-query -W -f='${Version}' libbrotli1)" = "${BROTLI_DEB_VERSION}"; \
     node -e 'const z=require("zlib");z.brotliDecompressSync(z.brotliCompressSync(Buffer.from("ok")))'
 
+ARG OPENGREP_VERSION=1.31.0
+ARG OPENGREP_SHA256_X86=dbbe3c2058dbe600c449a8ba22ea79a1643a6660658400090d0323a8d0d31147
+ARG OPENGREP_SHA256_AARCH64=2b713a29a00237f85408b83002fc111db5b94c7fa8d263f0a93184a960655d9d
+RUN set -eux; \
+    case "$(uname -m)" in \
+        x86_64) OPENGREP_ARCH="x86"; OPENGREP_SHA256="${OPENGREP_SHA256_X86}" ;; \
+        aarch64|arm64) OPENGREP_ARCH="aarch64"; OPENGREP_SHA256="${OPENGREP_SHA256_AARCH64}" ;; \
+        *) echo "Unsupported architecture: $(uname -m)" >&2; exit 1 ;; \
+    esac; \
+    curl -fsSL "https://github.com/opengrep/opengrep/releases/download/v${OPENGREP_VERSION}/opengrep_manylinux_${OPENGREP_ARCH}" -o /tmp/opengrep; \
+    echo "${OPENGREP_SHA256}  /tmp/opengrep" | sha256sum -c -; \
+    install -m 0755 /tmp/opengrep /usr/local/bin/opengrep; \
+    rm -f /tmp/opengrep; \
+    opengrep --version
+
+# Opengrep ships no rule registry of its own; bake the community ruleset so
+# scans run offline. Keep only rule YAML and LICENSE; drop tests, fixtures,
+# tooling, and rules marked with a proprietary license.
+ARG OPENGREP_RULES_REF=f1d2b562b414783763fd02a6ed2736eaed622efa
+RUN set -eux; \
+    mkdir -p /opt/opengrep-rules; \
+    curl -fsSL "https://codeload.github.com/opengrep/opengrep-rules/tar.gz/${OPENGREP_RULES_REF}" \
+        | tar -xz --strip-components=1 -C /opt/opengrep-rules; \
+    cd /opt/opengrep-rules; \
+    rm -rf .github scripts stats; \
+    find . -maxdepth 1 -type f ! -name LICENSE -delete; \
+    find . -mindepth 2 -type f \( ! \( -name '*.yaml' -o -name '*.yml' \) -o -name '*.test.yaml' -o -name '*.test.yml' -o -name '.*' \) -delete; \
+    grep -rlZ 'license: proprietary' . | xargs -0 -r rm -f; \
+    find . -type d -empty -delete; \
+    chmod -R a+rX /opt/opengrep-rules
+
+# Strix-authored rules that close gaps in the community ruleset.
+COPY containers/opengrep-rules/ /opt/opengrep-rules/strix/
+RUN chmod -R a+rX /opt/opengrep-rules/strix
+
 USER pentester
 
-RUN pipx install semgrep && \
-    pipx install bandit
+RUN pipx install bandit
 
 RUN npm install -g jshint
 
@@ -195,7 +273,12 @@ USER root
 
 RUN apt-get autoremove -y && \
     apt-get autoclean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
+    # Purge non-English locales (~160MB)
+    find /usr/share/locale -mindepth 1 -maxdepth 1 -type d \
+        ! -name 'en' ! -name 'en_US' ! -name 'C' -exec rm -rf {} + && \
+    # Remove package documentation and man pages not needed at runtime (~95MB)
+    rm -rf /usr/share/doc/* /usr/share/doc-base/* /usr/share/man/*
 
 ENV PATH="/home/pentester/go/bin:/home/pentester/.local/bin:/home/pentester/.npm-global/bin:/app/.venv/bin:$PATH"
 ENV VIRTUAL_ENV="/app/.venv"
@@ -225,6 +308,8 @@ RUN mkdir -p /workspace && chown -R pentester:pentester /workspace /app
 USER pentester
 RUN python3 -m venv /app/.venv && \
     /app/.venv/bin/pip install --no-cache-dir caido-sdk-client && \
+    /app/.venv/bin/pip install --no-cache-dir \
+        requests httpx beautifulsoup4 lxml pyjwt cryptography && \
     /app/.venv/bin/pip install --no-cache-dir -r /home/pentester/tools/jwt_tool/requirements.txt && \
     printf '%s\n' \
         '#!/bin/bash' \
@@ -235,8 +320,13 @@ RUN python3 -m venv /app/.venv && \
 COPY --chown=pentester:pentester strix/tools/proxy/caido_api.py /opt/strix-python/caido_api.py
 ENV PYTHONPATH=/opt/strix-python
 
-RUN echo 'export PATH="/home/pentester/go/bin:/home/pentester/.local/bin:/home/pentester/.npm-global/bin:$PATH"' >> /home/pentester/.bashrc && \
-    echo 'export PATH="/home/pentester/go/bin:/home/pentester/.local/bin:/home/pentester/.npm-global/bin:$PATH"' >> /home/pentester/.profile
+# Login shells (e.g. `bash -lc`) source /etc/profile, which on Debian/Kali
+# hard-resets PATH and drops the image's ENV PATH entries. Re-add the same
+# directories here — including /app/.venv/bin — so `python3`/`pip` resolve to
+# the venv (which ships requests, httpx, bs4, lxml, pyjwt, cryptography, and the
+# Caido SDK) instead of the externally-managed system interpreter.
+RUN echo 'export PATH="/home/pentester/go/bin:/home/pentester/.local/bin:/home/pentester/.npm-global/bin:/app/.venv/bin:$PATH"' >> /home/pentester/.bashrc && \
+    echo 'export PATH="/home/pentester/go/bin:/home/pentester/.local/bin:/home/pentester/.npm-global/bin:/app/.venv/bin:$PATH"' >> /home/pentester/.profile
 
 USER root
 COPY containers/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
