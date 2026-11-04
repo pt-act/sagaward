@@ -67,6 +67,14 @@ ALLOWED_IMPORT_ROOTS = frozenset(
         "typing",
         "pydantic",
         "strix",
+        # apf-action-gate G2a: the shell parser for classify.py. One root, one
+        # consumer; no other third-party import may join this set silently.
+        "bashlex",
+        # classify.py / install_grammar.py stdlib: tokenising (re, shlex) and
+        # RFC-3986 host extraction (urllib, 1c-5).
+        "re",
+        "shlex",
+        "urllib",
     },
 )
 
