@@ -11,8 +11,10 @@ from agents.sandbox.entries import BaseEntry, LocalDir
 from agents.sandbox.manifest import Environment, Manifest
 
 from strix.config import load_settings
+from strix.core.isolation import session_key as _session_key
 from strix.runtime.backends import get_backend
 from strix.runtime.caido_bootstrap import bootstrap_caido
+from strix.runtime.provenance_bringup import bring_up_provenance
 
 
 logger = logging.getLogger(__name__)
@@ -30,15 +32,20 @@ async def create_or_reuse(
     *,
     image: str,
     local_sources: list[dict[str, str]],
+    agent_id: str | None = None,
+    profile: str = "default",
 ) -> dict[str, Any]:
-    """Return the existing session bundle for ``scan_id`` or create a new one.
+    """Return the existing session bundle for ``(scan_id, agent_id)`` or create it.
 
     Each ``local_sources`` entry mounts its host ``source_path`` at
-    ``/workspace/<workspace_subdir>`` inside the container.
+    ``/workspace/<workspace_subdir>`` inside the container. ``profile`` selects
+    the capability set (see ``strix.core.isolation``); the quarantine volume is
+    mounted noexec per agent.
     """
-    cached = _SESSION_CACHE.get(scan_id)
+    key = _session_key(scan_id, agent_id)
+    cached = _SESSION_CACHE.get(key)
     if cached is not None:
-        logger.info("Reusing existing sandbox session for scan %s", scan_id)
+        logger.info("Reusing existing sandbox session for %s", key)
         return cached
 
     entries: dict[str | Path, BaseEntry] = {}
@@ -73,15 +80,19 @@ async def create_or_reuse(
     backend = get_backend(backend_name)
 
     logger.info(
-        "Creating sandbox session for scan %s (backend=%s, image=%s)",
-        scan_id,
+        "Creating sandbox session for %s (backend=%s, image=%s, profile=%s)",
+        key,
         backend_name,
         image,
+        profile,
     )
     client, session = await backend(
         image=image,
         manifest=manifest,
         exposed_ports=(_CONTAINER_CAIDO_PORT,),
+        profile=profile,
+        scan_id=scan_id,
+        agent_id=agent_id or "root",
     )
 
     caido_endpoint = await session.resolve_exposed_port(_CONTAINER_CAIDO_PORT)
@@ -102,17 +113,24 @@ async def create_or_reuse(
         container_url=container_caido_url,
     )
 
+    # Per-sandbox-epoch provenance. Built after the container is up and before
+    # any agent action can run, so the image inventory describes what the
+    # sandbox actually shipped. Dies with the container; never shared across
+    # scans (session_manager caches per scan/agent key).
+    provenance = await bring_up_provenance(session)
+
     bundle = {
         "client": client,
         "session": session,
+        "provenance": provenance,
         "caido_client": caido_client,
     }
-    _SESSION_CACHE[scan_id] = bundle
-    logger.info("Sandbox session for scan %s ready and cached", scan_id)
+    _SESSION_CACHE[key] = bundle
+    logger.info("Sandbox session for %s ready and cached", key)
     return bundle
 
 
-async def cleanup(scan_id: str) -> None:
+async def cleanup(scan_id: str, agent_id: str | None = None) -> None:
     """Tear down ``scan_id``'s container and drop its cache entry.
 
     Best-effort: any error during ``client.delete`` is logged and
@@ -120,9 +138,15 @@ async def cleanup(scan_id: str) -> None:
     scan from starting; the worst case is a stranded container that
     Docker's normal reaping will catch on next ``docker prune``.
     """
-    bundle = _SESSION_CACHE.pop(scan_id, None)
+    key = _session_key(scan_id, agent_id)
+    bundle = _SESSION_CACHE.pop(key, None)
     if bundle is None:
-        logger.debug("cleanup(%s): no cached session", scan_id)
+        # Teardown of one agent must not strand its siblings: clean the whole
+        # scan only when the caller names no agent.
+        if agent_id is None:
+            for sibling in [k for k in _SESSION_CACHE if k.startswith(f"{scan_id}:")]:
+                _SESSION_CACHE.pop(sibling, None)
+        logger.debug("cleanup(%s): no cached session", key)
         return
 
     caido_client = bundle.get("caido_client")

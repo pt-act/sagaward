@@ -15,8 +15,6 @@ RUN apt-get update && \
     apt-get upgrade -y
 
 RUN useradd -m -s /bin/bash pentester && \
-    usermod -aG sudo pentester && \
-    echo "pentester ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
     touch /home/pentester/.hushlogin
 
 RUN mkdir -p /home/pentester/tools /app/certs && \

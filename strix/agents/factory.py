@@ -5,8 +5,8 @@ from __future__ import annotations
 import inspect
 import json
 import logging
-import os
 import re
+import time
 from typing import TYPE_CHECKING, Any
 
 from agents.agent import ToolsToFinalOutputResult
@@ -18,6 +18,10 @@ from pydantic import ValidationError
 
 from strix.agents.funnel_emit import wrap_harness_tool
 from strix.agents.prompt import render_system_prompt
+from strix.core.provenance.surfacing import wrap_surfacing_tools
+from strix.core.provenance.write_hook import configure_filesystem_tools
+from strix.runtime.provenance_install import install_trigger, snapshot_install_prefixes
+from strix.runtime.provenance_reconcile import reconcile_after_exec, verify_patch_writes
 from strix.tools.agents_graph.tools import (
     agent_finish,
     create_agent,
@@ -253,12 +257,33 @@ def _format_validation_error(tool_name: str, exc: ValidationError) -> str:
     return f"{tool_name}: invalid arguments — " + "; ".join(parts)
 
 
+def _exec_command_text(raw_input: str) -> str | None:
+    """The command string from the tool call, or None when it cannot be read."""
+    try:
+        parsed = json.loads(raw_input)
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(parsed, dict):
+        return None
+    command = parsed.get("command")
+    return command if isinstance(command, str) else None
+
+
 def _wrap_exec_command(tool: FunctionTool) -> FunctionTool:
     invoke_tool = tool.on_invoke_tool
 
     async def invoke(ctx: Any, raw_input: str) -> Any:
+        started_ns = time.time_ns()
+        command = _exec_command_text(raw_input)
+        trigger = install_trigger(command) if command is not None else None
+        snapshot = None
+        if trigger is not None:
+            context = getattr(ctx, "context", None)
+            session = context.get("sandbox_session") if isinstance(context, dict) else None
+            if session is not None:
+                snapshot = await snapshot_install_prefixes(session, trigger)
         try:
-            return await invoke_tool(ctx, raw_input)
+            result = await invoke_tool(ctx, raw_input)
         except ValidationError as exc:
             return _format_validation_error(tool.name, exc)
         except InvalidManifestPathError as exc:
@@ -268,6 +293,14 @@ def _wrap_exec_command(tool: FunctionTool) -> FunctionTool:
                 "(or omitted to use the turn's cwd). "
                 f"Got: {rel!r}."
             )
+        await reconcile_after_exec(
+            ctx,
+            command=command,
+            started_ns=started_ns,
+            trigger=trigger,
+            install_snapshot=snapshot,
+        )
+        return result
 
     tool.on_invoke_tool = invoke
     return tool
@@ -451,9 +484,9 @@ def build_strix_agent(
     )
 
     if is_root:
-        tools: list[Tool] = [*_BASE_TOOLS, finish_scan]
+        tools: list[Tool] = wrap_surfacing_tools([*_BASE_TOOLS, finish_scan])
     else:
-        tools = [*_BASE_TOOLS, agent_finish]
+        tools = wrap_surfacing_tools([*_BASE_TOOLS, agent_finish])
 
     # White-box-only tools: code collection + reachability annotation.
     if is_whitebox:
@@ -469,11 +502,11 @@ def build_strix_agent(
         is_whitebox,
     )
 
-    # SGL-S0 containment: when egress enforcement is active, agent tools run as
-    # 'pentester' so they are subject to the iptables redirect (not uid-0 exempt).
-    # The container entrypoint still runs as root (docker_client.py sets
-    # create_kwargs["user"]="root") to install iptables rules at boot.
-    run_as = "pentester" if os.environ.get("STRIX_EGRESS_ENFORCE") == "1" else None
+    # Tools always run as 'pentester' — never as the container default, which is
+    # root when SGL's entrypoint installs iptables rules. The old conditional
+    # (run_as only under STRIX_EGRESS_ENFORCE) made the tool user depend on an
+    # egress flag; the fence's channel-trust edge needs it unconditional.
+    run_as = "pentester"
 
     return SandboxAgent(
         name=name,
@@ -483,8 +516,11 @@ def build_strix_agent(
         model=None,
         capabilities=[
             Filesystem(
-                configure_tools=(
-                    _configure_chat_completions_filesystem_tools if chat_completions_tools else None
+                configure_tools=lambda toolset: configure_filesystem_tools(
+                    toolset,
+                    chat_completions=chat_completions_tools,
+                    chat_converter=_configure_chat_completions_filesystem_tools,
+                    verifier=verify_patch_writes,
                 ),
             ),
             Shell(

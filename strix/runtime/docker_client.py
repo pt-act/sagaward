@@ -11,12 +11,15 @@ deltas:
    ``docker-entrypoint.sh`` actually run — without it, ``caido-cli`` never
    starts inside the container and ``bootstrap_caido`` retries against a
    dead port.
-2. Append NET_ADMIN/NET_RAW to ``cap_add`` (required by ``nmap -sS`` and
-   other raw-socket tools, and required by the SGL egress enforcer for
-   iptables rule installation).
-3. Add ``host.docker.internal`` → host-gateway to ``extra_hosts`` so the
-   agent can reach host-served apps.
-4. SGL-S0: inject STRIX_EGRESS_ENFORCE + STRIX_SCOPE_RULES into the
+2. Grant capabilities from the declared profile only (isolation unit): DEFAULT
+   adds none, RAW_SOCKETS adds NET_RAW for ``nmap -sS``. NET_ADMIN is never
+   granted to the agent's exec context; the SGL enforcer runs as root in the
+   entrypoint.
+3. ``host.docker.internal`` → host-gateway only when the profile declares it,
+   because reaching the host is a capability, not a default.
+4. Mount the per-agent quarantine volume ``noexec,nosuid,nodev`` at
+   ``/workspace/quarantine`` (isolation unit).
+5. SGL-S0: inject STRIX_EGRESS_ENFORCE + STRIX_SCOPE_RULES into the
    container environment when governance is active so the egress-enforcer
    entrypoint and decision proxy load the correct engagement context.
 
@@ -43,13 +46,34 @@ from agents.sandbox.sandboxes.docker import (
 from agents.sandbox.session.sandbox_session import SandboxSession
 from docker import errors as docker_errors  # type: ignore[import-untyped, unused-ignore]
 from docker.models.containers import Container  # type: ignore[import-untyped, unused-ignore]
+from docker.types import Mount  # type: ignore[import-untyped, unused-ignore]
 from docker.utils import parse_repository_tag  # type: ignore[import-untyped, unused-ignore]
+
+from strix.core.isolation import (
+    capabilities_for,
+    extra_hosts_for,
+    quarantine_mount,
+    validate_mount_options,
+)
 
 
 logger = logging.getLogger(__name__)
 
 
 class StrixDockerSandboxClient(DockerSandboxClient):
+    def __init__(
+        self,
+        docker_client: Any,
+        *,
+        profile: str = "default",
+        scan_id: str = "",
+        agent_id: str = "root",
+    ) -> None:
+        super().__init__(docker_client)
+        self._profile = profile
+        self._scan_id = scan_id
+        self._agent_id = agent_id
+
     async def _create_container(
         self,
         image: str,
@@ -104,17 +128,7 @@ class StrixDockerSandboxClient(DockerSandboxClient):
             }
         # ----- END VERBATIM COPY -----
 
-        # Strix injections — append, don't overwrite, so FUSE/SYS_ADMIN survives.
-        cap_add = create_kwargs.setdefault("cap_add", [])
-        if not isinstance(cap_add, list):
-            cap_add = list(cap_add)
-            create_kwargs["cap_add"] = cap_add
-        for cap in ("NET_ADMIN", "NET_RAW"):
-            if cap not in cap_add:
-                cap_add.append(cap)
-
-        extra_hosts = create_kwargs.setdefault("extra_hosts", {})
-        extra_hosts["host.docker.internal"] = "host-gateway"
+        self._apply_deltas(create_kwargs)
 
         # SGL-S0: inject governance environment when STRIX_EGRESS_ENFORCE is
         # set on the host.  The egress-enforcer entrypoint reads these to
@@ -145,7 +159,7 @@ class StrixDockerSandboxClient(DockerSandboxClient):
         logger.debug(
             "Creating sandbox container: image=%s caps=%s exposed_ports=%s",
             image,
-            cap_add,
+            create_kwargs.get("cap_add"),
             list(exposed_ports),
         )
         container = self.docker_client.containers.create(**create_kwargs)
@@ -155,6 +169,37 @@ class StrixDockerSandboxClient(DockerSandboxClient):
             image,
         )
         return container
+
+    def _apply_deltas(self, create_kwargs: dict[str, Any]) -> None:
+        """The injection half of the create body: caps, hosts, quarantine mount."""
+        # Strix injections — append, don't overwrite, so FUSE/SYS_ADMIN survives.
+        # Capabilities come from the declared profile only: DEFAULT adds nothing,
+        # RAW_SOCKETS adds NET_RAW. NET_ADMIN is never granted (the SGL enforcer
+        # runs in the entrypoint as root, not in the agent's exec context).
+        requested = capabilities_for(self._profile)
+        if requested:
+            cap_add = create_kwargs.setdefault("cap_add", [])
+            if not isinstance(cap_add, list):
+                cap_add = list(cap_add)
+                create_kwargs["cap_add"] = cap_add
+            for cap in requested:
+                if cap not in cap_add:
+                    cap_add.append(cap)
+
+        # host.docker.internal is a host-reach capability; only a profile that
+        # declares it gets it.
+        for host, target in extra_hosts_for(self._profile).items():
+            extra_hosts = create_kwargs.setdefault("extra_hosts", {})
+            extra_hosts[host] = target
+
+        # The quarantine volume: noexec/nosuid/nodev at the mount, per agent.
+        quarantine = quarantine_mount(self._scan_id, self._agent_id)
+        validate_mount_options(quarantine.options)  # refuse a container with an exec quarantine
+        mounts = create_kwargs.setdefault("mounts", [])
+        if not isinstance(mounts, list):
+            mounts = list(mounts)
+            create_kwargs["mounts"] = mounts
+        mounts.append(Mount(**quarantine.as_kwargs()))
 
     async def delete(self, session: SandboxSession) -> SandboxSession:
         container_id = getattr(getattr(session._inner, "state", None), "container_id", None)
@@ -172,8 +217,8 @@ class StrixDockerSandboxClient(DockerSandboxClient):
             exit_code, output = container.exec_run(f"cat {path}", stdout=True, stderr=True)
             if exit_code == 0:
                 return output.decode("utf-8", errors="replace")
-        except Exception:
-            pass
+        except Exception:  # noqa: BLE001 - health ingest is best-effort
+            logger.debug("target-health read failed", exc_info=True)
         return ""
 
     def exec_command(self, container_id: str, command: str) -> None:
@@ -183,5 +228,5 @@ class StrixDockerSandboxClient(DockerSandboxClient):
         try:
             container = self.docker_client.containers.get(container_id)
             container.exec_run(command, stdout=False, stderr=False)
-        except Exception:
-            pass
+        except Exception:  # noqa: BLE001 - fire-and-forget truncate
+            logger.debug("target-health truncate failed", exc_info=True)

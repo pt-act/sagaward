@@ -149,6 +149,8 @@ async def run_strix_scan(
         scan_id,
         image=image,
         local_sources=local_sources or [],
+        agent_id=root_id,
+        profile=scan_config.get("capability_profile", "default"),
     )
     logger.info("Sandbox ready for scan %s", scan_id)
 
@@ -238,6 +240,9 @@ async def run_strix_scan(
         context: dict[str, Any] = {
             "coordinator": coordinator,
             "sandbox_session": bundle["session"],
+            # Per-sandbox-epoch origin ledger. Tools read it through ctx.context;
+            # an absent ledger reads as "unverified", never as clean.
+            "provenance": bundle.get("provenance"),
             "caido_client": bundle["caido_client"],
             "docker_client": bundle["client"],
             "agent_id": root_id,
