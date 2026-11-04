@@ -71,9 +71,11 @@ ALLOWED_IMPORT_ROOTS = frozenset(
         # consumer; no other third-party import may join this set silently.
         "bashlex",
         # classify.py / install_grammar.py stdlib: tokenising (re, shlex) and
-        # RFC-3986 host extraction (urllib, 1c-5).
+        # RFC-3986 host extraction (urllib, 1c-5). ``sys`` is stdlib and is read
+        # only for its ``path`` (R12's site-packages roots, G2b).
         "re",
         "shlex",
+        "sys",
         "urllib",
     },
 )

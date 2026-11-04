@@ -300,6 +300,36 @@ def test_r5pp_adjacent_miss_sanctioned_wheel() -> None:
     assert decision.verdict == "ALLOW"
 
 
+def test_r5pp_posture_is_not_per_source() -> None:
+    # 1c-2: re-pointing the resolver is not a per-source property, so one
+    # other-url source condemns the whole install even beside an official wheel.
+    decision = decide_action(
+        action(
+            ActionKind.PACKAGE_INSTALL,
+            artifact_sources=(
+                source(SourceKind.OFFICIAL_INDEX, shape=SourceShape.WHEEL),
+                source(SourceKind.OTHER_URL, raw="http://target/y.whl"),
+            ),
+            scripts_disabled=True,
+        ),
+        ledger_with(),
+    )
+    assert decision.reason == ReasonCode.UNSAFE_INSTALL_SOURCE
+
+
+def test_action_carries_index_tokens_as_declared_data() -> None:
+    # The classifier fills these (G2b); the model must round-trip them verbatim so
+    # the audit record can name the evidence that re-pointed the install.
+    tokens = ("--index-url", "http://target/simple", "PIP_INDEX_URL=http://target/simple")
+    decided = action(
+        ActionKind.PACKAGE_INSTALL,
+        artifact_sources=(source(SourceKind.OTHER_URL, raw="evilpkg"),),
+        index_tokens=tokens,
+    )
+    assert decided.index_tokens == tokens
+    assert decide_action(decided, ledger_with()).reason is ReasonCode.UNSAFE_INSTALL_SOURCE
+
+
 def test_r5pp_operator_approved_releases() -> None:
     decision = decide_action(
         action(

@@ -1,4 +1,4 @@
-"""Command -> :class:`Action` classification (apf-action-gate G2a).
+"""Command -> :class:`Action` classification (apf-action-gate G2a + G2b).
 
 This is the gate's single I/O point. ``decide_action`` is pure and decides over a
 frozen snapshot; everything the decision needs from the filesystem — a target's
@@ -21,16 +21,22 @@ govern every branch:
   (:func:`strix.runtime.provenance_install.install_trigger`), applied to each
   member's argv. A member that fires the walk classifies as an install.
 
-G2b seams (index-selection evidence 1c-2, the assignment contract R8/N8, module
-execution R12, busybox 1c-7) are marked ``TODO(G2b)`` at the point where the
-missing evidence would matter; each seam currently takes the fail-closed
-behaviour the spec names, never a silent allow.
+G2b adds the classifier's second structural half: **index-selection evidence**
+(1c-2 — flags, env assignments and config files, where any non-official value
+re-points every source of that install), the **assignment contract** (R8/N8 — the
+value of a ``VAR=value`` assignment and the embedded path of a declared
+interpreter-env flag are resolved at the same single I/O point), **module
+execution** (R12 — ``python* -m <module>`` resolves against the recorded
+site-packages roots, never against ``cwd``), and the **busybox applet table**
+(1c-7 — applets are positional, so the shipped interpreter-class applets are
+declared data merged into ``INTERPRETER_CLASS``).
 """
 
 from __future__ import annotations
 
 import os
 import re
+import sys
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol
@@ -111,11 +117,14 @@ INTERPRETER_CLASS: frozenset[str] = frozenset(
         "bash",
         "dash",
         "zsh",
+        "ash",
         "python",
         "perl",
         "ruby",
         "node",
         "awk",
+        "php",
+        "lua",
         "env",
         "timeout",
         "nice",
@@ -131,6 +140,114 @@ INTERPRETER_CLASS: frozenset[str] = frozenset(
     }
 )
 EXEC_BEARING_WRAPPERS: frozenset[str] = frozenset({"find"})
+
+# 1c-7 — multi-call binaries. ``busybox`` selects an applet positionally, so no
+# ELF/shebang derivation covers it. The table is the shipped set (declared data,
+# not a discovery); the interpreter-class applets merge into
+# ``INTERPRETER_CLASS`` at bring-up, and everything the image does not ship is
+# the named remainder with AC-33 as its exit criterion.
+BUSYBOX_APPLETS: frozenset[str] = frozenset(
+    {
+        "ash",
+        "sh",
+        "awk",
+        "sed",
+        "grep",
+        "egrep",
+        "fgrep",
+        "find",
+        "xargs",
+        "env",
+        "printenv",
+        "timeout",
+        "nohup",
+        "setsid",
+        "flock",
+        "stdbuf",
+        "ionice",
+        "nice",
+        "tee",
+        "dd",
+        "cp",
+        "mv",
+        "rm",
+        "chmod",
+        "chown",
+        "install",
+        "tar",
+        "gzip",
+        "gunzip",
+        "bzip2",
+        "xz",
+        "unzip",
+        "wget",
+        "nc",
+        "netcat",
+        "ping",
+        "base64",
+        "xxd",
+        "od",
+        "md5sum",
+        "sha256sum",
+        "head",
+        "tail",
+        "cat",
+        "cut",
+        "tr",
+        "wc",
+        "sort",
+        "uniq",
+        "printf",
+        "echo",
+        "test",
+        "true",
+        "false",
+        "ls",
+        "mkdir",
+        "rmdir",
+        "ln",
+        "touch",
+        "stat",
+        "readlink",
+        "realpath",
+        "mktemp",
+        "sleep",
+        "date",
+        "id",
+        "whoami",
+        "uname",
+    }
+)
+# The applets that execute code or forward an operand: the only members that
+# change target extraction. The rest of the table is inventory, not policy.
+BUSYBOX_INTERPRETER_APPLETS: frozenset[str] = frozenset(
+    {
+        "ash",
+        "sh",
+        "awk",
+        "env",
+        "timeout",
+        "nohup",
+        "setsid",
+        "flock",
+        "stdbuf",
+        "ionice",
+        "nice",
+        "xargs",
+    }
+)
+# ``find`` is exec-bearing through its ``-exec`` family, declared separately.
+BUSYBOX_EXEC_WRAPPER_APPLETS: frozenset[str] = frozenset({"find"})
+
+
+def merged_interpreter_class() -> frozenset[str]:
+    """``INTERPRETER_CLASS`` with the busybox applet table merged (1c-7 bring-up).
+
+    The merge is what makes ``busybox sh`` an interpreter invocation even though
+    ``sh`` never appears as an argv[0]: the applet is selected positionally.
+    """
+    return INTERPRETER_CLASS | BUSYBOX_INTERPRETER_APPLETS | BUSYBOX_EXEC_WRAPPER_APPLETS
+
 
 # Builtins that execute an operand rather than reading it as data (1c-1). Their
 # operand is probed like a wrapper's (``exec``/``command``/``builtin``) or an
@@ -170,6 +287,52 @@ _SEARCH_PATH_ENV: frozenset[str] = frozenset(
 )
 _RUBYOPT_ENV = "RUBYOPT"
 
+# --- Index-selection evidence (C1 / 1c-2) -----------------------------------
+#
+# Declared data, not heuristics: a flag, an env assignment, or a config path.
+# Any non-official value re-points the resolver, and the posture is then not
+# per-source — every source of that install derives ``other-url``.
+INDEX_SELECTION_FLAGS: tuple[str, ...] = (
+    "--index-url",
+    "-i",
+    "--extra-index-url",
+    "--registry",
+)
+INDEX_SELECTION_ENV: tuple[str, ...] = (
+    "PIP_INDEX_URL",
+    "UV_INDEX_URL",
+    "NPM_CONFIG_REGISTRY",
+    "PIP_CONFIG_FILE",  # 1c-2: the explicit config pointer joins the env set
+)
+INDEX_SELECTION_CONFIG: tuple[str, ...] = (
+    "~/.pip/pip.conf",
+    "~/.config/pip/pip.conf",
+    "$VIRTUAL_ENV/pip.conf",
+    "/etc/pip.conf",
+    "~/.npmrc",
+    "./.npmrc",
+)
+# Config-mutating commands: ``<manager> config set`` with an index key is a
+# PACKAGE_INSTALL member carrying an ``other-url`` source, so R5'' denies the
+# re-point before it can persist.
+_CONFIG_MUTATING_MANAGERS: frozenset[str] = frozenset({"pip", "pip3", "npm", "yarn", "pnpm"})
+_INDEX_KEY_TOKENS: tuple[str, ...] = ("index-url", "index_url", "registry")
+
+# The declared config set is manager-scoped: a pip install does not read
+# ``.npmrc``, so a stray npm config must not re-point it (and an unknown manager
+# reads every location — the refusing direction).
+_CONFIG_PATHS_BY_FAMILY: dict[str, tuple[str, ...]] = {
+    "pip": ("~/.pip/pip.conf", "~/.config/pip/pip.conf", "$VIRTUAL_ENV/pip.conf", "/etc/pip.conf"),
+    "npm": ("~/.npmrc", "./.npmrc"),
+}
+_PIP_INDEX_ENV: frozenset[str] = frozenset({"PIP_INDEX_URL", "UV_INDEX_URL"})
+_NPM_INDEX_ENV: frozenset[str] = frozenset({"NPM_CONFIG_REGISTRY"})
+
+# R12 — module execution resolves against the interpreter's recorded roots, never
+# against ``cwd``: ``python3 -m yt_dlp`` is a module name, not a relative path.
+_MODULE_FLAG = "-m"
+_MODULE_SOURCE_SUFFIX = ".so"
+
 # Write-capable argument shapes whose write operand is a host-mount write (A8/N6).
 _TEE_VERBS: frozenset[str] = frozenset({"tee"})
 _DD_VERBS: frozenset[str] = frozenset({"dd"})
@@ -185,7 +348,15 @@ _SDIST_SUFFIXES: tuple[str, ...] = (".tar.gz", ".tar.bz2", ".tgz", ".zip", ".tar
 
 # Flags of an install verb whose following token is their value, not a source.
 _INSTALL_VALUE_FLAGS: frozenset[str] = frozenset(
-    {"--only-binary", "--target", "--prefix", "--index-url", "-i", "--extra-index-url"}
+    {
+        "--only-binary",
+        "--target",
+        "--prefix",
+        "--index-url",
+        "-i",
+        "--extra-index-url",
+        "--registry",
+    }
 )
 # Flags whose following token is a fetched requirement / project source.
 _INSTALL_SOURCE_FLAGS: frozenset[str] = frozenset(
@@ -401,14 +572,19 @@ def _head_after_wrappers(argv: Sequence[str]) -> tuple[str, Sequence[str]]:
     return (rest[0] if rest else ""), tuple(rest)
 
 
-def _is_interpreter(head: str) -> bool:
+def _is_python(head: str) -> bool:
+    """True for ``python``/``pypy`` and their versioned spellings (R12 applies)."""
     base = _base_name(head)
     for prefix in ("python", "pypy"):
         if base.startswith(prefix):
             rest = base[len(prefix) :]
             if not rest or rest.replace(".", "").isdigit():
                 return True
-    return base in INTERPRETER_CLASS
+    return False
+
+
+def _is_interpreter(head: str) -> bool:
+    return _is_python(head) or _base_name(head) in INTERPRETER_CLASS
 
 
 def _is_wrapper(head: str) -> bool:
@@ -528,7 +704,40 @@ def _scripts_disabled(argv: Sequence[str]) -> bool:
     )
 
 
-def _install_member(head: str, argv: Sequence[str]) -> bool:
+def _without_index_values(words: Sequence[str]) -> list[str]:
+    """``words`` with the index-selection flags' operands removed (flags kept).
+
+    The install grammar looks for the verb positionally and treats every
+    non-flag token as a verb candidate, so ``pip --index-url http://target
+    install x`` reads the URL as the verb. Removing only the *index-selection*
+    operands lets the same grammar see ``install``. Every other declared
+    value-flag keeps its named miss intact (AC-28b: ``npm --prefix /opt/app
+    install`` stays the EXECUTE the table declares).
+    """
+    out: list[str] = []
+    skip = False
+    for token in words:
+        if skip:
+            skip = False
+            continue
+        flag, separator, _value = token.partition("=")
+        if token in INDEX_SELECTION_FLAGS:
+            out.append(token)
+            skip = True
+            continue
+        if flag in INDEX_SELECTION_FLAGS and separator and flag.startswith("--"):
+            out.append(flag)
+            continue
+        if token.startswith("-i") and not token.startswith("--") and len(token) > 2:
+            out.append("-i")
+            continue
+        out.append(token)
+    return out
+
+
+def _install_member(  # noqa: PLR0911 - one return per declared grammar clause
+    head: str, argv: Sequence[str]
+) -> bool:
     """True when this member's argv fires the install grammar (C3, 1c-6).
 
     The declared manager/verb table is the provenance trigger's, never a second
@@ -542,6 +751,14 @@ def _install_member(head: str, argv: Sequence[str]) -> bool:
     """
     command = " ".join([head, *argv[1:]]) if head else ""
     if install_trigger(command) is not None:
+        return True
+    if install_trigger(" ".join(_without_index_values([head, *argv[1:]]))) is not None:
+        # Same grammar, index-selection operands removed: a re-pointed index flag
+        # no longer hides the verb (``pip --index-url URL install x``).
+        return True
+    if _is_config_mutation(argv):
+        # 1c-2: a config-mutating command assigns an index key, so it is an
+        # install member of the same posture (R5'' denies the re-point).
         return True
     base = _base_name(head)
     rest = list(argv[1:])
@@ -598,6 +815,14 @@ def _redirect_probes(node: Any, cwd: Path | None) -> tuple[list[_Probe], bool]:
 
 
 def _env_flag_targets(env: dict[str, str], cwd: Path | None) -> list[_Probe]:
+    """Target candidates carried by assignments (N8 — one contract).
+
+    The exec-by-construction flags make their operand a target regardless of
+    mode; a search-path flag adds only its existing executable members; any other
+    ``VAR=value`` assignment contributes its value only when that value is an
+    existing executable file (a plain value names no artifact, so it is neither a
+    target nor a deny).
+    """
     probes: list[_Probe] = []
     for name, value in env.items():
         if name in _EXEC_BY_CONSTRUCTION_ENV:
@@ -609,7 +834,9 @@ def _env_flag_targets(env: dict[str, str], cwd: Path | None) -> list[_Probe]:
         elif name in _SEARCH_PATH_ENV:
             for entry in value.split(":"):
                 probe = _probe(entry, cwd) if entry else None
-                if probe is not None and probe.executable:
+                if probe is not None and probe.executable and not _is_directory(probe):
+                    # A directory carries the exec bit; it is never a target
+                    # (a ``PYTHONPATH`` entry is neither a target nor a deny).
                     probes.append(probe)
         elif name == "NODE_OPTIONS":
             probes.extend(
@@ -617,7 +844,48 @@ def _env_flag_targets(env: dict[str, str], cwd: Path | None) -> list[_Probe]:
                 for token in value.split()
                 if token.startswith("--require=")
             )
+        elif value:
+            probe = _probe(value, cwd)
+            if probe.exists and probe.executable and not _is_directory(probe):
+                probes.append(probe)
     return probes
+
+
+def _is_directory(probe: _Probe) -> bool:
+    """True when this probe resolved to a directory (never an executable target)."""
+    path = probe.resolved.path
+    return path is not None and path.is_dir()
+
+
+def _module_operand(head: str, argv: Sequence[str]) -> tuple[int, str] | None:
+    """The (index, name) of a ``python* -m <module>`` selector (R12), if any."""
+    if not _is_python(head):
+        return None
+    for index in range(1, len(argv) - 1):
+        if argv[index] == _MODULE_FLAG:
+            return index + 1, argv[index + 1]
+    return None
+
+
+def _resolve_module(name: str, roots: Sequence[Path]) -> ResolvedTarget:
+    """Resolve ``name`` under the recorded site-packages roots (single I/O point).
+
+    A module name is never a ``cwd``-relative path: probing it as one would both
+    invent a target and miss the module. Dotted names walk the package path; an
+    extension module is matched by its shared-object suffix. Unresolvable stays
+    ``UNRESOLVED`` so R8's degraded class sees it.
+    """
+    if not name or name.startswith("-") or "/" in name:
+        return _unresolved(name)
+    parts = name.split(".")
+    for root in roots:
+        base = root.joinpath(*parts)
+        candidates = [Path(f"{base}.py"), base / "__init__.py"]
+        candidates.extend(sorted(base.parent.glob(f"{base.name}*{_MODULE_SOURCE_SUFFIX}")))
+        for candidate in candidates:
+            if candidate.is_file():
+                return _probe(str(candidate), None).resolved
+    return _unresolved(name)
 
 
 def _interpreter_operands(
@@ -632,8 +900,14 @@ def _interpreter_operands(
     """
     probes: list[_Probe] = []
     is_interp = _is_interpreter(head)
+    module = _module_operand(head, argv)
+    module_index = module[0] if module is not None else None
     pending_command = False
-    for arg in argv[1:]:
+    for position, arg in enumerate(argv[1:], start=1):
+        if position == module_index:
+            # R12: the module selector is resolved against site-packages, never
+            # probed as a cwd-relative path.
+            continue
         if pending_command:
             # A shell body descends as a member (1c-1); it is not a path target.
             if not descend_body:
@@ -667,19 +941,216 @@ def _flag_payload(argv: Sequence[str], flag: str) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Index-selection evidence (C1 / 1c-2).
+# ---------------------------------------------------------------------------
+
+
+def _official_index_value(raw: str) -> bool:
+    """True when ``raw`` names an official index host; unparseable is never official."""
+    host = host_of(raw)
+    return host is not None and host in OFFICIAL_INDEX_HOSTS
+
+
+def _flag_values(argv: Sequence[str]) -> list[tuple[str, str]]:
+    """``(token-as-spelled, value)`` for every declared index-selection flag.
+
+    Fused long (``--index-url=…``) and short (``-iURL``) forms carry their value;
+    a bare flag takes the next token. A trailing flag with no value is evidence
+    with an empty value and therefore re-points (fail-closed).
+    """
+    values: list[tuple[str, str]] = []
+    index = 1
+    while index < len(argv):
+        token = argv[index]
+        flag, separator, value = token.partition("=")
+        if flag in INDEX_SELECTION_FLAGS and separator and flag.startswith("--"):
+            values.append((token, value))
+            index += 1
+        elif token in INDEX_SELECTION_FLAGS:
+            if index + 1 < len(argv):
+                values.append((token, argv[index + 1]))
+                index += 2
+            else:
+                values.append((token, ""))
+                index += 1
+        elif token.startswith("-i") and not token.startswith("--") and len(token) > 2:
+            values.append((token, token[2:]))
+            index += 1
+        else:
+            index += 1
+    return values
+
+
+def _install_family(argv: Sequence[str]) -> str:
+    """The package-manager family whose index config this member consults."""
+    if not argv:
+        return "other"
+    base = _base_name(argv[0])
+    if _is_pip_member(base) or base == "uv" or _is_pip_module_member(argv):
+        return "pip"
+    if base in {"npm", "npx", "pnpm", "yarn", "bun"}:
+        return "npm"
+    return "other"
+
+
+def _config_paths(env: dict[str, str], cwd: Path | None, family: str) -> list[tuple[str, Path]]:
+    """``(declared spelling, path)`` for the config locations this manager reads (1c-2)."""
+    home = env.get("HOME") or os.environ.get("HOME") or str(Path.home())
+    virtualenv = env.get("VIRTUAL_ENV") or os.environ.get("VIRTUAL_ENV", "")
+    spellings = list(_CONFIG_PATHS_BY_FAMILY.get(family, INDEX_SELECTION_CONFIG))
+    explicit = env.get("PIP_CONFIG_FILE") or os.environ.get("PIP_CONFIG_FILE")
+    if explicit and family in {"pip", "other"}:
+        spellings.append(explicit)
+    paths: list[tuple[str, Path]] = []
+    for spelling in spellings:
+        expanded = spelling.replace("$VIRTUAL_ENV", virtualenv).replace("~", home, 1)
+        if "$" in expanded:
+            # An unset VIRTUAL_ENV names no path; nothing to read.
+            continue
+        path = Path(expanded)
+        if not path.is_absolute():
+            path = (cwd or Path.cwd()) / path
+        paths.append((spelling, path))
+    return paths
+
+
+def _config_index_values(path: Path) -> list[str] | None:
+    """Index/registry values assigned in a config file; ``None`` when unreadable.
+
+    The key is matched on its last ``:``-segment so an npm auth line
+    (``//registry.npmjs.org/:_authToken=…``) is not mistaken for a registry
+    assignment: only ``index-url``/``index_url``/``registry`` are index keys.
+    """
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None
+    values: list[str] = []
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped[0] in "#;[":  # comments and section headers
+            continue
+        key, separator, value = stripped.partition("=")
+        if not separator:
+            continue
+        key_text = key.strip().lower().rsplit(":", 1)[-1].strip()
+        if key_text in _INDEX_KEY_TOKENS:
+            values.append(value.strip().strip("'\""))
+    return values
+
+
+def _config_evidence(
+    env: dict[str, str], cwd: Path | None, family: str, repointed: bool
+) -> tuple[list[str], bool]:
+    """Record every present config path and decide whether it re-points.
+
+    Presence is evidence and goes on ``index_tokens``. The contents decide the
+    posture: an official index keeps the official class (AC-30's allow cell), a
+    non-official one re-points, and a present-but-unreadable or key-less config
+    re-points too — an unrecognised config is not an official one.
+    """
+    tokens: list[str] = []
+    for spelling, path in _config_paths(env, cwd, family):
+        if not path.is_file():
+            continue
+        tokens.append(spelling)
+        values = _config_index_values(path)
+        if not values:
+            repointed = True
+            continue
+        if any(not _official_index_value(value) for value in values):
+            repointed = True
+    return tokens, repointed
+
+
+def _index_selection(
+    argv: Sequence[str], env: dict[str, str], cwd: Path | None
+) -> tuple[tuple[str, ...], bool]:
+    """Every index-selection token found, and whether the resolver is re-pointed."""
+    family = _install_family(argv)
+    tokens: list[str] = []
+    repointed = False
+    for token, value in _flag_values(argv):
+        tokens.append(token)
+        if value and "=" not in token:
+            tokens.append(value)
+        if not _official_index_value(value):
+            repointed = True
+    for name, value in env.items():
+        if name not in INDEX_SELECTION_ENV:
+            continue
+        if family == "pip" and name in _NPM_INDEX_ENV:
+            continue
+        if family == "npm" and name in _PIP_INDEX_ENV:
+            continue
+        tokens.append(f"{name}={value}")
+        if name != "PIP_CONFIG_FILE" and not _official_index_value(value):
+            # PIP_CONFIG_FILE's value is a path; its contents decide below.
+            repointed = True
+    config_tokens, repointed = _config_evidence(env, cwd, family, repointed)
+    tokens.extend(config_tokens)
+    return tuple(tokens), repointed
+
+
+def _is_config_mutation(argv: Sequence[str]) -> bool:
+    """True when this member assigns an index key through ``<manager> config set``."""
+    if not argv:
+        return False
+    manager = _base_name(argv[0])
+    if _is_pip_module_member(argv):
+        manager = "pip"
+    if manager not in _CONFIG_MUTATING_MANAGERS:
+        return False
+    rest = list(argv[1:])
+    if "config" not in rest or "set" not in rest:
+        return False
+    return any(
+        _INDEX_KEY_TOKENS[0] in token.lower()
+        or _INDEX_KEY_TOKENS[1] in token.lower()
+        or token.lower().endswith(_INDEX_KEY_TOKENS[2])
+        for token in rest
+    )
+
+
+def _config_mutation_source(argv: Sequence[str]) -> ArtifactSource:
+    """The ``other-url`` source a config-mutating command carries (1c-2).
+
+    The re-point is not a per-value property: ``pip config set global.index-url
+    …`` rewrites where every later install resolves, so the member is an install
+    with an unsafe source and R5'' denies it before it persists.
+    """
+    assigned = ""
+    for position, token in enumerate(argv[1:], start=1):
+        lowered = token.lower()
+        if (
+            _INDEX_KEY_TOKENS[0] in lowered
+            or _INDEX_KEY_TOKENS[1] in lowered
+            or lowered.endswith(_INDEX_KEY_TOKENS[2])
+        ) and position + 1 < len(argv):
+            assigned = argv[position + 1]
+            break
+    raw = assigned or " ".join(argv)
+    return ArtifactSource(raw=raw, kind=SourceKind.OTHER_URL, shape=_suffix_shape(raw))
+
+
+# ---------------------------------------------------------------------------
 # Artifact sources (C1).
 # ---------------------------------------------------------------------------
 
 
 def _artifact_sources(
-    argv: Sequence[str], cwd: Path | None, *, operator_approved: bool
+    argv: Sequence[str],
+    cwd: Path | None,
+    *,
+    operator_approved: bool,
+    index_repointed: bool = False,
 ) -> list[ArtifactSource]:
     """Artifact sources of an install member (C1 derivation table).
 
-    TODO(G2b): index-selection evidence (flags/env/config 1c-2) narrows every
-    source to ``other-url`` when the resolver is re-pointed. Until G2b the
-    evidence tuple is empty; every URL is still host-parsed here, so an attacker
-    URL operand derives ``other-url`` and denies at R5''.
+    The index-selection evidence (1c-2) decides the *posture*: once the resolver
+    is re-pointed, every non-local source of this install derives ``other-url``,
+    because re-pointing is not a per-source property. A local path stays local
+    (the table's row is unconditional).
     """
     sources: list[ArtifactSource] = []
     skip_next = False
@@ -696,22 +1167,37 @@ def _artifact_sources(
             continue
         if arg.startswith("-") or not arg:
             continue
-        source = _derive_source(arg, cwd, operator_approved=operator_approved)
+        source = _derive_source(
+            arg, cwd, operator_approved=operator_approved, index_repointed=index_repointed
+        )
         if source is not None:
             sources.append(source)
     return sources
 
 
-def _derive_source(arg: str, cwd: Path | None, *, operator_approved: bool) -> ArtifactSource | None:
+def _derive_source(
+    arg: str,
+    cwd: Path | None,
+    *,
+    operator_approved: bool,
+    index_repointed: bool = False,
+) -> ArtifactSource | None:
     """One C1 source derivation: URL => host class, path-shaped => local, name => index."""
     shape = _suffix_shape(arg)
     if _looks_like_url(arg):
         kind = SourceKind.OPERATOR_APPROVED if operator_approved else _classify_url(arg)
+        if index_repointed and kind is not SourceKind.OPERATOR_APPROVED:
+            kind = SourceKind.OTHER_URL
         return ArtifactSource(raw=arg, kind=kind, shape=shape)
     if "/" in arg or arg in {".", ".."} or arg.startswith("~") or shape is not SourceShape.UNKNOWN:
         probe = _probe(arg, cwd)
         return ArtifactSource(raw=arg, kind=SourceKind.LOCAL, shape=shape, target=probe.resolved)
-    kind = SourceKind.OPERATOR_APPROVED if operator_approved else SourceKind.OFFICIAL_INDEX
+    if operator_approved:
+        kind = SourceKind.OPERATOR_APPROVED
+    elif index_repointed:
+        kind = SourceKind.OTHER_URL
+    else:
+        kind = SourceKind.OFFICIAL_INDEX
     return ArtifactSource(raw=arg, kind=kind, shape=SourceShape.UNKNOWN)
 
 
@@ -816,6 +1302,7 @@ class _Context:
     cwd: Path | None
     operator_approved: bool
     env: dict[str, str] = field(default_factory=dict)
+    module_roots: tuple[Path, ...] = ()
 
 
 class _Classifier:
@@ -1058,6 +1545,7 @@ class _Classifier:
                 cwd=fragment.cwd,
                 operator_approved=context.operator_approved,
                 env=context.env,
+                module_roots=context.module_roots,
             )
         cwd = member_context.cwd
         # BLOCKER-3/MAJOR-1: an exec wrapper's operand is the effective head
@@ -1074,10 +1562,24 @@ class _Classifier:
         targets: list[ResolvedTarget] = []
         interpreter_input: list[ResolvedTarget] = []
         sources: list[ArtifactSource] = []
+        index_tokens: tuple[str, ...] = ()
         input_probes = _input_redirect_probes(node, cwd)
 
         if kind is ActionKind.PACKAGE_INSTALL:
-            sources = _artifact_sources(argv, cwd, operator_approved=context.operator_approved)
+            if _is_config_mutation(argv):
+                # The mutation names its index key and value verbatim; the
+                # source is the assigned value (or the command when none parses).
+                source = _config_mutation_source(argv)
+                sources = [source]
+                index_tokens = tuple(token for token in (source.raw,) if token)
+            else:
+                index_tokens, index_repointed = _index_selection(argv, env, cwd)
+                sources = _artifact_sources(
+                    argv,
+                    cwd,
+                    operator_approved=context.operator_approved,
+                    index_repointed=index_repointed,
+                )
         elif head:
             probes = self._probes(head, argv, env, piped=piped, cwd=cwd)
             if kind is ActionKind.CHMOD_EXEC:
@@ -1102,6 +1604,13 @@ class _Classifier:
                 interpreter_input = [*interpreter_input, *input_targets]
                 if not _is_interpreter(head):
                     targets = [*targets, *input_targets]
+            # N8: assignment-carried operands are this member's shell state, so
+            # they are probed for every head — not only for wrappers.
+            targets = [*targets, *_exec_targets(_env_flag_targets(env, cwd))]
+            # R12: ``python -m <module>`` resolves under site-packages, never cwd.
+            module = _module_operand(head, argv) or _module_operand(effective_head, effective_argv)
+            if module is not None:
+                targets.append(_resolve_module(module[1], context.module_roots))
         if synthetic is not None:
             # A bare synthetic shell body: unattributable, R8's degraded class
             # carrying the command text — never a silent allow (N4).
@@ -1117,6 +1626,7 @@ class _Classifier:
             targets=targets,
             interpreter_input=interpreter_input,
             sources=sources,
+            index_tokens=index_tokens,
             install=install,
             scripts_disabled=_scripts_disabled(argv),
             executed_context=fragment.descended or fragment.piped,
@@ -1139,6 +1649,10 @@ class _Classifier:
         """
         probes: list[_Probe] = []
         base = _base_name(head)
+        applet = _busybox_applet_argv(argv)
+        if applet is not None:
+            # The applet is the executed head; probe it and its operands as such.
+            return self._probes(applet[0], applet, env, piped=piped, cwd=cwd)
         # A declared interpreter's operand is exec-bearing whether or not it
         # carries its own mode (A5(b)); the same holds for an exec operand
         # (``exec ./credman``, ``command sh script``) and a sourced file.
@@ -1203,19 +1717,32 @@ class _Classifier:
         self, head: str, argv: Sequence[str], *, piped: bool, cwd: Path | None
     ) -> list[ResolvedTarget]:
         """An interpreter's stdin/source operands (N4 source taxonomy)."""
+        applet = _busybox_applet_argv(argv)
+        if applet is not None:
+            return self._interpreter_input(applet[0], applet, piped=piped, cwd=cwd)
         if not _is_interpreter(head):
             return []
         inputs: list[ResolvedTarget] = []
-        skip_next = False
-        for arg in argv[1:]:
-            if skip_next:
-                skip_next = False
+        module = _module_operand(head, argv)
+        module_index = module[0] if module is not None else None
+        shell_body = _base_name(head) in _SHELL_INTERPRETERS
+        index = 1
+        while index < len(argv):
+            arg = argv[index]
+            index += 1
+            if index - 1 == module_index:
                 continue
             if arg in _COMMAND_FLAGS:
                 # A ``-c``/``-e``/``-r`` payload is a command string, never a path.
                 # A shell body descends as a member (1c-1); a non-shell body stays
-                # a synthetic unobserved operand (R3.8).
-                skip_next = True
+                # a synthetic unobserved operand (R3.8). When that opaque body
+                # interpolates a substitution, the operand reaching the
+                # interpreter is unobserved through it, so R3.8 fires (AC-33).
+                if index < len(argv):
+                    payload = argv[index]
+                    if not shell_body and _has_substitution(payload):
+                        inputs.append(_unresolved(f"<substitution>:{_base_name(head)}"))
+                    index += 1
                 continue
             if arg.startswith(("-", "<", ">", "|")):
                 continue
@@ -1349,6 +1876,20 @@ class _Classifier:
         return self._cache[body]
 
 
+def _busybox_applet_argv(argv: Sequence[str]) -> tuple[str, ...] | None:
+    """The applet invocation a ``busybox`` member selects positionally (1c-7).
+
+    ``busybox sh script`` is ``sh script``: the applet is a command word, not a
+    file operand. Returning the unwrapped argv lets target extraction treat it
+    exactly like the head it is, instead of probing ``sh`` as a cwd-relative
+    path and inventing a provenance miss.
+    """
+    if not argv or _base_name(argv[0]) != "busybox":
+        return None
+    rest = _strip_leading_flags(argv[1:])
+    return tuple(rest) if rest else None
+
+
 def _strip_leading_flags(args: Sequence[str]) -> list[str]:
     """Drop a wrapper builtin's leading options (``command -p``, ``builtin --``)."""
     rest = list(args)
@@ -1461,6 +2002,11 @@ def _walk_commands(ast: Iterable[Any]) -> Iterable[Any]:
             yield from _walk_commands([*_parts(node), *_list_parts(node)])
 
 
+def _has_substitution(text: str) -> bool:
+    """True when a command-flag payload interpolates a substitution."""
+    return "$(" in text or "`" in text
+
+
 def _has_body(head: str) -> bool:
     """True for a shell interpreter whose command-flag payload descends as a member."""
     return _base_name(head) in _SHELL_INTERPRETERS
@@ -1571,6 +2117,7 @@ def _build_action(
     targets: list[ResolvedTarget],
     interpreter_input: list[ResolvedTarget],
     sources: list[ArtifactSource],
+    index_tokens: tuple[str, ...],
     install: bool,
     scripts_disabled: bool,
     executed_context: bool,
@@ -1607,7 +2154,7 @@ def _build_action(
         targets=_dedupe(targets),
         interpreter_input=_dedupe(interpreter_input),
         artifact_sources=tuple(sources),
-        index_tokens=(),
+        index_tokens=index_tokens,
         cwd=context.cwd,
         scripts_disabled=scripts_disabled,
         references_quarantine=references,
@@ -1644,26 +2191,51 @@ def _empty_action(command: str, context: _Context) -> Action:
 # ---------------------------------------------------------------------------
 
 
+def _default_module_roots() -> tuple[Path, ...]:
+    """The interpreter's recorded site-packages roots (R12's resolution base)."""
+    roots: list[Path] = []
+    for entry in sys.path:
+        if not entry:
+            continue
+        path = Path(entry)
+        if "site-packages" in path.parts or "dist-packages" in path.parts:
+            roots.append(path)
+    return tuple(roots)
+
+
 def classify(
     command: str,
     cwd: Path | None = None,
     *,
     operator_approved: bool = False,
     parser: Parser | None = None,
+    module_roots: Sequence[Path] | None = None,
 ) -> Action:
     """Classify a shell ``command`` into a deny-dominant :class:`Action`.
 
     ``cwd`` is the perspective relative paths resolve against. A command whose
     parse fails is ``UNRESOLVED`` ``EXECUTE`` — the gate then denies it if it
     references quarantine and allows it with a degraded audit otherwise.
+    ``module_roots`` overrides the site-packages roots R12 resolves ``-m``
+    selectors against (defaults to the running interpreter's recorded roots).
     """
     active = parser or BashlexParser()
-    context = _Context(cwd=cwd, operator_approved=operator_approved)
+    context = _Context(
+        cwd=cwd,
+        operator_approved=operator_approved,
+        module_roots=tuple(module_roots) if module_roots is not None else _default_module_roots(),
+    )
     return _Classifier(active).classify(command, context)
 
 
 __all__ = [
+    "BUSYBOX_APPLETS",
+    "BUSYBOX_EXEC_WRAPPER_APPLETS",
+    "BUSYBOX_INTERPRETER_APPLETS",
     "EXEC_BEARING_WRAPPERS",
+    "INDEX_SELECTION_CONFIG",
+    "INDEX_SELECTION_ENV",
+    "INDEX_SELECTION_FLAGS",
     "INTERPRETER_CLASS",
     "SHELL_BUILTINS",
     "BashlexParser",
@@ -1671,4 +2243,5 @@ __all__ = [
     "Parser",
     "classify",
     "host_of",
+    "merged_interpreter_class",
 ]
