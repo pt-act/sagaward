@@ -231,6 +231,9 @@ class TestChannelContract:
     def test_bring_up_decodes_the_sdk_listing(self) -> None:
         async def _container(argv: tuple[str, ...]) -> _Result:
             joined = "\n".join(argv)
+            if "apf-image-inventory" in joined:
+                pairs = json.dumps([["/usr/bin/nmap", "/usr/bin/nmap"]])
+                return _Result(pairs.encode())
             if "os.path.realpath" in joined:
                 separator = argv.index("--")
                 payload = json.dumps(

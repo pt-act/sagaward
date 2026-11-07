@@ -55,6 +55,12 @@ class _FakeSession:
         joined = "\n".join(str(a) for a in _args)
         # Isolation bring-up probes (C1/C2) run before the inventory; answer them
         # as the container would, not with the inventory listing.
+        if "apf-image-inventory" in joined:
+            # The inventory probe prints [spelling, realpath] pairs; a test listing
+            # is its own canonical spelling.
+            lines = [line for line in self._result.stdout.splitlines() if line.strip()]
+            pairs = json.dumps([[line, line] for line in lines])
+            return _Result(stdout=pairs)
         if "os.path.realpath" in joined:
             separator = _args.index("--")
             paths = [str(a) for a in _args[separator + 1 :]]
@@ -169,3 +175,142 @@ class TestBringUp:
             envelope = ledger.lookup(path)
             assert isinstance(envelope, ProvenanceEnvelope)
             assert envelope.is_tainted() is False
+
+
+class TestSeedClosesTheLiveLoop:
+    """The integration replay's FINDING-1 shape, end to end.
+
+    A seeded binary is allowed at the gate with no miss; an unseeded one denies —
+    which is exactly the live failure the replay measured (`curl --version` denied
+    on a 0-entry ledger). The wiring exists (session-manager bring-up → this
+    function → `seed_paths`); this cell pins the loop, not the symbol name.
+    """
+
+    def test_a_seeded_binary_is_allowed_and_an_unseeded_one_denies(self) -> None:
+        import shutil  # noqa: PLC0415 - platform lookup
+
+        from strix.core.provenance.classify import classify  # noqa: PLC0415
+        from strix.core.provenance.gate import ReasonCode, decide_action  # noqa: PLC0415
+
+        seeded = shutil.which("ls")
+        unseeded = shutil.which("cat")
+        assert seeded is not None and unseeded is not None
+        session = _FakeSession(_Result(stdout=f"{seeded}\n"))
+
+        ledger = asyncio.run(bring_up_provenance(session))
+
+        assert decide_action(classify(f"{seeded} -la"), ledger).verdict == "ALLOW"
+        denied = decide_action(classify(f"{unseeded} /etc/hosts"), ledger)
+        assert denied.reason is ReasonCode.PROVENANCE_MISS
+
+
+class TestAliasKeys:
+    """Round-31: the usrmerged root records one file under two spellings.
+
+    Kali is usrmerged (`/bin` -> `/usr/bin`). The inventory canonicalizes
+    in-container; the gate resolves on the host process, which cannot see a
+    container symlink, so the seed must record the canonical key *and* the alias
+    key — otherwise the gate asks for `/bin/ls` and the ledger answers for
+    `/usr/bin/ls` (the replay's sixth-check defect, measured to the key).
+    """
+
+    def test_an_alias_pair_hits_on_both_spellings(self) -> None:
+        from strix.core.provenance.seed import seed_inventory  # noqa: PLC0415
+
+        ledger = ProvenanceLedger()
+        seeded = seed_inventory(
+            ledger,
+            [("/opt/apf-alias/bin/tool", "/opt/apf-alias/usr/bin/tool")],
+        )
+
+        assert seeded == 1
+        alias = ledger.lookup("/opt/apf-alias/bin/tool")
+        canonical = ledger.lookup("/opt/apf-alias/usr/bin/tool")
+        assert isinstance(alias, ProvenanceEnvelope)
+        assert isinstance(canonical, ProvenanceEnvelope)
+        assert alias == canonical
+        assert alias.is_tainted() is False
+
+    def test_the_pair_parser_is_fail_closed(self) -> None:
+        from strix.core.provenance.seed import parse_inventory_pairs  # noqa: PLC0415
+
+        assert parse_inventory_pairs("not json") is None
+        assert parse_inventory_pairs('{"x": 1}') is None
+        pairs = parse_inventory_pairs('[["/bin/ls", "/usr/bin/ls"], ["bad"], [1, 2]]')
+        assert pairs == (("/bin/ls", "/usr/bin/ls"),)
+
+    def test_a_symlinked_root_binary_is_reachable_through_the_alias(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # The host *can* resolve this one, so the canonical key serves it; the
+        # cell proves the pair shape end to end without depending on the host's
+        # own usrmerge layout.
+        from strix.core.provenance import seed as seed_module  # noqa: PLC0415
+        from strix.core.provenance.classify import classify  # noqa: PLC0415
+        from strix.core.provenance.gate import decide_action  # noqa: PLC0415
+        from strix.core.provenance.seed import seed_inventory  # noqa: PLC0415
+
+        # The subject here is the alias pair, not the writable-root skip (which
+        # has its own cells). Under a /tmp extraction the fixture itself is
+        # agent-writable, so the root list is emptied for this cell only.
+        monkeypatch.setattr(seed_module, "AGENT_WRITABLE_ROOTS", ())
+        probe_dir = Path(__file__).parent.resolve()
+        real = probe_dir / "_alias_probe.bin"
+        real.write_text("#!/bin/sh\nexit 0\n")
+        real.chmod(0o755)
+        alias = probe_dir / "_alias_probe_link"
+        if alias.exists() or alias.is_symlink():
+            alias.unlink()
+        alias.symlink_to(real)
+        try:
+            ledger = ProvenanceLedger()
+            # The pair's canonical value is what the in-container probe emits:
+            # os.path.realpath. On macOS a /tmp extraction is itself behind
+            # /private/tmp, and the canonical key must match the gate's resolve.
+            seed_inventory(ledger, [(str(alias), real.resolve().as_posix())])
+            decision = decide_action(classify(str(alias)), ledger)
+            assert decision.verdict == "ALLOW", decision
+        finally:
+            alias.unlink(missing_ok=True)
+            real.unlink(missing_ok=True)
+
+    def test_the_inventory_probe_produces_alias_pairs(self, tmp_path: Path) -> None:
+        """The probe's own pair production, against a symlinked root (round-33).
+
+        The recorder was tested with fake pairs; this runs the shipped probe
+        against a real symlinked root and asserts the alias spelling reaches the
+        output. Without `find -L` the root is not traversed and no pair differs.
+        """
+        import subprocess  # noqa: PLC0415
+        import sys  # noqa: PLC0415
+
+        from strix.core.provenance.seed import (  # noqa: PLC0415
+            INVENTORY_SCRIPT,
+            parse_inventory_pairs,
+        )
+
+        real = tmp_path / "real"
+        real.mkdir()
+        tool = real / "tool"
+        tool.write_text("#!/bin/sh\nexit 0\n")
+        tool.chmod(0o755)
+        link = tmp_path / "link"
+        link.symlink_to(real)
+
+        proc = subprocess.run(  # noqa: S603 - fixed argv, test-only
+            [sys.executable, "-I", "-c", INVENTORY_SCRIPT, "--", "/usr/bin/find", str(link)],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        pairs = parse_inventory_pairs(proc.stdout)
+
+        assert pairs, "the probe must produce at least one pair"
+        spellings = {spelling for spelling, _canonical in pairs}
+        canonicals = {canonical for _spelling, canonical in pairs}
+        assert str(link / "tool") in spellings, "the alias spelling must be listed"
+        assert str(real.resolve() / "tool") in canonicals
+        assert any(spelling != canonical for spelling, canonical in pairs), (
+            "the pair must differ for a symlinked root — otherwise the dual-key "
+            "recording never fires"
+        )

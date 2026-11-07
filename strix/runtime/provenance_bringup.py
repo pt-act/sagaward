@@ -17,19 +17,31 @@ from typing import Any
 
 from strix.core.provenance.ledger import ProvenanceLedger
 from strix.core.provenance.seed import (
-    IMAGE_INVENTORY_COMMAND,
+    FIND_BINARY,
     IMAGE_ROOTS,
-    parse_executable_listing,
-    seed_paths,
+    INVENTORY_SCRIPT,
+    parse_inventory_pairs,
+    seed_inventory,
 )
 from strix.runtime.isolation_bringup import assert_bringup_paths, scratch_baseline
-from strix.runtime.provenance_exec import OBSERVATION_ENV, observation_exec
+from strix.runtime.provenance_exec import OBSERVATION_ENV, PYTHON_BINARY, observation_exec
 
 
 logger = logging.getLogger(__name__)
 
 INVENTORY_TIMEOUT_SECONDS = 60
-INVENTORY_ARGV: tuple[str, ...] = (*OBSERVATION_ENV, *IMAGE_INVENTORY_COMMAND)
+# The probe canonicalizes in-container: `find` discovers, then each line is
+# realpath'd by the same python the path assertion uses, so the seed records the
+# container's own spelling (usrmerged `/bin` is a symlink to `/usr/bin`).
+INVENTORY_ARGV: tuple[str, ...] = (
+    *OBSERVATION_ENV,
+    PYTHON_BINARY,
+    "-c",
+    INVENTORY_SCRIPT,
+    "--",
+    FIND_BINARY,
+    *IMAGE_ROOTS,
+)
 
 
 async def bring_up_provenance(session: Any) -> ProvenanceLedger:
@@ -61,8 +73,14 @@ async def bring_up_provenance(session: Any) -> ProvenanceLedger:
             observation.stderr,
         )
 
-    paths = parse_executable_listing(observation.stdout)
-    if not paths:
+    pairs = parse_inventory_pairs(observation.stdout)
+    if pairs is None:
+        logger.warning(
+            "Provenance image inventory returned an unusable listing; treating this as a FAILED "
+            "seed — every executable will be a miss, and a miss is a DENY",
+        )
+        return ledger
+    if not pairs:
         logger.warning(
             "Provenance image inventory listed zero executables under %s — treating this as a "
             "FAILED seed, not an empty image. Every executable will be a miss, and a miss is a "
@@ -71,6 +89,6 @@ async def bring_up_provenance(session: Any) -> ProvenanceLedger:
         )
         return ledger
 
-    seeded = seed_paths(ledger, paths)
+    seeded = seed_inventory(ledger, pairs)
     logger.info("Provenance ledger seeded with %d image-owned executable(s)", seeded)
     return ledger

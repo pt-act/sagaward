@@ -57,6 +57,7 @@ from strix.core.provenance.gate import (
 )
 from strix.core.provenance.install_grammar import install_trigger
 from strix.core.provenance.paths import QUARANTINE_DIR, is_quarantine_path
+from strix.core.provenance.seed import is_agent_writable
 
 
 if TYPE_CHECKING:
@@ -677,26 +678,45 @@ def _is_exec_mode_token(arg: str) -> bool:
     return bool(_EXEC_MODE_TOKEN.match(arg)) and ("x" in arg.lower() or arg.lstrip("-+").isdigit())
 
 
-def _is_write_host(head: str, argv: Sequence[str], *, redirects_host: bool) -> bool:
+def _is_write_host(
+    head: str, argv: Sequence[str], *, redirects_host: bool, cwd: Path | None = None
+) -> bool:
+    """True when this member's write destination is outside the agent's surfaces.
+
+    ``tee``/``dd of=``/copy destinations are judged by where they resolve: into
+    scratch or the workspace is an ordinary agent write (the reconcilers record
+    it); anywhere else keeps the host-mount posture.
+    """
     if redirects_host:
         return True
     base = _base_name(head)
+    operands = [arg for arg in argv[1:] if not arg.startswith("-")]
     if base in _TEE_VERBS:
-        return True
+        if not operands:
+            return True
+        return any(_write_target_is_host(_probe(arg, cwd).resolved.path) for arg in operands)
     if base in _DD_VERBS:
-        return any(arg.startswith("of=") for arg in argv[1:])
-    return base in _COPY_VERBS and len([a for a in argv[1:] if not a.startswith("-")]) >= 2
+        targets = [arg[3:] for arg in operands if arg.startswith("of=")]
+        return any(_write_target_is_host(_probe(arg, cwd).resolved.path) for arg in targets)
+    if base in _COPY_VERBS and len(operands) >= 2:
+        return _write_target_is_host(_probe(operands[-1], cwd).resolved.path)
+    return False
 
 
 def _derive_kind(
-    head: str, argv: Sequence[str], *, redirects_host: bool, install: bool
+    head: str,
+    argv: Sequence[str],
+    *,
+    redirects_host: bool,
+    install: bool,
+    cwd: Path | None = None,
 ) -> ActionKind:
     """One kind per member (1c-1). Install wins, then chmod, then host write, else execute."""
     if install:
         return ActionKind.PACKAGE_INSTALL
     if _is_chmod_shape(head, argv, redirects_host=redirects_host):
         return ActionKind.CHMOD_EXEC
-    if _is_write_host(head, argv, redirects_host=redirects_host):
+    if _is_write_host(head, argv, redirects_host=redirects_host, cwd=cwd):
         return ActionKind.WRITE_HOST_MOUNT
     return ActionKind.EXECUTE
 
@@ -797,6 +817,22 @@ def _is_pip_module_member(argv: Sequence[str]) -> bool:
 # ---------------------------------------------------------------------------
 
 
+def _write_target_is_host(path: Path | None) -> bool:
+    """A write outside quarantine *and* outside the agent's own writable surface.
+
+    Scratch and the workspace are where the agent is supposed to write: the
+    reconcilers observe those writes after the exec, so the pre-exec gate must not
+    deny them on a ledger miss (round-30 integration FINDING-2 — the chicken-and-egg
+    that stopped the observation loop from ever closing). A write anywhere else
+    keeps the host-mount posture. An unresolved target refuses.
+    """
+    if path is None:
+        return True
+    if is_quarantine_path(path):
+        return False
+    return not is_agent_writable(path)
+
+
 def _redirect_probes(node: Any, cwd: Path | None) -> tuple[list[_Probe], bool]:
     """Output-redirection operands and whether any writes outside quarantine."""
     probes: list[_Probe] = []
@@ -814,7 +850,7 @@ def _redirect_probes(node: Any, cwd: Path | None) -> tuple[list[_Probe], bool]:
             continue
         probe = _probe(raw, cwd)
         probes.append(probe)
-        if probe.resolved.path is None or not is_quarantine_path(probe.resolved.path):
+        if _write_target_is_host(probe.resolved.path):
             writes_host = True
     return probes, writes_host
 
@@ -1658,7 +1694,9 @@ class _Classifier:
         install = _install_member(head, argv) or _install_member(effective_head, effective_argv)
         kind_head, kind_argv = (effective_head, effective_argv) if effective_head else (head, argv)
         redirect_probes, redirects_host = _redirect_probes(node, cwd)
-        kind = _derive_kind(kind_head, kind_argv, redirects_host=redirects_host, install=install)
+        kind = _derive_kind(
+            kind_head, kind_argv, redirects_host=redirects_host, install=install, cwd=cwd
+        )
         # 1c-2 write side: a write aimed at a declared config location is the
         # config channel, not an ordinary write — the re-point is denied before
         # it can persist (config write → install read → R5'' rejection).

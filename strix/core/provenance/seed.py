@@ -12,6 +12,7 @@ engagement-wired record made earlier still wins.
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -62,7 +63,14 @@ def _walk(root: Path, depth: int) -> Iterable[Path]:
 
 
 def seed_image_inventory(ledger: ProvenanceLedger, roots: Iterable[str | Path]) -> int:
-    """Record every executable under ``roots`` as image-sourced. Returns the count."""
+    """Record every executable under host ``roots`` as image-sourced. Returns the count.
+
+    **Host-walk helper, not the live path.** The sandbox's ledger is seeded from an
+    inventory enumerated *inside* the container and recorded through
+    :func:`seed_paths` (``runtime/provenance_bringup.py``); a host walk here would
+    record paths the container never had. This function is used by tests and
+    deployment tooling that already know the roots are the target filesystem's.
+    """
     seeded = 0
     seen: set[Path] = set()
     for raw_root in roots:
@@ -135,6 +143,89 @@ IMAGE_INVENTORY_COMMAND: tuple[str, ...] = (
     "-u+x",
     "-print",
 )
+
+
+# The inventory probe: the same discovery `find` runs, then each line realpath'd
+# *inside* the container, so the seed records the spelling the container's own
+# filesystem resolves to. Kali is usrmerged: `/bin` is a symlink to `/usr/bin`, and
+# a listing that records only the physical spelling leaves the gate's `/bin/ls`
+# lookup on a different ledger key (the integration replay's alias defect).
+INVENTORY_SCRIPT = r"""
+# apf-image-inventory
+import json, os, subprocess, sys
+
+args = sys.argv[1:]
+if args and args[0] == "--":
+    args = args[1:]
+find_binary, roots = args[0], args[1:]
+proc = subprocess.run(
+    # ``-L``: follow symlinked roots. Without it GNU/BSD find default to ``-P``,
+    # so a usrmerged ``/bin`` (a symlink to ``/usr/bin``) is never traversed and
+    # no alias-spelled path ever reaches the pairs — the dual-key recording then
+    # never fires (third replay pass, measured: 317 pairs, zero /bin-spelled).
+    [find_binary, "-L", *roots, "-maxdepth", "3", "-type", "f", "-perm", "-u+x", "-print"],
+    capture_output=True,
+    text=True,
+)
+pairs = []
+for line in proc.stdout.splitlines():
+    path = line.strip()
+    if not path.startswith("/"):
+        continue
+    try:
+        pairs.append([path, os.path.realpath(path)])
+    except OSError:
+        pairs.append([path, path])
+print(json.dumps(pairs))
+"""
+
+
+def parse_inventory_pairs(stdout: str) -> tuple[tuple[str, str], ...] | None:
+    """Parse the canonicalizing inventory probe. ``None`` when unusable.
+
+    Each item is a ``[spelling, realpath]`` pair; anything else is dropped. A
+    listing that parses to zero pairs is a failed seed, not an empty image, and
+    the caller treats it that way.
+    """
+    try:
+        raw = json.loads(stdout)
+    except (ValueError, TypeError):
+        return None
+    if not isinstance(raw, list):
+        return None
+    pairs: list[tuple[str, str]] = []
+    for item in raw:
+        if not isinstance(item, list) or len(item) != 2:
+            continue
+        spelling, canonical = item
+        if not isinstance(spelling, str) or not spelling.startswith("/"):
+            continue
+        if not isinstance(canonical, str) or not canonical.startswith("/"):
+            canonical = spelling
+        pairs.append((spelling, canonical))
+    return tuple(pairs)
+
+
+def seed_inventory(ledger: ProvenanceLedger, pairs: Iterable[tuple[str, str]]) -> int:
+    """Record each inventory pair as image-sourced under **canonical and alias keys**.
+
+    The canonical key is what the container's own realpath resolves to; the alias
+    key is the listing's spelling when it differs. The gate resolves a path on the
+    host process, which cannot see a container symlink, so both keys must hit the
+    same envelope — otherwise `/bin/ls` (the gate's spelling) and `/usr/bin/ls`
+    (the inventory's) are two different files to the ledger (round-31 alias defect).
+    """
+    seeded = 0
+    for spelling, canonical in pairs:
+        if is_agent_writable(spelling) or is_agent_writable(canonical):
+            continue
+        canonical_key = Path(canonical)
+        envelope = _image_envelope(canonical_key)
+        ledger.record_key(canonical_key, envelope)
+        if Path(spelling) != canonical_key:
+            ledger.record_key(Path(spelling), envelope)
+        seeded += 1
+    return seeded
 
 
 def parse_executable_listing(stdout: str) -> tuple[Path, ...]:

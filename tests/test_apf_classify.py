@@ -1078,3 +1078,47 @@ class TestFeederCarriers:
             decision = decide_action(classify(command), ProvenanceLedger())
             assert decision.verdict == "ALLOW", command
             assert decision.degraded is True, command
+
+
+# ── Round-30 integration FINDING-2: the agent's own surfaces are writable ────
+
+
+class TestWritableSurfaces:
+    """The pre-exec gate must not deny the writes the reconcilers exist to observe.
+
+    A scratch write is the model authoring in its own surface; the reconcilers
+    record it after the exec. Treating it as a host-mount write deadlocked the
+    live loop (deny before exec on a miss the reconciler would have cleared).
+    """
+
+    def test_a_redirect_into_the_agent_surface_is_not_a_host_write(self) -> None:
+        for command in (
+            "echo probe > /workspace/scratch/probe.txt",
+            "echo probe > /workspace/notes.txt",
+            "echo probe > /tmp/notes.txt",
+        ):
+            action = classify(command)
+            assert action.kind is ActionKind.EXECUTE, command
+            assert decide_action(action, ProvenanceLedger()).verdict == "ALLOW", command
+
+    def test_write_verb_destinations_are_judged_by_where_they_resolve(self) -> None:
+        scratch = [
+            "echo hi | tee /workspace/scratch/t",
+            "cp /tmp/a /workspace/scratch/b",
+            "dd if=in of=/workspace/scratch/d",
+        ]
+        for command in scratch:
+            action = classify(command)
+            kinds = {m.kind for m in action.members} or {action.kind}
+            assert ActionKind.WRITE_HOST_MOUNT not in kinds, command
+
+        outside = [
+            "echo hi | tee /mnt/target/t",
+            "cp /workspace/scratch/b /mnt/target/c",
+            "dd if=in of=/mnt/target/d",
+            "echo hi > /mnt/target/x",
+        ]
+        for command in outside:
+            action = classify(command)
+            kinds = {m.kind for m in action.members} or {action.kind}
+            assert ActionKind.WRITE_HOST_MOUNT in kinds, command

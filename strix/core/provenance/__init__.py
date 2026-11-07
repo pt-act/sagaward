@@ -35,7 +35,9 @@ from strix.core.provenance.seed import (
     IMAGE_ROOTS,
     default_image_roots,
     parse_executable_listing,
+    parse_inventory_pairs,
     seed_image_inventory,
+    seed_inventory,
     seed_paths,
 )
 from strix.core.provenance.writes import (
@@ -82,6 +84,8 @@ __all__ = [
     "record_model_authored",
     "record_scratch_artifacts",
     "resolve_workspace_path",
+    "parse_inventory_pairs",
     "seed_image_inventory",
+    "seed_inventory",
     "seed_paths",
 ]
