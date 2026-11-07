@@ -6,7 +6,6 @@ import inspect
 import json
 import logging
 import re
-import time
 from typing import TYPE_CHECKING, Any
 
 from agents.agent import ToolsToFinalOutputResult
@@ -20,8 +19,8 @@ from strix.agents.funnel_emit import wrap_harness_tool
 from strix.agents.prompt import render_system_prompt
 from strix.core.provenance.surfacing import wrap_surfacing_tools
 from strix.core.provenance.write_hook import configure_filesystem_tools
-from strix.runtime.provenance_install import install_trigger, snapshot_install_prefixes
-from strix.runtime.provenance_reconcile import reconcile_after_exec, verify_patch_writes
+from strix.runtime.exec_guard import guarded_invoke
+from strix.runtime.provenance_reconcile import verify_patch_writes
 from strix.tools.agents_graph.tools import (
     agent_finish,
     create_agent,
@@ -257,33 +256,19 @@ def _format_validation_error(tool_name: str, exc: ValidationError) -> str:
     return f"{tool_name}: invalid arguments — " + "; ".join(parts)
 
 
-def _exec_command_text(raw_input: str) -> str | None:
-    """The command string from the tool call, or None when it cannot be read."""
-    try:
-        parsed = json.loads(raw_input)
-    except json.JSONDecodeError:
-        return None
-    if not isinstance(parsed, dict):
-        return None
-    command = parsed.get("command")
-    return command if isinstance(command, str) else None
-
-
 def _wrap_exec_command(tool: FunctionTool) -> FunctionTool:
     invoke_tool = tool.on_invoke_tool
 
     async def invoke(ctx: Any, raw_input: str) -> Any:
-        started_ns = time.time_ns()
-        command = _exec_command_text(raw_input)
-        trigger = install_trigger(command) if command is not None else None
-        snapshot = None
-        if trigger is not None:
-            context = getattr(ctx, "context", None)
-            session = context.get("sandbox_session") if isinstance(context, dict) else None
-            if session is not None:
-                snapshot = await snapshot_install_prefixes(session, trigger)
+        # The gate decides before the container runs; an ALLOW proceeds into the
+        # existing exec+reconcile sequence, a DENY returns the refusal string.
         try:
-            result = await invoke_tool(ctx, raw_input)
+            return await guarded_invoke(
+                ctx,
+                raw_input,
+                lambda: invoke_tool(ctx, raw_input),
+                tool_name=tool.name,
+            )
         except ValidationError as exc:
             return _format_validation_error(tool.name, exc)
         except InvalidManifestPathError as exc:
@@ -293,17 +278,6 @@ def _wrap_exec_command(tool: FunctionTool) -> FunctionTool:
                 "(or omitted to use the turn's cwd). "
                 f"Got: {rel!r}."
             )
-        await reconcile_after_exec(
-            ctx,
-            command=command,
-            started_ns=started_ns,
-            trigger=trigger,
-            install_snapshot=snapshot,
-            # The attribution window is anchored to the action's own observation
-            # time, not to whatever the reconciler's clock says later.
-            observed_at_ns=time.time_ns(),
-        )
-        return result
 
     tool.on_invoke_tool = invoke
     return tool

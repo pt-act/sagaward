@@ -275,6 +275,11 @@ _COMMAND_FLAGS: frozenset[str] = frozenset({"-c", "-e", "-qec", "-r", "--command
 # body — R3.8's unobserved-operand class, never descended as shell.
 _SHELL_INTERPRETERS: frozenset[str] = frozenset({"sh", "bash", "dash", "zsh"})
 
+# Interpreters whose stdin is executed as code: a bare start is a REPL, and the
+# shell toolset ships a stdin feeder (write_stdin). Wrappers (env/timeout/xargs)
+# are excluded: a bare wrapper does not interpret its stdin as commands.
+_CODE_INTERPRETERS: frozenset[str] = frozenset({"awk", "ash", "perl", "ruby", "node", "php", "lua"})
+
 # Env flags that load code by construction: their operand is a target regardless
 # of mode. Search-path flags add only their executable members as targets.
 # TODO(G2b): the assignment contract R8/N8 owns the full VAR=value matrix; G2a
@@ -1665,7 +1670,11 @@ class _Classifier:
             kind = ActionKind.PACKAGE_INSTALL
 
         members = self._contained(fragment, node, member_context)
-        synthetic = _bare_body(node, piped=piped) if _has_body(head) and not members else None
+        synthetic = (
+            _bare_body(node, piped=piped)
+            if _has_body(effective_head or head) and not members
+            else None
+        )
         targets: list[ResolvedTarget] = []
         interpreter_input: list[ResolvedTarget] = []
         sources: list[ArtifactSource] = []
@@ -1693,7 +1702,26 @@ class _Classifier:
                 targets = [*(t.resolved for t in carve_out), *_exec_targets(probes)]
             else:
                 targets = _exec_targets(probes)
-            interpreter_input = self._interpreter_input(head, argv, piped=piped, cwd=cwd)
+            interpreter_input = self._interpreter_input(
+                # The carrier keys on the effective head — the same unwrapping
+                # the kind derivation uses. A raw-head read let ``exec sh`` /
+                # ``command sh`` reach a REPL with a clean R9 allow (round 27).
+                effective_head or head,
+                effective_argv if effective_head else argv,
+                piped=piped,
+                cwd=cwd,
+            )
+            # A here-document never survives as a node the walker models: the
+            # parsed forms reach the fail-closed shape, and a compound member
+            # (``true && bash <<EOF``) arrives with the body already dropped. The
+            # carrier is therefore read from the member's own text, once, for
+            # every member — the only place the body is still visible.
+            heredoc_head = _heredoc_interpreter_text(fragment.text)
+            if heredoc_head is not None:
+                interpreter_input = [
+                    *interpreter_input,
+                    _unresolved(f"<heredoc>:{heredoc_head}"),
+                ]
             if _is_interpreter(head) or _is_interpreter(effective_head):
                 # A5(b): an argument to a declared interpreter is exec-bearing.
                 targets = [*targets, *interpreter_input]
@@ -1814,7 +1842,12 @@ class _Classifier:
         return probes
 
     def _interpreter_input(
-        self, head: str, argv: Sequence[str], *, piped: bool, cwd: Path | None
+        self,
+        head: str,
+        argv: Sequence[str],
+        *,
+        piped: bool,
+        cwd: Path | None,
     ) -> list[ResolvedTarget]:
         """An interpreter's stdin/source operands (N4 source taxonomy)."""
         applet = _busybox_applet_argv(argv)
@@ -1826,6 +1859,7 @@ class _Classifier:
         module = _module_operand(head, argv)
         module_index = module[0] if module is not None else None
         shell_body = _base_name(head) in _SHELL_INTERPRETERS
+        body_seen = False
         index = 1
         while index < len(argv):
             arg = argv[index]
@@ -1838,6 +1872,7 @@ class _Classifier:
                 # a synthetic unobserved operand (R3.8). When that opaque body
                 # interpolates a substitution, the operand reaching the
                 # interpreter is unobserved through it, so R3.8 fires (AC-33).
+                body_seen = True
                 if index < len(argv):
                     payload = argv[index]
                     if not shell_body and _has_substitution(payload):
@@ -1851,6 +1886,12 @@ class _Classifier:
                 continue
             inputs.append(_probe(arg, cwd).resolved)
         if piped:
+            inputs.append(_unresolved(f"<stdin>:{_base_name(head)}"))
+        elif not inputs and not body_seen and module is None and _interprets_stdin_as_code(head):
+            # A bare code interpreter with no operand, body or pipe is a REPL: its
+            # stdin is the operand, and the shell toolset ships a feeder
+            # (write_stdin). R3.8 denies it; a script/``-c``/``-m`` form is not
+            # bare and keeps its own treatment.
             inputs.append(_unresolved(f"<stdin>:{_base_name(head)}"))
         return inputs
 
@@ -2107,6 +2148,50 @@ def _has_substitution(text: str) -> bool:
     return "$(" in text or "`" in text
 
 
+def _interprets_stdin_as_code(head: str) -> bool:
+    """True for interpreters whose stdin is executed as code (the feeder classes)."""
+    base = _base_name(head)
+    return _is_python(head) or base in _CODE_INTERPRETERS or base in _SHELL_INTERPRETERS
+
+
+def _has_heredoc(node: Any) -> bool:
+    """True when the node carries a here-document redirect (``<<``/``<<-``)."""
+    return any(
+        _kind(part) == "redirect" and str(getattr(part, "type", "")) in {"<<", "<<-"}
+        for part in _parts(node)
+    )
+
+
+def _heredoc_interpreter_text(command: str) -> str | None:
+    """The interpreter a parse-resistant here-document feeds, when that is the shape.
+
+    ``bashlex`` parses ``<<EOF`` but fails on a quoted delimiter (``<<'EOF'``), and
+    the fail-closed shape would otherwise carry only an unresolved command — leaving
+    the body to execute inside the interpreter with no R3.8 entry. The head is read
+    syntactically (first line, ``VAR=value`` prefixes and quotes stripped, exec
+    wrappers unwrapped — the same effective-head model the parses use); ``<<`` must
+    be present, so this is a shell-syntax check, not a word denylist.
+    """
+    if "<<" not in command:
+        return None
+    first = command.strip().splitlines()[0] if command.strip() else ""
+    tokens = [_strip_quotes(token) for token in re.findall(r"\S+", first)]
+    if not tokens:
+        return None
+    head, _rest = _head_after_wrappers(tokens)
+    if not head:
+        return None
+    head = _base_name(head)
+    return head if _interprets_stdin_as_code(head) or _is_interpreter(head) else None
+
+
+def _strip_quotes(token: str) -> str:
+    """A raw-text token without one matching pair of surrounding quotes."""
+    if len(token) >= 2 and token[0] == token[-1] and token[0] in {"'", '"'}:
+        return token[1:-1]
+    return token
+
+
 def _has_body(head: str) -> bool:
     """True for a shell interpreter whose command-flag payload descends as a member."""
     return _base_name(head) in _SHELL_INTERPRETERS
@@ -2143,14 +2228,30 @@ def _body_descends(word: Any, *, piped: bool = False) -> bool:
         return True
     words = [_word_text(part) for part in _word_nodes(commands[0])]
     _env, argv = _split_assignments(words)
-    return bool(argv) and _is_wrapper(argv[0])
+    # The body descends when its **effective** head is a wrapper: the raw first
+    # token let ``sh -c 'exec sh'`` stay opaque (R8 degraded allow) while the
+    # same body without the ``exec`` prefix descended and denied — the round-27
+    # raw-vs-effective head mistake, one nesting deeper (round-28 blocker).
+    head, _rest = _head_after_wrappers(argv)
+    return bool(head) and _is_wrapper(head)
 
 
 def _interpreter_body_word(words: list[Any]) -> Any | None:
-    """The ``word`` node holding an interpreter's shell ``-c`` payload, if any."""
-    if not words or not _is_interpreter(_word_text(words[0])):
+    """The ``word`` node holding a shell interpreter's ``-c`` payload, if any.
+
+    The interpreter is found through its **effective** head: ``command sh -c …``
+    and ``exec bash -c …`` feed the same body as ``sh -c …``, and a raw-first-word
+    read missed them entirely — the body was never found, never descended, and the
+    compound took a clean allow (round-28's second spelling of the blocker).
+    """
+    if not words:
         return None
-    if _base_name(_word_text(words[0])) not in _SHELL_INTERPRETERS:
+    raw = [_word_text(word) for word in words]
+    _env, argv = _split_assignments(raw)
+    head, _rest = _head_after_wrappers(argv)
+    if not head or not _is_interpreter(head):
+        return None
+    if _base_name(head) not in _SHELL_INTERPRETERS:
         return None
     for index, candidate in enumerate(words[:-1]):
         if _word_text(candidate) in _COMMAND_FLAGS:
@@ -2264,11 +2365,19 @@ def _build_action(
 
 
 def _unresolved_action(command: str, context: _Context) -> Action:
-    """The fail-closed shape: an EXECUTE with one unresolved target (2.3)."""
+    """The fail-closed shape: an EXECUTE with one unresolved target (2.3).
+
+    A parse-resistant here-document fed to an interpreter also carries an
+    ``<heredoc>:<interp>`` entry, so R3.8 sees the executed body instead of R8
+    treating the whole construct as merely unresolved.
+    """
+    heredoc_head = _heredoc_interpreter_text(command)
+    interpreter_input = (_unresolved(f"<heredoc>:{heredoc_head}"),) if heredoc_head else ()
     return Action(
         kind=ActionKind.EXECUTE,
         command=command,
         targets=(_unresolved(command),),
+        interpreter_input=interpreter_input,
         cwd=context.cwd,
         references_quarantine=_references_quarantine_text(command, context.cwd),
         operator_approved=context.operator_approved,
