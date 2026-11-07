@@ -1003,6 +1003,9 @@ def _config_paths(env: dict[str, str], cwd: Path | None, family: str) -> list[tu
         spellings.append(explicit)
     paths: list[tuple[str, Path]] = []
     for spelling in spellings:
+        if "$VIRTUAL_ENV" in spelling and not virtualenv:
+            # An unset VIRTUAL_ENV must not fabricate "/pip.conf" at the root.
+            continue
         expanded = spelling.replace("$VIRTUAL_ENV", virtualenv).replace("~", home, 1)
         if "$" in expanded:
             # An unset VIRTUAL_ENV names no path; nothing to read.
@@ -1061,6 +1064,101 @@ def _config_evidence(
         if any(not _official_index_value(value) for value in values):
             repointed = True
     return tokens, repointed
+
+
+def _declared_config_paths(env: dict[str, str], cwd: Path | None) -> frozenset[Path]:
+    """Every declared config location, resolved, for the write-side channel (1c-2).
+
+    Both managers' lists plus the explicit pointer, resolved the way a write
+    destination is resolved, so equality is on the real path (a symlinked home
+    still matches the ``~/.pip/pip.conf`` it stands for).
+    """
+    spellings: list[tuple[str, Path]] = []
+    for family in _CONFIG_PATHS_BY_FAMILY:
+        spellings.extend(_config_paths(env, cwd, family))
+    spellings.extend(_config_paths(env, cwd, "other"))
+    resolved: set[Path] = set()
+    for _spelling, path in spellings:
+        try:
+            resolved.add(Path(os.path.realpath(path)))
+        except OSError:
+            continue
+    return frozenset(resolved)
+
+
+def _config_write_target(
+    node: Any,
+    argv: Sequence[str],
+    env: dict[str, str],
+    cwd: Path | None,
+) -> ResolvedTarget | None:
+    """The declared config location this member **writes**, if any (1c-2).
+
+    The chain's first step is a write: a redirect, ``tee``, a copy destination or
+    ``dd of=`` aimed at a config path is the config channel, so it classifies as
+    an install carrying an ``other-url`` source and R5'' denies it *before* it
+    persists. A write elsewhere is unaffected. ``~`` is expanded the way the
+    shell would (the read side already expands it through ``HOME``); probing the
+    literal tilde would look for ``./~/.pip/pip.conf`` and miss the channel.
+    """
+    declared = _declared_config_paths(env, cwd)
+    if not declared:
+        return None
+    home = env.get("HOME") or os.environ.get("HOME") or str(Path.home())
+    candidates: list[str] = []
+    for part in _parts(node):
+        if _kind(part) != "redirect" or str(getattr(part, "type", "")).startswith("<"):
+            continue
+        raw = _word_text(getattr(part, "output", None))
+        if raw and raw not in {"-", "/dev/null"} and "$" not in raw and "`" not in raw:
+            candidates.append(raw)
+    base = _base_name(argv[0]) if argv else ""
+    operands = [arg for arg in argv[1:] if not arg.startswith("-")]
+    if base in _TEE_VERBS:
+        candidates.extend(operands)
+    elif base in _COPY_VERBS and len(operands) >= 2:
+        candidates.append(operands[-1])
+    elif base in _DD_VERBS:
+        candidates.extend(arg[3:] for arg in operands if arg.startswith("of="))
+    for raw in candidates:
+        expanded = f"{home}{raw[1:]}" if raw == "~" or raw.startswith("~/") else raw
+        probe = _probe(expanded, cwd)
+        path = probe.resolved.path
+        if path is not None and Path(os.path.realpath(path)) in declared:
+            return probe.resolved
+    return None
+
+
+def _install_sources(
+    argv: Sequence[str],
+    config_write: ResolvedTarget | None,
+    env: dict[str, str],
+    cwd: Path | None,
+    *,
+    operator_approved: bool,
+) -> tuple[list[ArtifactSource], tuple[str, ...]]:
+    """Sources and index tokens for a PACKAGE_INSTALL member (C1 / 1c-2).
+
+    Three entry paths, one posture: a write into a config location, a
+    config-mutating command, or an ordinary install with its index evidence.
+    """
+    if config_write is not None:
+        destination = str(config_write.path or config_write.raw)
+        return (
+            [ArtifactSource(raw=destination, kind=SourceKind.OTHER_URL, shape=SourceShape.UNKNOWN)],
+            (destination,),
+        )
+    if _is_config_mutation(argv):
+        source = _config_mutation_source(argv)
+        return [source], tuple(token for token in (source.raw,) if token)
+    index_tokens, index_repointed = _index_selection(argv, env, cwd)
+    sources = _artifact_sources(
+        argv,
+        cwd,
+        operator_approved=operator_approved,
+        index_repointed=index_repointed,
+    )
+    return sources, index_tokens
 
 
 def _index_selection(
@@ -1556,6 +1654,15 @@ class _Classifier:
         kind_head, kind_argv = (effective_head, effective_argv) if effective_head else (head, argv)
         redirect_probes, redirects_host = _redirect_probes(node, cwd)
         kind = _derive_kind(kind_head, kind_argv, redirects_host=redirects_host, install=install)
+        # 1c-2 write side: a write aimed at a declared config location is the
+        # config channel, not an ordinary write — the re-point is denied before
+        # it can persist (config write → install read → R5'' rejection).
+        config_write = _config_write_target(node, argv, env, cwd)
+        if config_write is not None and kind in {
+            ActionKind.EXECUTE,
+            ActionKind.WRITE_HOST_MOUNT,
+        }:
+            kind = ActionKind.PACKAGE_INSTALL
 
         members = self._contained(fragment, node, member_context)
         synthetic = _bare_body(node, piped=piped) if _has_body(head) and not members else None
@@ -1566,20 +1673,13 @@ class _Classifier:
         input_probes = _input_redirect_probes(node, cwd)
 
         if kind is ActionKind.PACKAGE_INSTALL:
-            if _is_config_mutation(argv):
-                # The mutation names its index key and value verbatim; the
-                # source is the assigned value (or the command when none parses).
-                source = _config_mutation_source(argv)
-                sources = [source]
-                index_tokens = tuple(token for token in (source.raw,) if token)
-            else:
-                index_tokens, index_repointed = _index_selection(argv, env, cwd)
-                sources = _artifact_sources(
-                    argv,
-                    cwd,
-                    operator_approved=context.operator_approved,
-                    index_repointed=index_repointed,
-                )
+            sources, index_tokens = _install_sources(
+                argv,
+                config_write,
+                env,
+                cwd,
+                operator_approved=context.operator_approved,
+            )
         elif head:
             probes = self._probes(head, argv, env, piped=piped, cwd=cwd)
             if kind is ActionKind.CHMOD_EXEC:

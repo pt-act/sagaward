@@ -315,29 +315,43 @@ def record_install_artifacts(
     prefixes: Iterable[str | Path] | None = None,
     snapshot: dict[Path, str] | None = None,
     observed_at_ns: int | None = None,
+    baseline: Iterable[Path] | None = None,
 ) -> int:
     """Record files an install created; surfaced bytes still taint.
 
-    Attribution is by snapshot, time and bytes, and **only with a snapshot**. A
-    file present in the pre-install snapshot is attributed by **digest** — a fresh
-    mtime on an unchanged file is a forged mtime and records nothing
-    (checkpoint-1b R5). A file absent from a complete snapshot is new and
-    attributed by **time**: it must be newer than the action. In both cases a
-    digest that matches surfaced content unions engagement, so an install is not a
-    laundering exit. **Without a snapshot nothing is recorded** (checkpoint-1c C5):
-    a failed or truncated snapshot is not a licence to fall back to mtime, because
-    that fallback is exactly the inversion the truth path exists to prevent.
+    Attribution is the **pre/post delta**, decided by snapshot, baseline, time
+    and bytes, and **only with a snapshot**. ``snapshot`` is the pre-install
+    digest listing; ``baseline`` is the pre-install *path* listing — the files
+    that existed before the command ran, whose digests may not be available. A
+    path in the baseline is **never** attributed as *created*: the install did
+    not make it, whatever its mtime says. A path the snapshot records with a
+    changed digest is a **modification** and is recorded (the install wrote it).
+
+    ``observed_at_ns`` anchors the 300 s forge window to the action's observation
+    rather than to the reconciler's clock: a file modified more than 300 s after
+    the observation is provably forged and records nothing. A file **older than
+    the action** (``not_before_ns``) and absent from both pre-install listings is
+    not new and records nothing.
+
+    A digest that matches surfaced content unions engagement, so an install is not
+    a laundering exit. **Without a snapshot nothing is recorded** (checkpoint-1c
+    C5): a failed or truncated snapshot is not a licence to fall back to mtime,
+    because that fallback is exactly the inversion the truth path exists to
+    prevent. An unresolvable path is skipped, never raised into the tool surface.
     """
     now_ns = time.time_ns() if observed_at_ns is None else observed_at_ns
+    preexisting = frozenset(baseline) if baseline is not None else frozenset()
     recorded = 0
     for raw, content_digest, mtime_ns in artifacts:
         if mtime_ns > now_ns + MTIME_FUTURE_TOLERANCE_NS:
             # Provably forged: a file cannot be modified after it was observed.
             continue
-        if not under_install_prefix(raw, prefixes):
-            continue
         path = resolve_or_none(raw)
-        if path is None or not under_install_prefix(path, prefixes):
+        if path is None:
+            # Unresolvable: there is no identity to attribute. Refuse — a raise
+            # here would reach the tool surface through the reconciler.
+            continue
+        if not under_install_prefix(raw, prefixes) or not under_install_prefix(path, prefixes):
             continue
         if snapshot is None:
             # No truth path (failed or truncated snapshot): attribute nothing.
@@ -350,8 +364,17 @@ def record_install_artifacts(
                 # Unchanged content: this is the pre-existing file with a forged
                 # or freshly touched mtime, not an install.
                 continue
+            # Changed digest: the install modified a pre-existing file. That is a
+            # write and is recorded (the dual-snapshot delta's "both, differing").
+        elif path in preexisting:
+            # Present before the install but with no digest in the snapshot: the
+            # baseline is authoritative about existence, so this is pre-existing,
+            # not created. Without this clause a fresh mtime on a baseline file
+            # would attribute it to the install (M35's cell).
+            continue
         elif mtime_ns < not_before_ns:
-            # Absent from a complete snapshot and older than the action: not new.
+            # Absent from both pre-install listings and older than the action:
+            # not new.
             continue
         envelope = model_authored_envelope(path)
         if isinstance(ledger.content_lookup_digest(content_digest), ProvenanceEnvelope):

@@ -11,6 +11,7 @@ failure, so a missed reconciliation returns ``None`` and the caller counts it.
 from __future__ import annotations
 
 import logging
+import time
 from pathlib import Path
 from typing import Any
 
@@ -176,6 +177,7 @@ async def reconcile_after_exec(
     started_ns: int | None = None,
     trigger: str | None = None,
     install_snapshot: dict[Any, str] | None = None,
+    observed_at_ns: int | None = None,
 ) -> None:
     """Observe scratch — and install prefixes, after an install — then record.
 
@@ -184,6 +186,10 @@ async def reconcile_after_exec(
     broken reconciler would strangle the engine while looking healthy. The
     install walk shares that counter: a broken install reconciler strangles
     installed tools exactly as a broken scratch reconciler strangles scripts.
+
+    ``observed_at_ns`` is the action's observation time; it anchors the install
+    attribution window. When the caller does not supply one, the observation
+    begins now — the same instant the probes run.
     """
     context = getattr(ctx, "context", None)
     if not isinstance(context, dict):
@@ -192,6 +198,7 @@ async def reconcile_after_exec(
     session = context.get("sandbox_session")
     if ledger is None or session is None:
         return
+    observation_ns = time.time_ns() if observed_at_ns is None else observed_at_ns
 
     quarantined = await reconcile_quarantine(session, ledger)
     recorded = await reconcile_scratch(session, ledger)
@@ -207,6 +214,7 @@ async def reconcile_after_exec(
             action_id=install_action_id(command),
             trigger=trigger,
             snapshot=install_snapshot,
+            observed_at_ns=observation_ns,
         )
 
     failed = quarantined is None or recorded is None or (install_like and installed is None)

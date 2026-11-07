@@ -457,6 +457,42 @@ class TestRuntime:
         asyncio.run(reconcile_after_exec(ctx, command="ls -la", started_ns=1))
         assert len(plain.calls) == 2, ("quarantine", "scratch")
 
+    def test_the_install_anchor_is_threaded_from_the_hook(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """The guard's anchor is the action's observation, passed down the chain."""
+        prefix = tmp_path / "prefix"
+        (prefix / "bin").mkdir(parents=True)
+        monkeypatch.setattr(install_policy, "INSTALL_PREFIXES", (str(prefix),))
+        monkeypatch.setitem(install_policy.TRIGGER_PREFIXES, "pip", (str(prefix),))
+        from strix.runtime import provenance_install as rt_install  # noqa: PLC0415
+
+        captured: dict[str, object] = {}
+
+        def fake(_ledger: object, _artifacts: object, **kwargs: object) -> int:
+            captured.update(kwargs)
+            return 0
+
+        monkeypatch.setattr(rt_install, "record_install_artifacts", fake)
+        session = _Session([b"", b"", b"[]"])
+        ctx = _Ctx({"provenance": ProvenanceLedger(), "sandbox_session": session})
+        anchor = 1234567890
+
+        asyncio.run(
+            reconcile_after_exec(
+                ctx,
+                command="pip install yt-dlp",
+                started_ns=1,
+                install_snapshot={},
+                observed_at_ns=anchor,
+            )
+        )
+
+        assert captured["observed_at_ns"] == anchor, "the hook's anchor must reach the recorder"
+        assert captured["baseline"] == frozenset()
+
 
 class TestManagerPrefixes:
     """R15-TRIGPREF: every declared trigger must have roots that can see its writes."""
@@ -885,3 +921,157 @@ class TestSnapshotFailClosed:
         assert parse_snapshot_listing(at_cap) is None
         parsed = parse_snapshot_listing(below)
         assert parsed is not None and len(parsed) == 2
+
+
+class TestAttributionContract:
+    """G2c: the forge window is anchored to the observation, and the pre/post
+    delta — snapshot digests plus the baseline listing — decides what was created."""
+
+    @staticmethod
+    def _tool(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+        prefix = tmp_path / "prefix"
+        tool = prefix / "bin" / "tool"
+        tool.parent.mkdir(parents=True)
+        tool.write_bytes(b"installed\n")
+        monkeypatch.setattr(install_policy, "INSTALL_PREFIXES", (str(prefix),))
+        return tool
+
+    @staticmethod
+    def _digest(path: Path) -> str:
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+
+    def test_the_forge_window_is_anchored_to_the_observation(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        tool = self._tool(tmp_path, monkeypatch)
+        ledger = ProvenanceLedger()
+        now = time.time_ns()
+        observed = now - 3600 * 10**9
+        # 50 minutes after the observation: beyond the 300 s window, so provably
+        # forged. A clock fallback would see a past mtime and record it.
+        mtime = observed + 600 * 10**9
+
+        recorded = record_install_artifacts(
+            ledger,
+            [(tool, self._digest(tool), mtime)],
+            not_before_ns=observed,
+            snapshot={},
+            observed_at_ns=observed,
+        )
+
+        assert recorded == 0
+        assert ledger.lookup(tool) is LedgerMiss.MISS
+
+    def test_a_baseline_path_with_a_fresh_mtime_is_not_created(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        tool = self._tool(tmp_path, monkeypatch)
+        ledger = ProvenanceLedger()
+        now = time.time_ns()
+
+        recorded = record_install_artifacts(
+            ledger,
+            [(tool, self._digest(tool), now)],
+            not_before_ns=now - 10**9,
+            snapshot={},
+            observed_at_ns=now,
+            baseline=frozenset({tool}),
+        )
+
+        assert recorded == 0
+        assert ledger.lookup(tool) is LedgerMiss.MISS
+
+    def test_a_genuinely_new_file_is_recorded(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        tool = self._tool(tmp_path, monkeypatch)
+        ledger = ProvenanceLedger()
+        now = time.time_ns()
+
+        recorded = record_install_artifacts(
+            ledger,
+            [(tool, self._digest(tool), now)],
+            not_before_ns=now - 10**9,
+            snapshot={},
+            observed_at_ns=now,
+            baseline=frozenset(),
+        )
+
+        assert recorded == 1
+        assert isinstance(ledger.lookup(tool), ProvenanceEnvelope)
+
+    def test_a_baseline_file_with_changed_content_is_a_modification(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        tool = self._tool(tmp_path, monkeypatch)
+        ledger = ProvenanceLedger()
+        now = time.time_ns()
+
+        recorded = record_install_artifacts(
+            ledger,
+            [(tool, self._digest(tool), now)],
+            not_before_ns=now - 10**9,
+            snapshot={tool: hashlib.sha256(b"old contents\n").hexdigest()},
+            observed_at_ns=now,
+            baseline=frozenset({tool}),
+        )
+
+        # The baseline says it existed; the digest says the install wrote it.
+        # Existence is not innocence once the bytes changed.
+        assert recorded == 1
+        assert isinstance(ledger.lookup(tool), ProvenanceEnvelope)
+
+    def test_a_removed_baseline_file_is_not_recorded(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        tool = self._tool(tmp_path, monkeypatch)
+        ledger = ProvenanceLedger()
+        now = time.time_ns()
+
+        recorded = record_install_artifacts(
+            ledger,
+            [],
+            not_before_ns=now - 10**9,
+            snapshot={tool: self._digest(tool)},
+            observed_at_ns=now,
+            baseline=frozenset({tool}),
+        )
+
+        assert recorded == 0
+        assert ledger.lookup(tool) is LedgerMiss.MISS, "deletion is not a write"
+
+    def test_an_unresolvable_path_refuses_without_raising(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        tool = self._tool(tmp_path, monkeypatch)
+        loop = tool.parent / "loop"
+        loop.symlink_to(loop)
+        ledger = ProvenanceLedger()
+        now = time.time_ns()
+
+        recorded = record_install_artifacts(
+            ledger,
+            [(loop, "a" * 64, now)],
+            not_before_ns=now - 10**9,
+            snapshot={},
+            observed_at_ns=now,
+            baseline=frozenset({loop}),
+        )
+
+        assert recorded == 0
+        # The ledger cannot even canonicalize the loop, so the observation must
+        # have stopped at the recorder; the neighbouring path proves the run
+        # continued and recorded nothing.
+        assert ledger.lookup(tool) is LedgerMiss.MISS

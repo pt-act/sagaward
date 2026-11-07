@@ -858,3 +858,126 @@ class TestMultiCallBinaries:
         # Declared data: every config path belongs to a manager family.
         assert any(path.endswith(".npmrc") for path in INDEX_SELECTION_CONFIG)
         assert any("pip.conf" in path for path in INDEX_SELECTION_CONFIG)
+
+
+# ── G2c: the config-file chain at the three persistent locations (AC-30) ───
+
+
+class TestConfigFileChain:
+    """config write → install read → URL validation → R5'' before persistence."""
+
+    def _home_config(self, tmp_path: Path) -> tuple[Path, Path]:
+        home = tmp_path / "home"
+        config = home / ".pip" / "pip.conf"
+        config.parent.mkdir(parents=True)
+        config.write_text("[global]\nindex-url = http://target/simple\n")
+        return home, config
+
+    def test_home_pip_conf_write_is_the_config_channel(self, tmp_path: Path) -> None:
+        home, _config = self._home_config(tmp_path)
+        action = classify(f"HOME={home} echo 'index-url = http://target/simple' > ~/.pip/pip.conf")
+        assert action.kind is ActionKind.PACKAGE_INSTALL
+        assert [source.kind for source in action.artifact_sources] == [SourceKind.OTHER_URL]
+        assert decide_action(action, ProvenanceLedger()).reason is ReasonCode.UNSAFE_INSTALL_SOURCE
+
+    def test_the_next_install_reads_the_home_pip_conf(self, tmp_path: Path) -> None:
+        home, _config = self._home_config(tmp_path)
+        action = classify(f"HOME={home} pip install --only-binary=:all: evilpkg", tmp_path)
+        assert [source.kind for source in action.artifact_sources] == [SourceKind.OTHER_URL]
+        assert "~/.pip/pip.conf" in action.index_tokens
+        assert decide_action(action, ProvenanceLedger()).reason is ReasonCode.UNSAFE_INSTALL_SOURCE
+
+    def test_virtualenv_pip_conf_write_is_the_config_channel(self, tmp_path: Path) -> None:
+        virtualenv = tmp_path / "venv"
+        virtualenv.mkdir()
+        action = classify(f"VIRTUAL_ENV={virtualenv} tee {virtualenv}/pip.conf")
+        assert action.kind is ActionKind.PACKAGE_INSTALL
+        assert [source.kind for source in action.artifact_sources] == [SourceKind.OTHER_URL]
+
+    def test_the_next_install_reads_the_virtualenv_pip_conf(self, tmp_path: Path) -> None:
+        virtualenv = tmp_path / "venv"
+        virtualenv.mkdir()
+        (virtualenv / "pip.conf").write_text("index-url = http://target/simple\n")
+        action = classify(
+            f"VIRTUAL_ENV={virtualenv} pip install --only-binary=:all: evilpkg", tmp_path
+        )
+        assert [source.kind for source in action.artifact_sources] == [SourceKind.OTHER_URL]
+        assert "$VIRTUAL_ENV/pip.conf" in action.index_tokens
+        assert decide_action(action, ProvenanceLedger()).reason is ReasonCode.UNSAFE_INSTALL_SOURCE
+
+    def test_etc_pip_conf_is_a_declared_location(self) -> None:
+        # The system location cannot be written by the test (and would need
+        # elevation), but it must be in the declared search list the classifier
+        # reads — otherwise a pre-positioned /etc/pip.conf is invisible.
+        from strix.core.provenance.classify import _config_paths  # noqa: PLC0415
+
+        assert "/etc/pip.conf" in INDEX_SELECTION_CONFIG
+        searched = {
+            str(path)
+            for _spelling, path in _config_paths(
+                {"HOME": "/nonexistent", "VIRTUAL_ENV": ""}, None, "pip"
+            )
+        }
+        assert "/etc/pip.conf" in searched
+
+    def test_an_unset_virtualenv_fabricates_no_root_config(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from strix.core.provenance.classify import _config_paths  # noqa: PLC0415
+
+        monkeypatch.delenv("VIRTUAL_ENV", raising=False)
+        searched = {
+            str(path)
+            for _spelling, path in _config_paths(
+                {"HOME": "/nonexistent", "VIRTUAL_ENV": ""}, None, "pip"
+            )
+        }
+        # "$VIRTUAL_ENV/pip.conf" with an empty variable must not become "/pip.conf".
+        assert "/pip.conf" not in searched
+
+
+class TestConfigPlantResidual:
+    """The named residual (gate gap ledger, round-23): index evidence is sampled at
+    classify time, so an interpreter-shaped planter inside the same compound writes
+    the config *after* the install member was classified. The classified write
+    shapes are closed; this shape is compensated, not closed, and the cell below is
+    the witness that keeps the gap visible until member-wise re-classification lands."""
+
+    def _home(self, tmp_path: Path) -> Path:
+        home = tmp_path / "home"
+        (home / ".pip").mkdir(parents=True)
+        return home
+
+    def install(self, home: Path) -> str:
+        return f"HOME={home} pip install --only-binary=:all: evilpkg"
+
+    def test_a_classified_write_in_the_same_compound_denies(self, tmp_path: Path) -> None:
+        home = self._home(tmp_path)
+        command = f"HOME={home} echo x > ~/.pip/pip.conf && " + self.install(home)
+        action = classify(command, tmp_path)
+        assert (
+            decide_action(action, ProvenanceLedger()).reason is ReasonCode.UNSAFE_INSTALL_SOURCE
+        ), "the write-shape channel must deny the compound before any member runs"
+
+    def test_an_interpreter_shaped_plant_is_the_named_residual(self, tmp_path: Path) -> None:
+        home = self._home(tmp_path)
+        config = home / ".pip" / "pip.conf"
+        planter = tmp_path / "planter.py"
+        planter.write_text(
+            "from pathlib import Path\n"
+            f"Path({str(config)!r}).write_text('index-url=http://target/simple')\n"
+        )
+        ledger = ProvenanceLedger()
+        _record(ledger, planter)
+        command = f"HOME={home} python3 {planter} && " + self.install(home)
+
+        # t0: the planter is a recorded script, so nothing here is a target; the
+        # install member sees no config and derives official-index → the compound
+        # ALLOWs. This is the gap, asserted rather than assumed.
+        assert decide_action(classify(command, tmp_path), ledger).verdict == "ALLOW"
+
+        # t1: the file the planter writes is exactly the evidence the next action
+        # reads — the chain denial that compensates for the residual.
+        config.write_text("index-url=http://target/simple\n")
+        decision = decide_action(classify(self.install(home), tmp_path), ledger)
+        assert decision.reason is ReasonCode.UNSAFE_INSTALL_SOURCE

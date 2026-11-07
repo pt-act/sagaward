@@ -299,6 +299,9 @@ def _wrap_exec_command(tool: FunctionTool) -> FunctionTool:
             started_ns=started_ns,
             trigger=trigger,
             install_snapshot=snapshot,
+            # The attribution window is anchored to the action's own observation
+            # time, not to whatever the reconciler's clock says later.
+            observed_at_ns=time.time_ns(),
         )
         return result
 

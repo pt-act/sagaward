@@ -106,6 +106,7 @@ async def reconcile_install_prefixes(
     action_id: str,
     trigger: str,
     snapshot: dict[Path, str] | None = None,
+    observed_at_ns: int | None = None,
 ) -> int | None:
     """Observe the declared prefixes and record what the install created.
 
@@ -151,6 +152,10 @@ async def reconcile_install_prefixes(
         not_before_ns=not_before_ns,
         prefixes=prefixes_for_trigger(trigger),
         snapshot=snapshot,
+        observed_at_ns=observed_at_ns,
+        # The pre-install listing is the baseline: its paths existed before the
+        # command, so they are never attributed as created.
+        baseline=frozenset(snapshot),
     )
     logger.info(
         "Install-prefix reconciliation for action %s recorded %d file(s)",
