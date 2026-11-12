@@ -2,7 +2,7 @@
 
 No web-framework import, so the guard is unit-testable without fastapi. ``app.py`` is the thin
 FastAPI wrapper. The patched guard reuses the P0 net classifier
-(``strix.core.net.is_internal_target``) — no primitive is re-implemented.
+(``oriontrix.core.net.is_internal_target``) — no primitive is re-implemented.
 """
 
 from __future__ import annotations
@@ -11,7 +11,7 @@ import os
 
 import httpx
 
-from strix.core.net import is_internal_target
+from oriontrix.core.net import is_internal_target
 
 
 def is_vuln() -> bool:

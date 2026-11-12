@@ -13,8 +13,8 @@ Patched mode (`VULN_MODE=0`) fixes both:
 ## Run
 
 ```bash
-docker build -t strix-business-logic-fixture .
-docker run -p 8080:8080 -e VULN_MODE=1 strix-business-logic-fixture
+docker build -t oriontrix-business-logic-fixture .
+docker run -p 8080:8080 -e VULN_MODE=1 oriontrix-business-logic-fixture
 ```
 
 ## Endpoints

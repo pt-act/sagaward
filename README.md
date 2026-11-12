@@ -56,14 +56,14 @@ Full list of changes: [`CHANGELOG.md`](CHANGELOG.md). Deep-dives:
 | **Business-logic testing** (Phase 5) | Orchestrator + evidence gate (impossible-state ∧ typed artifact ∧ reproduces) | diff/callback/race |
 | **Propose–dispose** | Instrumentation funnel + derived metrics; quarantined, off-by-default research ablation | — |
 
-These run alongside the original Strix toolkit (below); nothing upstream was removed from the
+These run alongside the original upstream toolkit (below); nothing upstream was removed from the
 agent's capabilities.
 
 ---
 
 ## Overview
 
-Strix agents act like real hackers — they run your code dynamically, find vulnerabilities, and
+Oriontrix agents act like real hackers — they run your code dynamically, find vulnerabilities, and
 validate them through actual proof-of-concepts. Built for developers and security teams who need
 fast, accurate security testing without the overhead of manual pentesting or the false positives
 of static analysis tools.
@@ -98,26 +98,26 @@ This fork is run from source (the upstream hosted installer is not used).
 
 ```bash
 # 1. Clone the fork
-git clone https://github.com/pt-act/strix.git
-cd strix
+git clone https://github.com/pt-act/oriontrix.git
+cd oriontrix
 
 # 2. Install dependencies
 uv sync
 
 # 3. Build the sandbox image (Kali + pinned security tools)
-./scripts/docker.sh dev            # builds strix-sandbox:dev
+./scripts/docker.sh dev            # builds oriontrix-sandbox:dev
 
 # 4. Configure your AI provider
-export STRIX_LLM="openai/gpt-5.4"
+export ORIONTRIX_LLM="openai/gpt-5.4"
 export LLM_API_KEY="your-api-key"
-export STRIX_IMAGE="strix-sandbox:dev"   # point the runtime at your local build
+export ORIONTRIX_IMAGE="oriontrix-sandbox:dev"   # point the runtime at your local build
 
 # 5. Run your first assessment
-uv run strix --target ./app-directory
+uv run oriontrix --target ./app-directory
 ```
 
 > [!NOTE]
-> Results are saved to `strix_runs/<run-name>`. The sandbox image build pulls a Kali base and
+> Results are saved to `oriontrix_runs/<run-name>`. The sandbox image build pulls a Kali base and
 > several network-heavy tool layers (nuclei templates, Go tools) — allow time on the first build.
 
 ---
@@ -128,35 +128,35 @@ uv run strix --target ./app-directory
 
 ```bash
 # Scan a local codebase
-uv run strix --target ./app-directory
+uv run oriontrix --target ./app-directory
 
 # Security review of a GitHub repository
-uv run strix --target https://github.com/org/repo
+uv run oriontrix --target https://github.com/org/repo
 
 # Black-box web application assessment
-uv run strix --target https://your-app.com
+uv run oriontrix --target https://your-app.com
 ```
 
 ### Advanced testing scenarios
 
 ```bash
 # Grey-box authenticated testing
-uv run strix --target https://your-app.com --instruction "Authenticated testing using credentials: user:pass"
+uv run oriontrix --target https://your-app.com --instruction "Authenticated testing using credentials: user:pass"
 
 # Multi-target testing (source code + deployed app)
-uv run strix -t https://github.com/org/app -t https://your-app.com
+uv run oriontrix -t https://github.com/org/app -t https://your-app.com
 
 # White-box source-aware scan (local repository)
-uv run strix --target ./app-directory --scan-mode standard
+uv run oriontrix --target ./app-directory --scan-mode standard
 
 # Focused testing with custom instructions
-uv run strix --target api.your-app.com --instruction "Focus on business logic flaws and IDOR"
+uv run oriontrix --target api.your-app.com --instruction "Focus on business logic flaws and IDOR"
 
 # Detailed instructions via file (rules of engagement, scope, exclusions)
-uv run strix --target api.your-app.com --instruction-file ./instruction.md
+uv run oriontrix --target api.your-app.com --instruction-file ./instruction.md
 
 # Force PR diff-scope against a specific base branch
-uv run strix -n --target ./ --scan-mode quick --scope-mode diff --diff-base origin/main
+uv run oriontrix -n --target ./ --scan-mode quick --scope-mode diff --diff-base origin/main
 ```
 
 ### Headless mode
@@ -166,7 +166,7 @@ and automated jobs. Prints real-time findings and the final report; exits non-ze
 vulnerabilities are found.
 
 ```bash
-uv run strix -n --target https://your-app.com
+uv run oriontrix -n --target https://your-app.com
 ```
 
 ### CI/CD (GitHub Actions)
@@ -175,7 +175,7 @@ Add a security test on pull requests. (Build the image in the job, or pull from 
 registry — the upstream hosted installer is not used in this fork.)
 
 ```yaml
-name: strix-penetration-test
+name: oriontrix-penetration-test
 
 on:
   pull_request:
@@ -194,34 +194,34 @@ jobs:
       - name: Build sandbox image
         run: ./scripts/docker.sh ci
 
-      - name: Run Strix
+      - name: Run Oriontrix
         env:
-          STRIX_LLM: ${{ secrets.STRIX_LLM }}
+          ORIONTRIX_LLM: ${{ secrets.ORIONTRIX_LLM }}
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
-          STRIX_IMAGE: strix-sandbox:ci
-        run: uv run strix -n -t ./ --scan-mode quick
+          ORIONTRIX_IMAGE: oriontrix-sandbox:ci
+        run: uv run oriontrix -n -t ./ --scan-mode quick
 ```
 
 > [!TIP]
-> In CI pull-request runs, Strix automatically scopes quick reviews to changed files. If
+> In CI pull-request runs, Oriontrix automatically scopes quick reviews to changed files. If
 > diff-scope cannot resolve, ensure checkout uses full history (`fetch-depth: 0`) or pass
 > `--diff-base` explicitly.
 
 ### Configuration
 
 ```bash
-export STRIX_LLM="openai/gpt-5.4"
+export ORIONTRIX_LLM="openai/gpt-5.4"
 export LLM_API_KEY="your-api-key"
 
 # Optional
-export STRIX_IMAGE="strix-sandbox:dev"     # the sandbox image the runtime uses
+export ORIONTRIX_IMAGE="oriontrix-sandbox:dev"     # the sandbox image the runtime uses
 export LLM_API_BASE="your-api-base-url"     # local model, e.g. Ollama / LMStudio
 export PERPLEXITY_API_KEY="your-api-key"    # search capabilities
-export STRIX_REASONING_EFFORT="high"        # high (default) | medium (quick scan)
+export ORIONTRIX_REASONING_EFFORT="high"        # high (default) | medium (quick scan)
 ```
 
 > [!NOTE]
-> Strix saves your configuration to `~/.strix/cli-config.json`, so you don't re-enter it each run.
+> Oriontrix saves your configuration to `~/.oriontrix/cli-config.json`, so you don't re-enter it each run.
 
 **Recommended models:**
 
@@ -236,7 +236,7 @@ See [`docs/llm-providers/overview`](docs/llm-providers/overview.mdx) for all sup
 
 ## The Inherited Toolkit
 
-Strix agents come with a comprehensive security testing toolkit:
+Oriontrix agents come with a comprehensive security testing toolkit:
 
 - **Full HTTP Proxy** — request/response manipulation and analysis
 - **Browser Automation** — multi-tab browser for XSS, CSRF, auth flows
@@ -264,12 +264,12 @@ Documentation lives in [`docs/`](docs/). Start with:
 ## Contributing
 
 Contributions to this fork are welcome — open a
-[pull request](https://github.com/pt-act/strix/pulls) or
-[issue](https://github.com/pt-act/strix/issues). See [`docs/contributing`](docs/contributing.mdx).
+[pull request](https://github.com/pt-act/oriontrix/pulls) or
+[issue](https://github.com/pt-act/oriontrix/issues). See [`docs/contributing`](docs/contributing.mdx).
 
 ## Acknowledgements
 
-Strix builds on the incredible work of open-source projects like
+Oriontrix builds on the incredible work of open-source projects like
 [LiteLLM](https://github.com/BerriAI/litellm), [Caido](https://github.com/caido/caido),
 [Nuclei](https://github.com/projectdiscovery/nuclei),
 [interactsh](https://github.com/projectdiscovery/interactsh),

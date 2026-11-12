@@ -6,7 +6,7 @@
 # FORWARD/PREROUTING rules in its own netns.
 #
 # Build:
-#   docker build -f containers/Dockerfile.gateway -t strix-egress-gateway:latest .
+#   docker build -f containers/Dockerfile.gateway -t oriontrix-egress-gateway:latest .
 #
 # The agent container (running as root in its own netns) cannot reach or
 # flush these rules — it is a different container with no Docker API access.
@@ -19,20 +19,20 @@ RUN apt-get update && \
         iproute2 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install strix governance modules (scope decision service + egress proxy)
+# Install oriontrix governance modules (scope decision service + egress proxy)
 # into the system Python path.  Only pydantic + typing_extensions needed.
 RUN pip install --no-cache-dir \
     'pydantic>=2.13,<3' \
     'typing_extensions>=4.15'
 
-COPY strix/ /opt/strix-python/strix/
-RUN find /opt/strix-python/strix -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
-RUN chown -R root:root /opt/strix-python/strix
+COPY oriontrix/ /opt/oriontrix-python/oriontrix/
+RUN find /opt/oriontrix-python/oriontrix -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
+RUN chown -R root:root /opt/oriontrix-python/oriontrix
 
-ENV PYTHONPATH=/opt/strix-python
+ENV PYTHONPATH=/opt/oriontrix-python
 
 # Audit log directory
-RUN mkdir -p /var/log/strix
+RUN mkdir -p /var/log/oriontrix
 
 COPY containers/gateway-entrypoint.sh /usr/local/bin/gateway-entrypoint.sh
 RUN chmod +x /usr/local/bin/gateway-entrypoint.sh

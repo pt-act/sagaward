@@ -40,8 +40,8 @@ _agents.function_tool = lambda **_: lambda f: f
 sys.modules.setdefault("agents", _agents)
 sys.modules.setdefault("agents.usage", _agents_usage)
 
-from strix.agents.funnel_emit import emit_harness_run, wrap_harness_tool  # noqa: E402
-from strix.report.state import (  # noqa: E402
+from oriontrix.agents.funnel_emit import emit_harness_run, wrap_harness_tool  # noqa: E402
+from oriontrix.report.state import (  # noqa: E402
     ReportState,
     get_global_report_state,
     set_global_report_state,

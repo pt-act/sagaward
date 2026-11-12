@@ -56,14 +56,14 @@ sys.modules["agents.model_settings"] = _agents_model_settings
 sys.modules["agents"] = _agents
 sys.modules["agents.usage"] = _agents_usage
 
-from strix.report.state import (  # noqa: E402
+from oriontrix.report.state import (  # noqa: E402
     ReportState,
     get_global_report_state,
     set_global_report_state,
 )
 
-# Mock strix.report.dedupe to avoid pulling the full agents model tree in tests.
-_dedupe: Any = ModuleType("strix.report.dedupe")
+# Mock oriontrix.report.dedupe to avoid pulling the full agents model tree in tests.
+_dedupe: Any = ModuleType("oriontrix.report.dedupe")
 
 
 async def _check_duplicate(_candidate: Any, _existing: Any) -> dict[str, Any]:
@@ -71,21 +71,21 @@ async def _check_duplicate(_candidate: Any, _existing: Any) -> dict[str, Any]:
 
 
 _dedupe.check_duplicate = _check_duplicate
-sys.modules["strix.report.dedupe"] = _dedupe
+sys.modules["oriontrix.report.dedupe"] = _dedupe
 
 # Replay engine imports caido_sdk_client at module load time; inject a stub.
 _CAIDO_MODULES = (
     "caido_sdk_client",
     "caido_sdk_client.api",
     "caido_sdk_client.api.replay",
-    "strix.tools.proxy",
-    "strix.tools.proxy.caido_api",
+    "oriontrix.tools.proxy",
+    "oriontrix.tools.proxy.caido_api",
 )
 for _mod in _CAIDO_MODULES:
     if _mod not in sys.modules:
         sys.modules[_mod] = ModuleType(_mod)
 
-_caido_api: Any = sys.modules["strix.tools.proxy.caido_api"]
+_caido_api: Any = sys.modules["oriontrix.tools.proxy.caido_api"]
 _caido_api.view_request = AsyncMock(return_value=MagicMock())
 _caido_api.get_client = AsyncMock(return_value=MagicMock())
 _caido_api.replay_send_raw = AsyncMock(
@@ -139,7 +139,7 @@ def _build_raw_request(
 
 _caido_api.build_raw_request = _build_raw_request
 
-from strix.tools.identity.tools import (  # noqa: E402
+from oriontrix.tools.identity.tools import (  # noqa: E402
     _run_auth_matrix,
     identity_store_list,
     identity_store_upsert,
@@ -297,7 +297,7 @@ class TestIdentityToolsTier1(IsolatedAsyncioTestCase):
             ]
         }
 
-        with patch("strix.tools.identity.tools.replay_ladder", return_value=fake_ladder):
+        with patch("oriontrix.tools.identity.tools.replay_ladder", return_value=fake_ladder):
             result = await _run_auth_matrix("req-1", "example.com", self.run_dir)
 
         self.assertTrue(result["success"])
@@ -341,7 +341,7 @@ class TestIdentityToolsTier1(IsolatedAsyncioTestCase):
             headers={"Authorization": "Bearer user-token"},
         )
 
-        with patch("strix.tools.identity.tools.diff") as mock_diff:
+        with patch("oriontrix.tools.identity.tools.diff") as mock_diff:
             mock_diff.return_value = MagicMock(deltas=[], candidates=[])
             result = await _run_auth_matrix("req-1", "example.com", self.run_dir)
 

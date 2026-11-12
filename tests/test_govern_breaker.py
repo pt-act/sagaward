@@ -1,4 +1,4 @@
-"""Tests for strix.core.govern.breaker — SGL-S3.
+"""Tests for oriontrix.core.govern.breaker — SGL-S3.
 
 SP6: circuit breaker trips on error-rate >25%/20 reqs OR p95 latency
      >3x baseline.  Kill-switch halts all in-flight actions.  Zero-tolerance.
@@ -12,7 +12,7 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from strix.core.govern.breaker import (
+from oriontrix.core.govern.breaker import (
     BreakerSnapshot,
     BreakerState,
     CircuitBreaker,

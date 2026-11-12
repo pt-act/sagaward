@@ -21,19 +21,19 @@
 #
 # Prerequisites:
 #   - Container runs with --cap-add NET_ADMIN (for iptables)
-#   - STRIX_SCOPE_RULES env contains newline/comma-separated scope patterns
-#   - STRIX_EGRESS_ENFORCE=1 is set
+#   - ORIONTRIX_SCOPE_RULES env contains newline/comma-separated scope patterns
+#   - ORIONTRIX_EGRESS_ENFORCE=1 is set
 
 set -euo pipefail
 
-PROXY_PORT="${STRIX_PROXY_PORT:-48081}"
-DECISION_SOCKET="${STRIX_DECISION_SOCKET:-/run/strix/decision.sock}"
+PROXY_PORT="${ORIONTRIX_PROXY_PORT:-48081}"
+DECISION_SOCKET="${ORIONTRIX_DECISION_SOCKET:-/run/oriontrix/decision.sock}"
 
 # Agent subnet on the internal network — injected by docker_client.py at create time
-AGENT_SUBNET="${STRIX_AGENT_SUBNET:-}"
+AGENT_SUBNET="${ORIONTRIX_AGENT_SUBNET:-}"
 
 if [ -z "${AGENT_SUBNET}" ]; then
-    echo "[gateway-entrypoint] FATAL: STRIX_AGENT_SUBNET is not set — refusing to start without agent subnet" >&2
+    echo "[gateway-entrypoint] FATAL: ORIONTRIX_AGENT_SUBNET is not set — refusing to start without agent subnet" >&2
     exit 1
 fi
 
@@ -76,11 +76,11 @@ fi
 
 # ── 1. Start the decision proxy ───────────────────────────────────────────────
 # Binds 0.0.0.0 so it accepts forwarded connections from the agent container.
-mkdir -p /run/strix
-STRIX_SCOPE_RULES="${STRIX_SCOPE_RULES:-}" \
-STRIX_DECISION_SOCKET="${DECISION_SOCKET}" \
-STRIX_EGRESS_ENFORCE="1" \
-python3 -m strix.runtime.egress_proxy \
+mkdir -p /run/oriontrix
+ORIONTRIX_SCOPE_RULES="${ORIONTRIX_SCOPE_RULES:-}" \
+ORIONTRIX_DECISION_SOCKET="${DECISION_SOCKET}" \
+ORIONTRIX_EGRESS_ENFORCE="1" \
+python3 -m oriontrix.runtime.egress_proxy \
     --port "${PROXY_PORT}" \
     --socket "${DECISION_SOCKET}" \
     --bind "0.0.0.0" \
@@ -118,37 +118,37 @@ if command -v ip6tables >/dev/null 2>&1; then
 fi
 
 # ── nat table — REDIRECT agent TCP and DNS UDP to the proxy ─────────────────
-iptables -t nat -N STRIX_EGRESS 2>/dev/null || iptables -t nat -F STRIX_EGRESS
+iptables -t nat -N ORIONTRIX_EGRESS 2>/dev/null || iptables -t nat -F ORIONTRIX_EGRESS
 
 # Drop loopback-destined packets from the agent subnet (adversarial 127.0.0.1)
-iptables -t nat -A STRIX_EGRESS -s "${AGENT_SUBNET}" -d 127.0.0.0/8 -j DROP
+iptables -t nat -A ORIONTRIX_EGRESS -s "${AGENT_SUBNET}" -d 127.0.0.0/8 -j DROP
 
 # TCP from agent subnet → REDIRECT to proxy port
-iptables -t nat -A STRIX_EGRESS -s "${AGENT_SUBNET}" -p tcp -j REDIRECT --to-ports "${PROXY_PORT}"
+iptables -t nat -A ORIONTRIX_EGRESS -s "${AGENT_SUBNET}" -p tcp -j REDIRECT --to-ports "${PROXY_PORT}"
 
 # DNS UDP from agent subnet → REDIRECT to proxy port
-iptables -t nat -A STRIX_EGRESS -s "${AGENT_SUBNET}" -p udp --dport 53 -j REDIRECT --to-ports "${PROXY_PORT}"
+iptables -t nat -A ORIONTRIX_EGRESS -s "${AGENT_SUBNET}" -p udp --dport 53 -j REDIRECT --to-ports "${PROXY_PORT}"
 
 # Explicitly drop non-TCP and non-DNS-UDP from agent subnet (defense-in-depth)
-iptables -t nat -A STRIX_EGRESS -s "${AGENT_SUBNET}" -p icmp -j DROP
-iptables -t nat -A STRIX_EGRESS -s "${AGENT_SUBNET}" -p udp ! --dport 53 -j DROP
+iptables -t nat -A ORIONTRIX_EGRESS -s "${AGENT_SUBNET}" -p icmp -j DROP
+iptables -t nat -A ORIONTRIX_EGRESS -s "${AGENT_SUBNET}" -p udp ! --dport 53 -j DROP
 
 # Remove any stale jump before adding (prevents duplicates on re-run)
-iptables -t nat -D PREROUTING -j STRIX_EGRESS 2>/dev/null || true
-iptables -t nat -A PREROUTING -j STRIX_EGRESS
+iptables -t nat -D PREROUTING -j ORIONTRIX_EGRESS 2>/dev/null || true
+iptables -t nat -A PREROUTING -j ORIONTRIX_EGRESS
 
 # filter table — only allow what the proxy mediated
-iptables -N STRIX_FILTER 2>/dev/null || iptables -F STRIX_FILTER
+iptables -N ORIONTRIX_FILTER 2>/dev/null || iptables -F ORIONTRIX_FILTER
 
 # ESTABLISHED,RELATED return traffic for proxy-initiated upstream connections
-iptables -A STRIX_FILTER -m state --state ESTABLISHED,RELATED -j ACCEPT
+iptables -A ORIONTRIX_FILTER -m state --state ESTABLISHED,RELATED -j ACCEPT
 
 # Loopback on the gateway itself — always allowed
-iptables -A STRIX_FILTER -i lo -j ACCEPT
+iptables -A ORIONTRIX_FILTER -i lo -j ACCEPT
 
 # Remove any stale jump before adding (prevents duplicates on re-run)
-iptables -D FORWARD -j STRIX_FILTER 2>/dev/null || true
-iptables -A FORWARD -j STRIX_FILTER
+iptables -D FORWARD -j ORIONTRIX_FILTER 2>/dev/null || true
+iptables -A FORWARD -j ORIONTRIX_FILTER
 
 # No catch-all ACCEPT — any agent-sourced packet that isn't TCP or DNS UDP
 # hits the default DROP policy (see -P FORWARD DROP above).

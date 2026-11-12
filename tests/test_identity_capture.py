@@ -6,15 +6,15 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase
 
-from strix.core.identity import IdentityStore
-from strix.core.identity.capture import capture_from_login, capture_from_proxy
-from strix.core.identity.export import (
+from oriontrix.core.identity import IdentityStore
+from oriontrix.core.identity.capture import capture_from_login, capture_from_proxy
+from oriontrix.core.identity.export import (
     export_identities,
     export_identities_to_file,
     import_identities,
     import_identities_from_file,
 )
-from strix.core.identity.store import identity_store_path
+from oriontrix.core.identity.store import identity_store_path
 
 
 class TestIdentityCaptureTier1(TestCase):

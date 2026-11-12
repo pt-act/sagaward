@@ -6,7 +6,7 @@ confirmed, patch → unconfirmed) while the raw model proposal does not — that
 M0 number and the substrate for E1–E4.
 
 The typed registry (ground-truth labels `V`, gap class, which disposer confirms each pair, the
-power-check) is `strix/research/corpus.py`. These are **minimal faithful reproductions** of each
+power-check) is `oriontrix/research/corpus.py`. These are **minimal faithful reproductions** of each
 CVE's vulnerability + fix, sized for hermetic disposer checks; swap in the real upstream repos at
 the cited commits for a full live run.
 
@@ -27,21 +27,21 @@ Each app switches on `VULN_MODE` (`1` = vulnerable, `0` = patched):
   the synthesized minimal diff (no clean public single-commit fix exists). The P2 differential
   flips: the attacker's cross-user request is 2xx on vuln, 403 on patch.
 - **ssrf_fetch** — patched blocks internal/metadata targets via the P0 net classifier
-  (`strix.core.net.is_internal_target`, the `<=3.0.12 -> 3.0.13` fix). The P3 OOB callback fires
+  (`oriontrix.core.net.is_internal_target`, the `<=3.0.12 -> 3.0.13` fix). The P3 OOB callback fires
   on vuln (the URL is fetched) and not on patch.
 
 ## Run
 
 ```bash
 # IDOR (self-contained)
-docker build -t strix-bv2p-idor benchmarks/bv2p/idor_memories
-docker run -p 8080:8080 -e VULN_MODE=1 strix-bv2p-idor      # vulnerable
-docker run -p 8080:8080 -e VULN_MODE=0 strix-bv2p-idor      # patched
+docker build -t oriontrix-bv2p-idor benchmarks/bv2p/idor_memories
+docker run -p 8080:8080 -e VULN_MODE=1 oriontrix-bv2p-idor      # vulnerable
+docker run -p 8080:8080 -e VULN_MODE=0 oriontrix-bv2p-idor      # patched
 
-# SSRF (build from the repo root so strix.core.net is in context)
-docker build -f benchmarks/bv2p/ssrf_fetch/Dockerfile -t strix-bv2p-ssrf .
-docker run -p 8080:8080 -e VULN_MODE=1 strix-bv2p-ssrf      # vulnerable
-docker run -p 8080:8080 -e VULN_MODE=0 strix-bv2p-ssrf      # patched
+# SSRF (build from the repo root so oriontrix.core.net is in context)
+docker build -f benchmarks/bv2p/ssrf_fetch/Dockerfile -t oriontrix-bv2p-ssrf .
+docker run -p 8080:8080 -e VULN_MODE=1 oriontrix-bv2p-ssrf      # vulnerable
+docker run -p 8080:8080 -e VULN_MODE=0 oriontrix-bv2p-ssrf      # patched
 ```
 
 Targets run sandboxed; SSRF confirmation uses the self-hosted P3 OOB oracle — no target data
@@ -49,5 +49,5 @@ leaves to a third party.
 
 ## Adding pairs
 
-Append a `BV2PPair` to `BV2P_CORPUS` in `strix/research/corpus.py` and add its fixture dir here.
+Append a `BV2PPair` to `BV2P_CORPUS` in `oriontrix/research/corpus.py` and add its fixture dir here.
 Race (P4) and business-logic (P5) pairs are soft-edged behind their phases.

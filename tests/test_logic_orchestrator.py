@@ -7,9 +7,9 @@ from pathlib import Path
 from typing import Any
 from unittest import IsolatedAsyncioTestCase
 
-from strix.core.logic import BusinessLogicOrchestrator
-from strix.core.logic.context import ExecutionContext
-from strix.core.logic.models import (
+from oriontrix.core.logic import BusinessLogicOrchestrator
+from oriontrix.core.logic.context import ExecutionContext
+from oriontrix.core.logic.models import (
     BusinessLogicModel,
     ConfirmedViolation,
     FlowModel,
@@ -17,8 +17,8 @@ from strix.core.logic.models import (
     Step,
     UnconfirmedHypothesis,
 )
-from strix.core.logic.store import BusinessLogicStore
-from strix.core.paths import logic_model_path
+from oriontrix.core.logic.store import BusinessLogicStore
+from oriontrix.core.paths import logic_model_path
 
 
 class _MockContext(ExecutionContext):

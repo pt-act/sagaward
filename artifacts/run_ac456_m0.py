@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """AC-4/5/6 credited both-sides M0 run driver (openwebui-idor-memories).
 
-Runs the DEPLOYED wrapper (strix.core.runner.run_strix_scan) against the live
-fixture in each VULN_MODE, with the STRIX_AUTH_HEADERS capture fix and glm-5.
+Runs the DEPLOYED wrapper (oriontrix.core.runner.run_oriontrix_scan) against the live
+fixture in each VULN_MODE, with the ORIONTRIX_AUTH_HEADERS capture fix and glm-5.
 
 Provenance: exploratory (NOT paper-cited). Code anchored at wip/ac456-authheader-fix.
 Model: z-ai/glm-5 via Prime Intellect (api.pinference.ai). Provider is a personal-
@@ -12,8 +12,8 @@ Usage:  uv run python artifacts/run_ac456_m0.py <vuln_mode 0|1> <run_name>
 """
 import asyncio, os, subprocess, sys, time
 
-FIXTURE_IMAGE = "strix-bv2p-idor_memories"
-SANDBOX_IMAGE = "strix-sandbox:caidofix"
+FIXTURE_IMAGE = "oriontrix-bv2p-idor_memories"
+SANDBOX_IMAGE = "oriontrix-sandbox:caidofix"
 TARGET = "http://host.docker.internal:8080"
 MAX_TURNS = 40
 
@@ -46,8 +46,8 @@ def stop_fixture(cid: str) -> None:
     subprocess.run(["docker","stop",cid], capture_output=True, timeout=20)
 
 async def main(mode: int, run_name: str) -> None:
-    from strix.core.runner import run_strix_scan
-    from strix.report.state import ReportState, set_global_report_state
+    from oriontrix.core.runner import run_oriontrix_scan
+    from oriontrix.report.state import ReportState, set_global_report_state
     scan_config = {
         "scan_id": run_name,
         "run_name": run_name,
@@ -59,7 +59,7 @@ async def main(mode: int, run_name: str) -> None:
     }
     # Identity/logic tools resolve run_dir from the GLOBAL report state (see
     # tools/identity/tools.py:_run_dir). The CLI sets this up; a direct
-    # run_strix_scan caller must too, or identity_store_upsert/auth_matrix raise
+    # run_oriontrix_scan caller must too, or identity_store_upsert/auth_matrix raise
     # "No run_dir provided in context and no global report state available".
     report_state = ReportState(run_name)
     report_state.hydrate_from_run_dir()
@@ -70,18 +70,18 @@ async def main(mode: int, run_name: str) -> None:
     cid = start_fixture(mode)
     print(f"[fixture] up cid={cid[:12]} VULN_MODE={mode}", flush=True)
     try:
-        await run_strix_scan(
+        await run_oriontrix_scan(
             scan_config=scan_config,
             scan_id=run_name,
             image=SANDBOX_IMAGE,
-            model=os.environ["STRIX_LLM"],
+            model=os.environ["ORIONTRIX_LLM"],
             interactive=False,
             max_turns=MAX_TURNS,
         )
     finally:
         stop_fixture(cid)
         print(f"[fixture] stopped cid={cid[:12]}", flush=True)
-        from strix.runtime import session_manager
+        from oriontrix.runtime import session_manager
         try:
             await session_manager.cleanup(run_name)
         except Exception as e:

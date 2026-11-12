@@ -13,7 +13,7 @@ from typing import Any
 
 import pytest
 
-from strix.core.provenance import (
+from oriontrix.core.provenance import (
     LedgerMiss,
     ProvenanceEnvelope,
     ProvenanceLedger,
@@ -22,8 +22,8 @@ from strix.core.provenance import (
     record_model_authored,
     resolve_workspace_path,
 )
-from strix.core.provenance.content import ABSENT, digest
-from strix.core.provenance.write_hook import (
+from oriontrix.core.provenance.content import ABSENT, digest
+from oriontrix.core.provenance.write_hook import (
     EXPECTED_WRITE_TOOLS,
     configure_filesystem_tools,
     wrap_apply_patch_tool,

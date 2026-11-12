@@ -3,7 +3,7 @@ title: "Introduction"
 description: "Open-source AI hackers to secure your apps"
 ---
 
-Strix are autonomous AI agents that act like real hackers—they run your code dynamically, find vulnerabilities, and validate them with proof-of-concepts. Built for developers and security teams who need fast, accurate security testing without the overhead of manual pentesting or the false positives of static analysis tools.
+Oriontrix are autonomous AI agents that act like real hackers—they run your code dynamically, find vulnerabilities, and validate them with proof-of-concepts. Built for developers and security teams who need fast, accurate security testing without the overhead of manual pentesting or the false positives of static analysis tools.
 
 <Note>
   This is a research-oriented **fork** of upstream [Strix](https://github.com/usestrix/strix)
@@ -13,7 +13,7 @@ Strix are autonomous AI agents that act like real hackers—they run your code d
 </Note>
 
 <Frame>
-  <img src="/images/screenshot.png" alt="Strix Demo" />
+  <img src="/images/screenshot.png" alt="Oriontrix Demo" />
 </Frame>
 
 <CardGroup cols={2}>
@@ -50,7 +50,7 @@ Strix are autonomous AI agents that act like real hackers—they run your code d
 
 ## Security Tools
 
-Strix agents come equipped with a comprehensive toolkit:
+Oriontrix agents come equipped with a comprehensive toolkit:
 
 | Tool | Purpose |
 |------|---------|
@@ -75,7 +75,7 @@ Strix agents come equipped with a comprehensive toolkit:
 
 ## Multi-Agent Architecture
 
-Strix uses a graph of specialized agents for comprehensive security testing:
+Oriontrix uses a graph of specialized agents for comprehensive security testing:
 
 - **Distributed Workflows** — Specialized agents for different attacks and assets
 - **Scalable Testing** — Parallel execution for fast comprehensive coverage
@@ -85,26 +85,26 @@ Strix uses a graph of specialized agents for comprehensive security testing:
 
 ```bash
 # Build from source (this fork is run from source)
-git clone https://github.com/pt-act/strix.git && cd strix
+git clone https://github.com/pt-act/oriontrix.git && cd oriontrix
 uv sync
 ./scripts/docker.sh dev
 
 # Configure
-export STRIX_LLM="openai/gpt-5.4"
+export ORIONTRIX_LLM="openai/gpt-5.4"
 export LLM_API_KEY="your-api-key"
-export STRIX_IMAGE="strix-sandbox:dev"
+export ORIONTRIX_IMAGE="oriontrix-sandbox:dev"
 
 # Scan
-uv run strix --target ./your-app
+uv run oriontrix --target ./your-app
 ```
 
 ## Community
 
 <CardGroup cols={2}>
-  <Card title="GitHub" icon="github" href="https://github.com/pt-act/strix">
+  <Card title="GitHub" icon="github" href="https://github.com/pt-act/oriontrix">
     Star the fork, open issues, and contribute.
   </Card>
-  <Card title="Changelog" icon="list" href="https://github.com/pt-act/strix/blob/main/CHANGELOG.md">
+  <Card title="Changelog" icon="list" href="https://github.com/pt-act/oriontrix/blob/main/CHANGELOG.md">
     See how this fork differs from upstream.
   </Card>
 </CardGroup>

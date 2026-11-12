@@ -7,7 +7,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
 
-from strix.core.inventory.collectors import (
+from oriontrix.core.inventory.collectors import (
     collect_arjun,
     collect_code,
     collect_ffuf,
@@ -21,7 +21,7 @@ from strix.core.inventory.collectors import (
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from strix.core.inventory.models import EndpointObservation
+    from oriontrix.core.inventory.models import EndpointObservation
 
 
 class TestSitemapCollector(unittest.TestCase):
@@ -179,7 +179,7 @@ def update_user(user_id: int):
 
     def _temp_fastapi_file(self) -> Path:
         """Return a temporary file path with the FastAPI fixture written."""
-        path = Path(self._tmp.name) / "strix_inventory_fastapi_fixture.py"
+        path = Path(self._tmp.name) / "oriontrix_inventory_fastapi_fixture.py"
         path.write_text(self.FASTAPI_SOURCE)
         return path
 

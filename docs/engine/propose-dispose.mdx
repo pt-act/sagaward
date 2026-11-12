@@ -18,7 +18,7 @@ and LLM-critic detectors are stuck on.
 
 ## Instrumentation (shipped)
 
-`strix/report/proposals.py`, `strix/core/proposals/`
+`oriontrix/report/proposals.py`, `oriontrix/core/proposals/`
 
 - **`ProposalRecord` / `FunnelLog`** — a durable per-engagement record of each proposal and the
   harness verdicts it received.
@@ -32,7 +32,7 @@ and LLM-critic detectors are stuck on.
 
 ## Measurement track (research, non-gating)
 
-`strix/research/`, `benchmarks/bv2p/`
+`oriontrix/research/`, `benchmarks/bv2p/`
 
 This track *measures* the engine; it never gates a product capability.
 
@@ -52,8 +52,8 @@ One research baseline lets an agent *self-confirm* — the one path that would v
 locus-1 invariant. It is therefore **quarantined**:
 
 - **Off by default**, gated on an exact environment sentinel; runners refuse without it.
-- **Research-only entrypoint** (`python -m strix.research.ablation`); no production module imports
-  `strix.research`, and the ablation imports nothing from `strix.report`.
+- **Research-only entrypoint** (`python -m oriontrix.research.ablation`); no production module imports
+  `oriontrix.research`, and the ablation imports nothing from `oriontrix.report`.
 - Its verdict type carries **no `evidence_class`** — it can never enter the product report path.
 
 It exists only to quantify what the propose–dispose architecture buys you, and it can never

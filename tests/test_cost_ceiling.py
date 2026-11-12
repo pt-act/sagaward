@@ -1,4 +1,4 @@
-"""Tests for strix.core.govern.cost_ceiling — SGL-S4a.
+"""Tests for oriontrix.core.govern.cost_ceiling — SGL-S4a.
 
 SP7: spend ≤ ceiling; exhaustion ⇒ halt; no action left half-executed at
      the ceiling.  Backpressure at 80 %, hard halt at 100 %.
@@ -10,7 +10,7 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from strix.core.govern.cost_ceiling import (
+from oriontrix.core.govern.cost_ceiling import (
     CostCeiling,
     CostSignal,
     CostSnapshot,

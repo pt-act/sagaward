@@ -44,7 +44,7 @@ _agents.function_tool = _function_tool
 sys.modules["agents"] = _agents
 sys.modules["agents.usage"] = _agents_usage
 
-from strix.tools.inventory.tools import (  # noqa: E402
+from oriontrix.tools.inventory.tools import (  # noqa: E402
     build_ranked_surface_map,
     classify_inventory_params,
     collect_inventory_from_code,

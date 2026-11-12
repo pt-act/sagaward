@@ -7,11 +7,11 @@ from unittest import IsolatedAsyncioTestCase, TestCase
 from hypothesis import given
 from hypothesis import strategies as st
 
-from strix.core.proposals.models import (
+from oriontrix.core.proposals.models import (
     C1C8Answer,
     InterventionFlags,
 )
-from strix.report.proposals import (
+from oriontrix.report.proposals import (
     FunnelLog,
     compute_funnel_efficiency,
     compute_prec_gate,

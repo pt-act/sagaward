@@ -14,16 +14,16 @@ from unittest.mock import patch
 # Ensure we import race-harness modules with our mocks, not with any state
 # left over from other test files.
 for _stale_race in (
-    "strix.core.race",
-    "strix.core.race.models",
-    "strix.core.race.verdict",
-    "strix.core.race.aggregator",
-    "strix.core.race.precondition",
-    "strix.core.race.dispatch",
-    "strix.core.race.collector",
-    "strix.core.race.harness",
-    "strix.tools.race",
-    "strix.tools.race.tools",
+    "oriontrix.core.race",
+    "oriontrix.core.race.models",
+    "oriontrix.core.race.verdict",
+    "oriontrix.core.race.aggregator",
+    "oriontrix.core.race.precondition",
+    "oriontrix.core.race.dispatch",
+    "oriontrix.core.race.collector",
+    "oriontrix.core.race.harness",
+    "oriontrix.tools.race",
+    "oriontrix.tools.race.tools",
 ):
     sys.modules.pop(_stale_race, None)
 
@@ -92,7 +92,7 @@ sys.modules["caido_sdk_client"] = _caido_sdk_client
 sys.modules["caido_sdk_client.types"] = _caido_sdk_client.types
 
 # Mock dedupe so the report layer can run without LLM-based duplicate checks.
-_dedupe: Any = ModuleType("strix.report.dedupe")
+_dedupe: Any = ModuleType("oriontrix.report.dedupe")
 
 
 async def _check_duplicate(_candidate: Any, _existing: Any) -> dict[str, Any]:
@@ -101,19 +101,19 @@ async def _check_duplicate(_candidate: Any, _existing: Any) -> dict[str, Any]:
 
 _dedupe.check_duplicate = _check_duplicate
 
-import strix.core.race.dispatch as _dispatch_module
-import strix.core.race.harness as _harness_module
-import strix.core.race.precondition as _precondition_module
-from strix.report.state import (
+import oriontrix.core.race.dispatch as _dispatch_module
+import oriontrix.core.race.harness as _harness_module
+import oriontrix.core.race.precondition as _precondition_module
+from oriontrix.report.state import (
     ReportState,
     get_global_report_state,
     set_global_report_state,
 )
-from strix.tools.race.tools import _run_tool as _core_run_tool
+from oriontrix.tools.race.tools import _run_tool as _core_run_tool
 
 
 if TYPE_CHECKING:
-    from strix.core.identity.models import Identity
+    from oriontrix.core.identity.models import Identity
 
 
 class _FakeRaceTarget:
@@ -256,7 +256,7 @@ class TestRaceToolRegistration(TestCase):
     RACE_TOOLS: ClassVar[set[str]] = {"run_race_harness"}
 
     def test_agent_exposes_race_harness_tool(self) -> None:
-        # Minimal SDK mock required by build_strix_agent.
+        # Minimal SDK mock required by build_oriontrix_agent.
         _agents_model_settings: Any = ModuleType("agents.model_settings")
         _agents_model_settings.ModelSettings = type("ModelSettings", (), {})
         sys.modules["agents.model_settings"] = _agents_model_settings
@@ -300,19 +300,19 @@ class TestRaceToolRegistration(TestCase):
 
         # Clear stale agent/factory namespaces so the factory re-imports from the
         # freshly mocked agents modules.
-        for _stale in ("strix.agents", "strix.agents.factory"):
+        for _stale in ("oriontrix.agents", "oriontrix.agents.factory"):
             sys.modules.pop(_stale, None)
 
-        # Clear stale proxy namespace so the factory imports real strix.tools.proxy.
-        for _stale in ("strix.tools.proxy", "strix.tools.proxy.caido_api"):
+        # Clear stale proxy namespace so the factory imports real oriontrix.tools.proxy.
+        for _stale in ("oriontrix.tools.proxy", "oriontrix.tools.proxy.caido_api"):
             sys.modules.pop(_stale, None)
 
-        from strix.agents.factory import build_strix_agent
+        from oriontrix.agents.factory import build_oriontrix_agent
 
         def _tool_names(agent: Any) -> set[str]:
             return {str(getattr(t, "name", getattr(t, "__name__", ""))) for t in agent.tools}
 
-        agent = build_strix_agent(is_root=True, is_whitebox=False)
+        agent = build_oriontrix_agent(is_root=True, is_whitebox=False)
         self.assertTrue(self.RACE_TOOLS.issubset(_tool_names(agent)))
 
 
@@ -327,17 +327,17 @@ class TestRaceToolEndToEnd(IsolatedAsyncioTestCase):
         self.report_state = ReportState(run_name=self.run_dir.name)
         self.report_state._run_dir = self.run_dir
         set_global_report_state(self.report_state)
-        self._dedupe_patcher = patch.dict(sys.modules, {"strix.report.dedupe": _dedupe})
+        self._dedupe_patcher = patch.dict(sys.modules, {"oriontrix.report.dedupe": _dedupe})
         self._dedupe_patcher.start()
         self._state_patcher = patch(
-            "strix.report.state.get_global_report_state",
+            "oriontrix.report.state.get_global_report_state",
             return_value=self.report_state,
         )
         self._state_patcher.start()
 
         # Seed the identity store with a user identity for the target.
-        from strix.core.identity import IdentityStore, identity_store_path
-        from strix.core.identity.models import Freshness, Identity
+        from oriontrix.core.identity import IdentityStore, identity_store_path
+        from oriontrix.core.identity.models import Freshness, Identity
 
         store = IdentityStore(identity_store_path(self.run_dir))
         store.upsert_identity(

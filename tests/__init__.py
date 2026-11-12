@@ -1,1 +1,1 @@
-"""Test package for Strix regression coverage."""
+"""Test package for Oriontrix regression coverage."""

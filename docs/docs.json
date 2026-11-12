@@ -82,7 +82,7 @@
       "anchors": [
         {
           "anchor": "GitHub",
-          "href": "https://github.com/pt-act/strix",
+          "href": "https://github.com/pt-act/oriontrix",
           "icon": "github"
         }
       ]
@@ -92,12 +92,12 @@
     "links": [],
     "primary": {
       "type": "github",
-      "href": "https://github.com/pt-act/strix"
+      "href": "https://github.com/pt-act/oriontrix"
     }
   },
   "footer": {
     "socials": {
-      "github": "https://github.com/pt-act/strix"
+      "github": "https://github.com/pt-act/oriontrix"
     }
   },
   "fonts": {

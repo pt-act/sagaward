@@ -14,14 +14,14 @@ from unittest.mock import MagicMock, patch
 # Clear race-harness modules so this test file imports them with a fresh
 # caido_sdk_client mock (set up below) and no state from other test files.
 for _stale_race in (
-    "strix.core.race",
-    "strix.core.race.models",
-    "strix.core.race.verdict",
-    "strix.core.race.aggregator",
-    "strix.core.race.precondition",
-    "strix.core.race.dispatch",
-    "strix.core.race.collector",
-    "strix.core.race.harness",
+    "oriontrix.core.race",
+    "oriontrix.core.race.models",
+    "oriontrix.core.race.verdict",
+    "oriontrix.core.race.aggregator",
+    "oriontrix.core.race.precondition",
+    "oriontrix.core.race.dispatch",
+    "oriontrix.core.race.collector",
+    "oriontrix.core.race.harness",
 ):
     sys.modules.pop(_stale_race, None)
 
@@ -53,19 +53,19 @@ _caido_sdk_client.types.UpdateScopeOptions = object
 sys.modules["caido_sdk_client"] = _caido_sdk_client
 sys.modules["caido_sdk_client.types"] = _caido_sdk_client.types
 
-import strix.core.race.dispatch as _dispatch_module
-import strix.core.race.harness as _harness_module
-import strix.core.race.precondition as _precondition_module
-from strix.core.identity.models import Freshness, Identity
-from strix.core.race.collector import collect_commit_count, collect_state_delta
-from strix.core.race.dispatch import dispatch
-from strix.core.race.harness import (
+import oriontrix.core.race.dispatch as _dispatch_module
+import oriontrix.core.race.harness as _harness_module
+import oriontrix.core.race.precondition as _precondition_module
+from oriontrix.core.identity.models import Freshness, Identity
+from oriontrix.core.race.collector import collect_commit_count, collect_state_delta
+from oriontrix.core.race.dispatch import dispatch
+from oriontrix.core.race.harness import (
     build_trial_summary,
     run_race_harness,
     target_url_from_request_id,
 )
-from strix.core.race.models import CopyOutcome, Precondition, ScopedRefusal
-from strix.core.race.precondition import reset_precondition, setup_precondition
+from oriontrix.core.race.models import CopyOutcome, Precondition, ScopedRefusal
+from oriontrix.core.race.precondition import reset_precondition, setup_precondition
 
 
 # Mock cvss so any report filing path can calculate severity without the real package.
@@ -87,7 +87,7 @@ _cvss.CVSS3 = _CVSS3
 sys.modules["cvss"] = _cvss
 
 # Mock dedupe to avoid LLM-based duplicate checks in report tests.
-_dedupe: Any = ModuleType("strix.report.dedupe")
+_dedupe: Any = ModuleType("oriontrix.report.dedupe")
 
 
 async def _check_duplicate(_candidate: Any, _existing: Any) -> dict[str, Any]:

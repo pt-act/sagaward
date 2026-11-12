@@ -10,9 +10,9 @@ from unittest import TestCase
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from strix.core.oob.correlator import Correlator
-from strix.core.oob.models import OobHit
-from strix.core.oob.registry import TokenRegistry
+from oriontrix.core.oob.correlator import Correlator
+from oriontrix.core.oob.models import OobHit
+from oriontrix.core.oob.registry import TokenRegistry
 
 
 _ID_ALPHABET = st.characters(whitelist_categories=("L", "N"))

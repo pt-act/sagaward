@@ -5,7 +5,7 @@ All notable changes to this fork are documented here. Format based on
 
 This is a research-oriented fork of the upstream **Strix** project
 ([usestrix/strix](https://github.com/usestrix/strix), Apache-2.0, © OmniSecure Inc.),
-diverged at upstream **v1.0.4**. It re-shapes Strix from a breadth-oriented scanner into a
+diverged at upstream **v1.0.4**. It re-shapes the upstream engine from a breadth-oriented scanner into a
 **stateful, auth-aware, impact-gated bounty engine** in which the LLM proposes and a
 deterministic harness disposes — every finding is backed by a diff, callback,
 reachability, or race artifact. See the upstream history for changes prior to the fork point.
@@ -17,6 +17,15 @@ reachability, or race artifact. See the upstream history for changes prior to th
 Forked from upstream `v1.0.4`. Work landed 2026-06-14 → 2026-06-18. The additions are
 organised as the implementation phases (0–5) plus the propose–dispose architecture and its
 measurement track. Upstream behaviour is preserved unless noted under *Changed*.
+
+### Changed — Oriontrix pre-publication
+- Renamed the product, package (`oriontrix-agent`), CLI (`oriontrix`), environment
+  prefixes (`ORIONTRIX_*`, with a one-time legacy `STRIX_*` compatibility shim),
+  home directory, skills, and container images to Oriontrix.
+- Removed the telemetry transports (PostHog and Scarf); Oriontrix is local-only and
+  sends no telemetry.
+- Removed the managed-cloud client and the hosted-product links; Oriontrix runs on
+  the user's keys.
 
 ### Added — Foundation & impact gating (Phase 0)
 - **Impact gate** in the report layer: every `vulnerability_report` now carries an
@@ -131,4 +140,4 @@ measurement track. Upstream behaviour is preserved unless noted under *Changed*.
 - This fork retains the upstream Apache-2.0 `LICENSE` and copyright. It is an independent
   derivative and is not affiliated with or endorsed by the upstream project or OmniSecure Inc.
 
-[Unreleased]: https://github.com/pt-act/strix
+[Unreleased]: https://github.com/pt-act/oriontrix

@@ -7,8 +7,8 @@ import unittest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from strix.core.inventory.models import Param, ParamClassEvidence
-from strix.core.inventory.spray import (
+from oriontrix.core.inventory.models import Param, ParamClassEvidence
+from oriontrix.core.inventory.spray import (
     all_classes,
     spray_values_for,
     spray_values_for_param,

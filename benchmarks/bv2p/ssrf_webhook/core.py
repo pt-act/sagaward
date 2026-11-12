@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import os
 
-from strix.core.net import is_internal_target
+from oriontrix.core.net import is_internal_target
 
 
 def is_vuln() -> bool:

@@ -7,7 +7,7 @@ from unittest import TestCase
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from strix.core.diff import diff
+from oriontrix.core.diff import diff
 
 
 class TestDiffEngineTier1(TestCase):

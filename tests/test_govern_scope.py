@@ -1,4 +1,4 @@
-"""Tests for strix.core.govern.scope — SGL-S1.
+"""Tests for oriontrix.core.govern.scope — SGL-S1.
 
 Tiers
 -----
@@ -19,7 +19,7 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from strix.core.govern.scope import (
+from oriontrix.core.govern.scope import (
     ActionClass,
     AuthzTier,
     Decision,

@@ -1,4 +1,4 @@
-"""Tests for strix.core.net outbound-trust hardening."""
+"""Tests for oriontrix.core.net outbound-trust hardening."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import ipaddress
 
 import pytest
 
-from strix.core.net import (
+from oriontrix.core.net import (
     EXTERNAL_PUBLIC_CORPUS,
     INTERNAL_CORPUS,
     METADATA_CORPUS,

@@ -31,8 +31,8 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from strix.core.diff import diff
-from strix.core.govern.scope import (
+from oriontrix.core.diff import diff
+from oriontrix.core.govern.scope import (
     ActionClass,
     EngagementCtx,
     ScopeRule,
@@ -43,10 +43,10 @@ from strix.core.govern.scope import (
     _host_matches,
     _normalize_host,
 )
-from strix.core.govern.ownership import check_ownership
-from strix.core.govern.cost_ceiling import CostCeiling, CostSignal
-from strix.core.govern.breaker import BreakerState, CircuitBreaker
-from strix.core.govern.audit import AuditAction, AuditLog
+from oriontrix.core.govern.ownership import check_ownership
+from oriontrix.core.govern.cost_ceiling import CostCeiling, CostSignal
+from oriontrix.core.govern.breaker import BreakerState, CircuitBreaker
+from oriontrix.core.govern.audit import AuditAction, AuditLog
 
 # ══════════════════════════════════════════════════════════════════════════════
 # SP8 — Gate-neutrality: SGL never alters engine dispositions

@@ -8,8 +8,8 @@ Covers spec upstream-upgrade AC-4/AC-5/AC-6 (offline, no Docker/API key):
 
 from __future__ import annotations
 
-from strix.config.models import DEFAULT_MODEL_RETRY, request_timeout_extra_args
-from strix.core.inputs import make_model_settings
+from oriontrix.config.models import DEFAULT_MODEL_RETRY, request_timeout_extra_args
+from oriontrix.core.inputs import make_model_settings
 
 
 # ---- AC-6: timeout wiring works (true-positive) ----

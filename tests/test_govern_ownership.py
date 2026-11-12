@@ -1,4 +1,4 @@
-"""Tests for strix.core.govern.ownership — SGL-S2.
+"""Tests for oriontrix.core.govern.ownership — SGL-S2.
 
 Tiers
 -----
@@ -16,13 +16,13 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from strix.core.govern.ownership import (
+from oriontrix.core.govern.ownership import (
     MatchMethod,
     OwnershipConfidence,
     check_ownership,
     _is_shared_infrastructure,
 )
-from strix.core.govern.scope import ScopeRule
+from oriontrix.core.govern.scope import ScopeRule
 
 # ══════════════════════════════════════════════════════════════════════════════
 # helpers

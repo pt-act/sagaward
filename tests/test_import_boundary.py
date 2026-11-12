@@ -1,12 +1,12 @@
-"""Import-boundary test for the Strix Governance Layer (SGL).
+"""Import-boundary test for the Oriontrix Governance Layer (SGL).
 
 S7/S8 hard invariant: SGL modules may only *remove* actions upstream.
 They must NEVER import from the detection engine:
-  - strix.core.logic
-  - strix.core.proposals
-  - strix.core.oob
-  - strix.core.diff
-  - strix.core.race
+  - oriontrix.core.logic
+  - oriontrix.core.proposals
+  - oriontrix.core.oob
+  - oriontrix.core.diff
+  - oriontrix.core.race
 
 This test uses Python's ``ast`` module for static analysis — it parses
 every ``.py`` file in the SGL directories and checks all ``import`` and
@@ -21,29 +21,29 @@ from pathlib import Path
 import pytest
 
 # SGL directories that must be import-boundary clean.
-# Note: strix/runtime/oob/ is pre-existing OOB infrastructure, not SGL
-# governance code — it legitimately imports from strix.core.oob.models.
+# Note: oriontrix/runtime/oob/ is pre-existing OOB infrastructure, not SGL
+# governance code — it legitimately imports from oriontrix.core.oob.models.
 _SGL_RECURSIVE_DIRS = [
-    "strix/core/govern",
-    "strix/telemetry",
+    "oriontrix/core/govern",
+    "oriontrix/telemetry",
 ]
 
 # Individual runtime files that are SGL governance code
 _SGL_INDIVIDUAL_FILES = [
-    "strix/runtime/egress_proxy.py",
-    "strix/runtime/docker_client.py",
-    "strix/runtime/session_manager.py",
-    "strix/runtime/backends.py",
-    "strix/runtime/caido_bootstrap.py",
+    "oriontrix/runtime/egress_proxy.py",
+    "oriontrix/runtime/docker_client.py",
+    "oriontrix/runtime/session_manager.py",
+    "oriontrix/runtime/backends.py",
+    "oriontrix/runtime/caido_bootstrap.py",
 ]
 
 # Forbidden import prefixes — the detection engine
 _FORBIDDEN_PREFIXES = [
-    "strix.core.logic",
-    "strix.core.proposals",
-    "strix.core.oob",
-    "strix.core.diff",
-    "strix.core.race",
+    "oriontrix.core.logic",
+    "oriontrix.core.proposals",
+    "oriontrix.core.oob",
+    "oriontrix.core.diff",
+    "oriontrix.core.race",
 ]
 
 # Known exceptions: runtime/backends.py and runtime/docker_client.py may

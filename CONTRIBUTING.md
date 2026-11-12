@@ -1,6 +1,6 @@
-# Contributing to Strix
+# Contributing to Oriontrix
 
-Thank you for your interest in contributing to Strix! This guide will help you get started with development and contributions.
+Thank you for your interest in contributing to Oriontrix! This guide will help you get started with development and contributions.
 
 ## 🚀 Development Setup
 
@@ -15,8 +15,8 @@ Thank you for your interest in contributing to Strix! This guide will help you g
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/usestrix/strix.git
-   cd strix
+   git clone https://github.com/pt-act/oriontrix.git
+   cd oriontrix
    ```
 
 2. **Install development dependencies**
@@ -30,18 +30,18 @@ Thank you for your interest in contributing to Strix! This guide will help you g
 
 3. **Configure your LLM provider**
    ```bash
-   export STRIX_LLM="openai/gpt-5.4"
+   export ORIONTRIX_LLM="openai/gpt-5.4"
    export LLM_API_KEY="your-api-key"
    ```
 
-4. **Run Strix in development mode**
+4. **Run Oriontrix in development mode**
    ```bash
-   uv run strix --target https://example.com
+   uv run oriontrix --target https://example.com
    ```
 
 ## 📚 Contributing Skills
 
-Skills are specialized knowledge packages that enhance agent capabilities. See [strix/skills/README.md](strix/skills/README.md) for detailed guidelines.
+Skills are specialized knowledge packages that enhance agent capabilities. See [oriontrix/skills/README.md](oriontrix/skills/README.md) for detailed guidelines.
 
 ### Quick Guide
 
@@ -83,7 +83,7 @@ Skills are specialized knowledge packages that enhance agent capabilities. See [
 When reporting bugs, please include:
 
 - Python version and OS
-- Strix version
+- Oriontrix version
 - LLMs being used
 - Full error traceback
 - Steps to reproduce
@@ -101,8 +101,7 @@ We welcome feature ideas! Please:
 
 ## 🤝 Community
 
-- **Discord**: [Join our community](https://discord.gg/strix-ai)
-- **Issues**: [GitHub Issues](https://github.com/usestrix/strix/issues)
+- **Issues**: [GitHub Issues](https://github.com/pt-act/oriontrix/issues)
 
 ## ✨ Recognition
 
@@ -113,4 +112,4 @@ We value all contributions! Contributors will be:
 
 ---
 
-**Questions?** Reach out on [Discord](https://discord.gg/strix-ai) or create an issue. We're here to help!
+**Questions?** Create an issue on GitHub. We're here to help!

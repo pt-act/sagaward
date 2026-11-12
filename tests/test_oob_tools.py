@@ -72,13 +72,13 @@ _agents.function_tool = _function_tool
 sys.modules["agents"] = _agents
 sys.modules["agents.usage"] = _agents_usage
 
-from strix.core.oob.models import OobHit  # noqa: E402
-from strix.report.state import (  # noqa: E402
+from oriontrix.core.oob.models import OobHit  # noqa: E402
+from oriontrix.report.state import (  # noqa: E402
     ReportState,
     get_global_report_state,
     set_global_report_state,
 )
-from strix.tools.oob.tools import (  # noqa: E402
+from oriontrix.tools.oob.tools import (  # noqa: E402
     confirm_oob_callback,
     mint_oob_token,
     poll_oob_callbacks,
@@ -90,7 +90,7 @@ from strix.tools.oob.tools import (  # noqa: E402
 # deduplication during unit tests. We patch sys.modules per test because the
 # real module imports from agents.models and is not available in the offline
 # test environment.
-_dedupe: Any = ModuleType("strix.report.dedupe")
+_dedupe: Any = ModuleType("oriontrix.report.dedupe")
 
 
 async def _check_duplicate(_candidate: Any, _existing: Any) -> dict[str, Any]:
@@ -283,10 +283,10 @@ class TestOobPromotionPBT(TestCase):
         report_state = ReportState(run_name=run_dir.name)
         report_state._run_dir = run_dir
         set_global_report_state(report_state)
-        dedupe_patcher = patch.dict(sys.modules, {"strix.report.dedupe": _dedupe})
+        dedupe_patcher = patch.dict(sys.modules, {"oriontrix.report.dedupe": _dedupe})
         dedupe_patcher.start()
         state_patcher = patch(
-            "strix.report.state.get_global_report_state",
+            "oriontrix.report.state.get_global_report_state",
             return_value=report_state,
         )
         state_patcher.start()
@@ -409,10 +409,10 @@ class TestOobEndToEnd(IsolatedAsyncioTestCase):
         self.report_state = ReportState(run_name=self.run_dir.name)
         self.report_state._run_dir = self.run_dir
         set_global_report_state(self.report_state)
-        self._dedupe_patcher = patch.dict(sys.modules, {"strix.report.dedupe": _dedupe})
+        self._dedupe_patcher = patch.dict(sys.modules, {"oriontrix.report.dedupe": _dedupe})
         self._dedupe_patcher.start()
         self._state_patcher = patch(
-            "strix.report.state.get_global_report_state",
+            "oriontrix.report.state.get_global_report_state",
             return_value=self.report_state,
         )
         self._state_patcher.start()

@@ -44,21 +44,21 @@ _agents.function_tool = _function_tool
 sys.modules["agents"] = _agents
 sys.modules["agents.usage"] = _agents_usage
 
-from strix.core.inventory.models import (  # noqa: E402
+from oriontrix.core.inventory.models import (  # noqa: E402
     Endpoint,
     Param,
     ParamClassEvidence,
     RankedSurfaceMap,
     ReachabilityAnnotation,
 )
-from strix.core.inventory.store import save_ranked_map  # noqa: E402
-from strix.core.proposals.models import InterventionFlags  # noqa: E402
-from strix.report.state import (  # noqa: E402
+from oriontrix.core.inventory.store import save_ranked_map  # noqa: E402
+from oriontrix.core.proposals.models import InterventionFlags  # noqa: E402
+from oriontrix.report.state import (  # noqa: E402
     ReportState,
     get_global_report_state,
     set_global_report_state,
 )
-from strix.tools.inventory.tools import propose_vulnerability_investigation  # noqa: E402
+from oriontrix.tools.inventory.tools import propose_vulnerability_investigation  # noqa: E402
 
 
 class _FakeContext:

@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from strix.core.provenance.classify import (
+from oriontrix.core.provenance.classify import (
     BUSYBOX_APPLETS,
     BUSYBOX_INTERPRETER_APPLETS,
     INDEX_SELECTION_CONFIG,
@@ -22,16 +22,16 @@ from strix.core.provenance.classify import (
     host_of,
     merged_interpreter_class,
 )
-from strix.core.provenance.gate import (
+from oriontrix.core.provenance.gate import (
     ActionKind,
     ReasonCode,
     Resolution,
     SourceKind,
     decide_action,
 )
-from strix.core.provenance.ledger import ProvenanceLedger
-from strix.core.provenance.model import ProvenanceEnvelope, Source
-from strix.core.provenance.paths import DEFAULT_QUARANTINE_DIR
+from oriontrix.core.provenance.ledger import ProvenanceLedger
+from oriontrix.core.provenance.model import ProvenanceEnvelope, Source
+from oriontrix.core.provenance.paths import DEFAULT_QUARANTINE_DIR
 
 
 CLEAN = ProvenanceEnvelope(sources=frozenset({Source.SANDBOX_IMAGE}))
@@ -909,7 +909,7 @@ class TestConfigFileChain:
         # The system location cannot be written by the test (and would need
         # elevation), but it must be in the declared search list the classifier
         # reads — otherwise a pre-positioned /etc/pip.conf is invisible.
-        from strix.core.provenance.classify import _config_paths  # noqa: PLC0415
+        from oriontrix.core.provenance.classify import _config_paths  # noqa: PLC0415
 
         assert "/etc/pip.conf" in INDEX_SELECTION_CONFIG
         searched = {
@@ -923,7 +923,7 @@ class TestConfigFileChain:
     def test_an_unset_virtualenv_fabricates_no_root_config(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        from strix.core.provenance.classify import _config_paths  # noqa: PLC0415
+        from oriontrix.core.provenance.classify import _config_paths  # noqa: PLC0415
 
         monkeypatch.delenv("VIRTUAL_ENV", raising=False)
         searched = {

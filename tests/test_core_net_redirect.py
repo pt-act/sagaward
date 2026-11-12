@@ -9,8 +9,8 @@ from urllib.error import HTTPError
 
 import pytest
 
-from strix.core.net.corpus import INTERNAL_CORPUS, METADATA_CORPUS
-from strix.core.net.redirect import (
+from oriontrix.core.net.corpus import INTERNAL_CORPUS, METADATA_CORPUS
+from oriontrix.core.net.redirect import (
     RedirectInternalTargetError,
     RedirectLoopError,
     RedirectValidationError,
@@ -57,7 +57,7 @@ def test_external_to_internal_redirect_rejected() -> None:
         return _MockResponse(200)
 
     with (
-        patch("strix.core.net.redirect.urlopen", side_effect=_urlopen_side_effect),
+        patch("oriontrix.core.net.redirect.urlopen", side_effect=_urlopen_side_effect),
         pytest.raises(RedirectInternalTargetError),
     ):
         validate_redirect_chain("http://example.com/")
@@ -87,7 +87,7 @@ def test_external_to_alternate_notation_internal_redirect_rejected(
         return _MockResponse(200)
 
     with (
-        patch("strix.core.net.redirect.urlopen", side_effect=_urlopen_side_effect),
+        patch("oriontrix.core.net.redirect.urlopen", side_effect=_urlopen_side_effect),
         pytest.raises(RedirectInternalTargetError),
     ):
         validate_redirect_chain("http://example.com/")
@@ -105,7 +105,7 @@ def test_external_to_corpus_internal_redirect_rejected(target: str) -> None:
         return _MockResponse(200)
 
     with (
-        patch("strix.core.net.redirect.urlopen", side_effect=_urlopen_side_effect),
+        patch("oriontrix.core.net.redirect.urlopen", side_effect=_urlopen_side_effect),
         pytest.raises(RedirectInternalTargetError),
     ):
         validate_redirect_chain("http://example.com/")
@@ -125,7 +125,7 @@ def test_redirect_loop_detected() -> None:
         return _MockResponse(200)
 
     with (
-        patch("strix.core.net.redirect.urlopen", side_effect=_urlopen_side_effect),
+        patch("oriontrix.core.net.redirect.urlopen", side_effect=_urlopen_side_effect),
         pytest.raises(RedirectLoopError),
     ):
         validate_redirect_chain("http://example.com/a")
@@ -139,7 +139,7 @@ def test_external_to_external_chain_passes() -> None:
             return _MockResponse(302, "http://github.com/destination")
         return _MockResponse(200)
 
-    with patch("strix.core.net.redirect.urlopen", side_effect=_urlopen_side_effect):
+    with patch("oriontrix.core.net.redirect.urlopen", side_effect=_urlopen_side_effect):
         chain = validate_redirect_chain("http://example.com/")
 
     assert chain == ["http://example.com/", "http://github.com/destination"]
@@ -156,7 +156,7 @@ def test_hop_limit_enforced() -> None:
         return _MockResponse(302, f"http://example.com/{call_count}")
 
     with (
-        patch("strix.core.net.redirect.urlopen", side_effect=_urlopen_side_effect),
+        patch("oriontrix.core.net.redirect.urlopen", side_effect=_urlopen_side_effect),
         pytest.raises(RedirectLoopError),
     ):
         validate_redirect_chain("http://example.com/", max_hops=3)
@@ -168,7 +168,7 @@ def test_non_redirect_response_ends_chain() -> None:
     def _urlopen_side_effect(_req: object, **_: Any) -> _MockResponse:
         return _MockResponse(200)
 
-    with patch("strix.core.net.redirect.urlopen", side_effect=_urlopen_side_effect):
+    with patch("oriontrix.core.net.redirect.urlopen", side_effect=_urlopen_side_effect):
         chain = validate_redirect_chain("http://example.com/")
 
     assert chain == ["http://example.com/"]
@@ -182,7 +182,7 @@ def test_http_error_3xx_redirect_via_exception() -> None:
             raise _make_http_error(302, "http://github.com/destination")
         return _MockResponse(200)
 
-    with patch("strix.core.net.redirect.urlopen", side_effect=_urlopen_side_effect):
+    with patch("oriontrix.core.net.redirect.urlopen", side_effect=_urlopen_side_effect):
         chain = validate_redirect_chain("http://example.com/")
 
     assert chain == ["http://example.com/", "http://github.com/destination"]
@@ -197,7 +197,7 @@ def test_http_error_3xx_to_internal_rejected() -> None:
         return _MockResponse(200)
 
     with (
-        patch("strix.core.net.redirect.urlopen", side_effect=_urlopen_side_effect),
+        patch("oriontrix.core.net.redirect.urlopen", side_effect=_urlopen_side_effect),
         pytest.raises(RedirectInternalTargetError),
     ):
         validate_redirect_chain("http://example.com/")
@@ -210,7 +210,7 @@ def test_network_error_stops_chain_with_message() -> None:
         raise ConnectionError("no route to host")
 
     with (
-        patch("strix.core.net.redirect.urlopen", side_effect=_urlopen_side_effect),
+        patch("oriontrix.core.net.redirect.urlopen", side_effect=_urlopen_side_effect),
         pytest.raises(RedirectValidationError, match="no route to host"),
     ):
         validate_redirect_chain("http://example.com/")

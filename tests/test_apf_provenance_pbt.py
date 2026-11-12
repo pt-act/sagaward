@@ -14,7 +14,7 @@ import pytest
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
-from strix.core.provenance import (
+from oriontrix.core.provenance import (
     Label,
     LedgerMiss,
     Principal,

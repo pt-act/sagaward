@@ -1,4 +1,4 @@
-"""Tests for strix.core.provenance — the action-fence origin ledger.
+"""Tests for oriontrix.core.provenance — the action-fence origin ledger.
 
 Covers AC-1..AC-9 of apf-provenance. AC-10 (tool-boundary wiring) lives in
 ``tests/test_apf_provenance_wiring.py``.
@@ -14,8 +14,8 @@ from pathlib import Path
 
 import pytest
 
-from strix.core.govern.scope import AuthzTier
-from strix.core.provenance import (
+from oriontrix.core.govern.scope import AuthzTier
+from oriontrix.core.provenance import (
     ArtifactRef,
     DeclassifyForbidden,
     Label,
@@ -30,9 +30,9 @@ from strix.core.provenance import (
 )
 
 
-PACKAGE_DIR = Path(__file__).resolve().parent.parent / "strix" / "core" / "provenance"
-_GOVERN_DIR = Path(__file__).resolve().parent.parent / "strix" / "core" / "govern"
-_RULED_EDGE_MODULE = "strix.core.govern.scope"
+PACKAGE_DIR = Path(__file__).resolve().parent.parent / "oriontrix" / "core" / "provenance"
+_GOVERN_DIR = Path(__file__).resolve().parent.parent / "oriontrix" / "core" / "govern"
+_RULED_EDGE_MODULE = "oriontrix.core.govern.scope"
 
 
 def _absolute(module_file: Path, node: ast.ImportFrom) -> str:
@@ -66,7 +66,7 @@ ALLOWED_IMPORT_ROOTS = frozenset(
         "time",
         "typing",
         "pydantic",
-        "strix",
+        "oriontrix",
         # apf-action-gate G2a: the shell parser for classify.py. One root, one
         # consumer; no other third-party import may join this set silently.
         "bashlex",
@@ -370,11 +370,11 @@ class TestPackagePurity:
 
         assert roots <= ALLOWED_IMPORT_ROOTS
 
-    def test_strix_imports_are_package_local_only(self) -> None:
+    def test_oriontrix_imports_are_package_local_only(self) -> None:
         """Package-local, with ONE ruled edge (operator ruling 2026-11-04, option a).
 
         ``gate.py`` may import the ``AuthzTier`` enum — a type, used for the decision's
-        tier label, never for decide logic — from ``strix.core.govern.scope``. Nothing
+        tier label, never for decide logic — from ``oriontrix.core.govern.scope``. Nothing
         else crosses the package boundary, and no other module may take that edge.
         """
         for module in PACKAGE_DIR.glob("*.py"):
@@ -382,14 +382,14 @@ class TestPackagePurity:
             for node in ast.walk(tree):
                 if isinstance(node, ast.Import):
                     for alias in node.names:
-                        assert not alias.name.startswith("strix") or alias.name.startswith(
-                            "strix.core.provenance"
+                        assert not alias.name.startswith("oriontrix") or alias.name.startswith(
+                            "oriontrix.core.provenance"
                         ), f"{module.name} imports outside the package: {alias.name}"
                 if isinstance(node, ast.ImportFrom):
                     target = _absolute(module, node)
-                    if not target.startswith("strix"):
+                    if not target.startswith("oriontrix"):
                         continue
-                    if target.startswith("strix.core.provenance"):
+                    if target.startswith("oriontrix.core.provenance"):
                         continue
                     names = {alias.name for alias in node.names}
                     assert (module.name, target, names) == (
@@ -412,15 +412,16 @@ class TestPackagePurity:
                 elif isinstance(node, ast.Import):
                     mods = [alias.name for alias in node.names]
                 for mod in mods:
-                    assert not mod.startswith("strix.core.provenance"), (
+                    assert not mod.startswith("oriontrix.core.provenance"), (
                         f"govern/{module.name} imports provenance: {mod}"
                     )
 
     def test_gate_import_closure_stays_engine_free(self) -> None:
-        """Importing the gate loads only the two packages and no SDK/Docker/network libs."""
+        """Importing the gate loads only the two packages, the stdlib-only env
+        shim, and no SDK/Docker/network libs."""
         code = (
             "import sys\n"
-            "import strix.core.provenance.gate\n"
+            "import oriontrix.core.provenance.gate\n"
             "print('\\n'.join(sorted(sys.modules)))\n"
         )
         out = subprocess.run(  # noqa: S603 - fixed argv, test-only
@@ -430,12 +431,18 @@ class TestPackagePurity:
             text=True,
             cwd=Path(__file__).resolve().parent.parent,
         ).stdout.split()
-        strix_mods = {m for m in out if m.startswith("strix.")}
+        oriontrix_mods = {m for m in out if m.startswith("oriontrix.")}
         assert all(
-            m in {"strix.core", "strix.core.govern", "strix.core.provenance"}
-            or m.startswith(("strix.core.govern.", "strix.core.provenance."))
-            for m in strix_mods
-        ), strix_mods
+            m
+            in {
+                "oriontrix._env_compat",
+                "oriontrix.core",
+                "oriontrix.core.govern",
+                "oriontrix.core.provenance",
+            }
+            or m.startswith(("oriontrix.core.govern.", "oriontrix.core.provenance."))
+            for m in oriontrix_mods
+        ), oriontrix_mods
         roots = {m.split(".")[0] for m in out}
         assert not roots & _ENGINE_ROOTS, roots & _ENGINE_ROOTS
 

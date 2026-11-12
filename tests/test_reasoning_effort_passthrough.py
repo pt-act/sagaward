@@ -7,7 +7,7 @@ Design: a positive reasoning_effort is emitted via the SDK-native
 it as the top-level ``reasoning_effort`` create-arg to the OpenAI-compatible
 client). For litellm-known reasoners this is the long-standing path. Thinking-only
 providers that litellm does not recognise (Ox Alpha / x-preview-f-free) opt in via
-``STRIX_FORCE_REASONING_EFFORT`` (force_reasoning_effort=True) -- OFF by default so
+``ORIONTRIX_FORCE_REASONING_EFFORT`` (force_reasoning_effort=True) -- OFF by default so
 models that previously emitted no reasoning arg (e.g. z-ai/glm-5) are byte-identical
 (no silent treatment change). ``max``/``xhigh`` clamp to ``high``. The ``none`` ->
 ``extra_body.thinking:disabled`` path is unchanged.
@@ -25,8 +25,8 @@ from agents.models.interface import ModelTracing
 from agents.models.openai_chatcompletions import OpenAIChatCompletionsModel
 from openai import AsyncOpenAI
 
-from strix.config.settings import LlmSettings, ReasoningEffort
-from strix.core.inputs import make_model_settings
+from oriontrix.config.settings import LlmSettings, ReasoningEffort
+from oriontrix.core.inputs import make_model_settings
 
 
 THINKING_ONLY = "x-preview-f-free"      # litellm does NOT know this as a reasoner
@@ -92,8 +92,8 @@ def test_known_reasoner_uses_reasoning_without_flag() -> None:
 # ─── v0.2.0 round-2 additions (validator round-1 reconciliation) ──────────────
 
 def test_settings_load_max(monkeypatch: pytest.MonkeyPatch) -> None:
-    """AC-5 end-to-end: a Settings load with STRIX_REASONING_EFFORT=max validates."""
-    monkeypatch.setenv("STRIX_REASONING_EFFORT", "max")
+    """AC-5 end-to-end: a Settings load with ORIONTRIX_REASONING_EFFORT=max validates."""
+    monkeypatch.setenv("ORIONTRIX_REASONING_EFFORT", "max")
     settings = LlmSettings(_env_file=None)
     assert settings.reasoning_effort == "max"
 

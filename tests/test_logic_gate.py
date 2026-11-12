@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from unittest import IsolatedAsyncioTestCase
 
-from strix.core.logic.gate import evaluate
-from strix.core.logic.models import (
+from oriontrix.core.logic.gate import evaluate
+from oriontrix.core.logic.models import (
     ConfirmedViolation,
     ExecutedSequence,
     ExecutedStep,

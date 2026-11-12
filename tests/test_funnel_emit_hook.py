@@ -34,7 +34,7 @@ _agents.function_tool = lambda **_: lambda f: f
 sys.modules.setdefault("agents", _agents)
 sys.modules.setdefault("agents.usage", _agents_usage)
 
-from strix.report.state import (  # noqa: E402
+from oriontrix.report.state import (  # noqa: E402
     ReportState,
     get_global_report_state,
     set_global_report_state,

@@ -12,8 +12,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from hypothesis import assume, given, settings
 from hypothesis import strategies as st
 
-from strix.core.identity.capture import capture_from_proxy
-from strix.core.identity.models import Freshness, Identity
+from oriontrix.core.identity.capture import capture_from_proxy
+from oriontrix.core.identity.models import Freshness, Identity
 
 
 # The replay engine imports caido_sdk_client at module load time. In test
@@ -23,14 +23,14 @@ _CAIDO_MODULES = (
     "caido_sdk_client",
     "caido_sdk_client.api",
     "caido_sdk_client.api.replay",
-    "strix.tools.proxy",
-    "strix.tools.proxy.caido_api",
+    "oriontrix.tools.proxy",
+    "oriontrix.tools.proxy.caido_api",
 )
 for _mod in _CAIDO_MODULES:
     if _mod not in sys.modules:
         sys.modules[_mod] = ModuleType(_mod)
 
-_caido_api: Any = sys.modules["strix.tools.proxy.caido_api"]
+_caido_api: Any = sys.modules["oriontrix.tools.proxy.caido_api"]
 _caido_api.view_request = AsyncMock(return_value=MagicMock())
 _caido_api.get_client = AsyncMock(return_value=MagicMock())
 _caido_api.replay_send_raw = AsyncMock(
@@ -106,7 +106,7 @@ _caido_api.apply_modifications = _apply_modifications
 _caido_api.build_raw_request = _build_raw_request
 
 
-from strix.core.identity.replay import (  # noqa: E402
+from oriontrix.core.identity.replay import (  # noqa: E402
     _overlay_identity_auth,
     _strip_original_auth,
     replay_as_identity,
@@ -156,15 +156,15 @@ class TestReplayEngineTier1(IsolatedAsyncioTestCase):
 
         with (
             patch(
-                "strix.core.identity.replay.caido_api.view_request",
+                "oriontrix.core.identity.replay.caido_api.view_request",
                 side_effect=fake_view_request,
             ),
             patch(
-                "strix.core.identity.replay.caido_api.get_client",
+                "oriontrix.core.identity.replay.caido_api.get_client",
                 new=AsyncMock(),
             ),
             patch(
-                "strix.core.identity.replay.caido_api.replay_send_raw",
+                "oriontrix.core.identity.replay.caido_api.replay_send_raw",
                 side_effect=fake_replay_send_raw,
             ),
         ):
@@ -211,15 +211,15 @@ class TestReplayEngineTier1(IsolatedAsyncioTestCase):
 
         with (
             patch(
-                "strix.core.identity.replay.caido_api.view_request",
+                "oriontrix.core.identity.replay.caido_api.view_request",
                 side_effect=fake_view_request,
             ),
             patch(
-                "strix.core.identity.replay.caido_api.get_client",
+                "oriontrix.core.identity.replay.caido_api.get_client",
                 new=AsyncMock(),
             ),
             patch(
-                "strix.core.identity.replay.caido_api.replay_send_raw",
+                "oriontrix.core.identity.replay.caido_api.replay_send_raw",
                 side_effect=fake_replay_send_raw,
             ),
         ):
@@ -246,11 +246,11 @@ class TestReplayEngineTier1(IsolatedAsyncioTestCase):
 
         with (
             patch(
-                "strix.core.identity.replay.caido_api.view_request",
+                "oriontrix.core.identity.replay.caido_api.view_request",
                 side_effect=fake_view_request,
             ),
             patch(
-                "strix.core.identity.replay.caido_api.get_client",
+                "oriontrix.core.identity.replay.caido_api.get_client",
                 new=AsyncMock(),
             ),
         ):
