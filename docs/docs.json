@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "maple",
-  "name": "Strix — Bounty-Grade Engine",
+  "name": "Oriontrix — Bounty-Grade Engine",
   "colors": {
     "primary": "#000000",
     "light": "#ffffff",
@@ -112,7 +112,7 @@
   "appearance": {
     "default": "dark"
   },
-  "description": "Bounty-grade fork of Strix: impact-gated, evidence-backed AI security testing",
+  "description": "Oriontrix — a bounty-grade fork of Strix: impact-gated, evidence-backed AI security testing",
   "background": {
     "decoration": "grid"
   }
