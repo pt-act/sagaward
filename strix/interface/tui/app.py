@@ -159,7 +159,7 @@ class SplashScreen(Static):  # type: ignore[misc]
         return Panel.fit(content, border_style=self.PRIMARY_GREEN, padding=(1, 6))
 
     def _build_url_text(self) -> Text:
-        return Text("strix.ai", style=Style(color=self.PRIMARY_GREEN, bold=True))
+        return Text("Oriontrix", style=Style(color=self.PRIMARY_GREEN, bold=True))
 
     def _build_welcome_text(self) -> Text:
         text = Text("Welcome to ", style=Style(color="white", bold=True))

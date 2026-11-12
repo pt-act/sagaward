@@ -47,7 +47,6 @@ from strix.interface.utils import (
 )
 from strix.report.state import get_global_report_state
 from strix.report.writer import read_run_record, write_run_record
-from strix.telemetry import posthog, scarf
 from strix.telemetry.logging import configure_dependency_logging
 
 
@@ -169,7 +168,7 @@ def validate_environment() -> None:
 
         panel = Panel(
             error_text,
-            title="[bold white]STRIX",
+            title="[bold white]ORIONTRIX",
             title_align="left",
             border_style="red",
             padding=(1, 2),
@@ -200,7 +199,7 @@ def check_docker_installed() -> None:
 
         panel = Panel(
             error_text,
-            title="[bold white]STRIX",
+            title="[bold white]ORIONTRIX",
             title_align="left",
             border_style="red",
             padding=(1, 2),
@@ -243,7 +242,7 @@ async def warm_up_llm() -> None:
             console.print(
                 Panel(
                     warn_text,
-                    title="[bold white]STRIX",
+                    title="[bold white]ORIONTRIX",
                     title_align="left",
                     border_style="yellow",
                     padding=(1, 2),
@@ -280,7 +279,7 @@ async def warm_up_llm() -> None:
 
         panel = Panel(
             error_text,
-            title="[bold white]STRIX",
+            title="[bold white]ORIONTRIX",
             title_align="left",
             border_style="red",
             padding=(1, 2),
@@ -623,7 +622,7 @@ def display_completion_message(args: argparse.Namespace, results_path: Path) -> 
 
     panel = Panel(
         panel_content,
-        title="[bold white]STRIX",
+        title="[bold white]ORIONTRIX",
         title_align="left",
         border_style=border_style,
         padding=(1, 2),
@@ -633,9 +632,8 @@ def display_completion_message(args: argparse.Namespace, results_path: Path) -> 
     console.print(panel)
     console.print()
     console.print(
-        "[#60a5fa]strix.ai[/]  [dim]·[/]  "
-        "[#60a5fa]docs.strix.ai[/]  [dim]·[/]  "
-        "[#60a5fa]discord.gg/strix-ai[/]"
+        "[#60a5fa]Oriontrix[/]  [dim]·[/]  "
+        "[dim]local-only · no telemetry · your keys[/]"
     )
     console.print()
 
@@ -675,7 +673,7 @@ def pull_docker_image() -> None:
 
             panel = Panel(
                 error_text,
-                title="[bold white]STRIX",
+                title="[bold white]ORIONTRIX",
                 title_align="left",
                 border_style="red",
                 padding=(1, 2),
@@ -736,7 +734,7 @@ def main() -> None:
 
             panel = Panel(
                 error_text,
-                title="[bold white]STRIX",
+                title="[bold white]ORIONTRIX",
                 title_align="left",
                 border_style="red",
                 padding=(1, 2),
@@ -755,16 +753,6 @@ def main() -> None:
 
         _persist_run_record(args)
 
-    _telemetry_start_kwargs = {
-        "model": load_settings().llm.model,
-        "scan_mode": args.scan_mode,
-        "is_whitebox": is_whitebox_scan(args.targets_info),
-        "interactive": not args.non_interactive,
-        "has_instructions": bool(args.instruction),
-    }
-    posthog.start(**_telemetry_start_kwargs)
-    scarf.start(**_telemetry_start_kwargs)
-
     exit_reason = "user_exit"
     try:
         if args.non_interactive:
@@ -773,10 +761,8 @@ def main() -> None:
             asyncio.run(run_tui(args))
     except KeyboardInterrupt:
         exit_reason = "interrupted"
-    except Exception as e:
+    except Exception:
         exit_reason = "error"
-        posthog.error("unhandled_exception", str(e))
-        scarf.error("unhandled_exception", str(e))
         raise
     finally:
         report_state = get_global_report_state()
@@ -786,8 +772,6 @@ def main() -> None:
                 "stopped",
             )
             report_state.cleanup(status=status)
-            posthog.end(report_state, exit_reason=exit_reason)
-            scarf.end(report_state, exit_reason=exit_reason)
 
     results_path = run_dir_for(args.run_name)
     display_completion_message(args, results_path)

@@ -55,7 +55,9 @@ class RuntimeSettings(BaseSettings):
 class TelemetrySettings(BaseSettings):
     model_config = _BASE_CONFIG
 
-    enabled: bool = Field(default=True, alias="STRIX_TELEMETRY")
+    # The telemetry transports were removed pre-publication; the setting stays
+    # default-off for compatibility with existing environments.
+    enabled: bool = Field(default=False, alias="STRIX_TELEMETRY")
 
 
 class IntegrationSettings(BaseSettings):

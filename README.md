@@ -1,20 +1,26 @@
 <div align="center">
 
-# Strix — Bounty-Grade Engine (fork)
+# Oriontrix
 
-### Autonomous AI that finds vulnerabilities and prove them with evidence.
+### Agents propose. The harness disposes.
 
 <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-3b82f6?style=flat-square" alt="License"></a>
 <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/changelog-fork-2b9246?style=flat-square" alt="Changelog"></a>
 
 </div>
 
-> **This is a research-oriented fork** of the upstream [Strix](https://github.com/usestrix/strix)
-> project (Apache-2.0, © OmniSecure Inc.), diverged at upstream **v1.0.4**. It re-shapes Strix
-> from a breadth-oriented scanner into a **stateful, auth-aware, impact-gated bounty engine**:
-> the LLM *proposes* candidates and a deterministic harness *disposes* of them, so every finding
-> is backed by a diff, callback, reachability, or race artifact — not a model's say-so.
-> It is independent and **not affiliated with or endorsed by** the upstream project.
+**Local-only. No telemetry. No cloud client. Everything runs on your keys.**
+
+> **Lineage.** Oriontrix is a research-oriented fork of the upstream
+> [Strix](https://github.com/usestrix/strix) project (Apache-2.0, © OmniSecure Inc.),
+> diverged at upstream commit **67536408** (v1.0.4). The "Strix" name is used only for
+> provenance and attribution, per Apache-2.0 §6; Oriontrix is independent and **not
+> affiliated with or endorsed by** the upstream project.
+
+It re-shapes the upstream engine from a breadth-oriented scanner into a **stateful,
+auth-aware, impact-gated bounty engine**: the LLM *proposes* candidates and a deterministic
+harness *disposes* of them, so every finding is backed by a diff, callback, reachability,
+or race artifact — not a model's say-so.
 
 ---
 

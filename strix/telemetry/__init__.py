@@ -1,7 +1,5 @@
-from . import posthog, scarf
+"""Internal logging helpers.
 
-
-__all__ = [
-    "posthog",
-    "scarf",
-]
+The telemetry transports (PostHog, Scarf) were removed pre-publication; this
+package now carries only the per-scan logging setup in ``logging``.
+"""
