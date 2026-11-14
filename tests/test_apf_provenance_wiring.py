@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from oriontrix.core.provenance import (
+from sagaward.core.provenance import (
     LedgerMiss,
     ProvenanceEnvelope,
     ProvenanceLedger,
@@ -25,8 +25,8 @@ from oriontrix.core.provenance import (
     parse_executable_listing,
     seed_paths,
 )
-from oriontrix.runtime.isolation_bringup import IsolationBringupError
-from oriontrix.runtime.provenance_bringup import bring_up_provenance
+from sagaward.runtime.isolation_bringup import IsolationBringupError
+from sagaward.runtime.provenance_bringup import bring_up_provenance
 
 
 class _Result:
@@ -189,8 +189,8 @@ class TestSeedClosesTheLiveLoop:
     def test_a_seeded_binary_is_allowed_and_an_unseeded_one_denies(self) -> None:
         import shutil  # noqa: PLC0415 - platform lookup
 
-        from oriontrix.core.provenance.classify import classify  # noqa: PLC0415
-        from oriontrix.core.provenance.gate import ReasonCode, decide_action  # noqa: PLC0415
+        from sagaward.core.provenance.classify import classify  # noqa: PLC0415
+        from sagaward.core.provenance.gate import ReasonCode, decide_action  # noqa: PLC0415
 
         seeded = shutil.which("ls")
         unseeded = shutil.which("cat")
@@ -215,7 +215,7 @@ class TestAliasKeys:
     """
 
     def test_an_alias_pair_hits_on_both_spellings(self) -> None:
-        from oriontrix.core.provenance.seed import seed_inventory  # noqa: PLC0415
+        from sagaward.core.provenance.seed import seed_inventory  # noqa: PLC0415
 
         ledger = ProvenanceLedger()
         seeded = seed_inventory(
@@ -232,7 +232,7 @@ class TestAliasKeys:
         assert alias.is_tainted() is False
 
     def test_the_pair_parser_is_fail_closed(self) -> None:
-        from oriontrix.core.provenance.seed import parse_inventory_pairs  # noqa: PLC0415
+        from sagaward.core.provenance.seed import parse_inventory_pairs  # noqa: PLC0415
 
         assert parse_inventory_pairs("not json") is None
         assert parse_inventory_pairs('{"x": 1}') is None
@@ -245,10 +245,10 @@ class TestAliasKeys:
         # The host *can* resolve this one, so the canonical key serves it; the
         # cell proves the pair shape end to end without depending on the host's
         # own usrmerge layout.
-        from oriontrix.core.provenance import seed as seed_module  # noqa: PLC0415
-        from oriontrix.core.provenance.classify import classify  # noqa: PLC0415
-        from oriontrix.core.provenance.gate import decide_action  # noqa: PLC0415
-        from oriontrix.core.provenance.seed import seed_inventory  # noqa: PLC0415
+        from sagaward.core.provenance import seed as seed_module  # noqa: PLC0415
+        from sagaward.core.provenance.classify import classify  # noqa: PLC0415
+        from sagaward.core.provenance.gate import decide_action  # noqa: PLC0415
+        from sagaward.core.provenance.seed import seed_inventory  # noqa: PLC0415
 
         # The subject here is the alias pair, not the writable-root skip (which
         # has its own cells). Under a /tmp extraction the fixture itself is
@@ -284,7 +284,7 @@ class TestAliasKeys:
         import subprocess  # noqa: PLC0415
         import sys  # noqa: PLC0415
 
-        from oriontrix.core.provenance.seed import (  # noqa: PLC0415
+        from sagaward.core.provenance.seed import (  # noqa: PLC0415
             INVENTORY_SCRIPT,
             parse_inventory_pairs,
         )

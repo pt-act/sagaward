@@ -14,12 +14,12 @@
 
 set -e
 
-if [ "${ORIONTRIX_EGRESS_ENFORCE:-0}" = "1" ]; then
+if [ "${SAGAWARD_EGRESS_ENFORCE:-0}" = "1" ]; then
     echo "[prod-entrypoint] Activating SGL egress substrate..."
-    /usr/local/sbin/oriontrix-egress-enforcer
+    /usr/local/sbin/sagaward-egress-enforcer
     echo "[prod-entrypoint] Egress substrate active."
 else
-    echo "[prod-entrypoint] ORIONTRIX_EGRESS_ENFORCE not set — dev/pass-through mode."
+    echo "[prod-entrypoint] SAGAWARD_EGRESS_ENFORCE not set — dev/pass-through mode."
 fi
 
 # Delegate to the dev entrypoint (Caido + interactsh + proxy env setup).

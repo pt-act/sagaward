@@ -36,7 +36,7 @@ _agents.RunContextWrapper = _RunContextWrapper
 _agents.function_tool = _function_tool
 sys.modules["agents"] = _agents
 
-from oriontrix.tools.scanner_runner.tool import (
+from sagaward.tools.scanner_runner.tool import (
     ScannerNotFoundError,
     ScannerRunnerError,
     ScannerTimeoutError,

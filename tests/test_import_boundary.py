@@ -1,12 +1,12 @@
-"""Import-boundary test for the Oriontrix Governance Layer (SGL).
+"""Import-boundary test for the Sagaward Governance Layer (SGL).
 
 S7/S8 hard invariant: SGL modules may only *remove* actions upstream.
 They must NEVER import from the detection engine:
-  - oriontrix.core.logic
-  - oriontrix.core.proposals
-  - oriontrix.core.oob
-  - oriontrix.core.diff
-  - oriontrix.core.race
+  - sagaward.core.logic
+  - sagaward.core.proposals
+  - sagaward.core.oob
+  - sagaward.core.diff
+  - sagaward.core.race
 
 This test uses Python's ``ast`` module for static analysis — it parses
 every ``.py`` file in the SGL directories and checks all ``import`` and
@@ -21,29 +21,29 @@ from pathlib import Path
 import pytest
 
 # SGL directories that must be import-boundary clean.
-# Note: oriontrix/runtime/oob/ is pre-existing OOB infrastructure, not SGL
-# governance code — it legitimately imports from oriontrix.core.oob.models.
+# Note: sagaward/runtime/oob/ is pre-existing OOB infrastructure, not SGL
+# governance code — it legitimately imports from sagaward.core.oob.models.
 _SGL_RECURSIVE_DIRS = [
-    "oriontrix/core/govern",
-    "oriontrix/telemetry",
+    "sagaward/core/govern",
+    "sagaward/telemetry",
 ]
 
 # Individual runtime files that are SGL governance code
 _SGL_INDIVIDUAL_FILES = [
-    "oriontrix/runtime/egress_proxy.py",
-    "oriontrix/runtime/docker_client.py",
-    "oriontrix/runtime/session_manager.py",
-    "oriontrix/runtime/backends.py",
-    "oriontrix/runtime/caido_bootstrap.py",
+    "sagaward/runtime/egress_proxy.py",
+    "sagaward/runtime/docker_client.py",
+    "sagaward/runtime/session_manager.py",
+    "sagaward/runtime/backends.py",
+    "sagaward/runtime/caido_bootstrap.py",
 ]
 
 # Forbidden import prefixes — the detection engine
 _FORBIDDEN_PREFIXES = [
-    "oriontrix.core.logic",
-    "oriontrix.core.proposals",
-    "oriontrix.core.oob",
-    "oriontrix.core.diff",
-    "oriontrix.core.race",
+    "sagaward.core.logic",
+    "sagaward.core.proposals",
+    "sagaward.core.oob",
+    "sagaward.core.diff",
+    "sagaward.core.race",
 ]
 
 # Known exceptions: runtime/backends.py and runtime/docker_client.py may

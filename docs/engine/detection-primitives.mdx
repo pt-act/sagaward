@@ -5,13 +5,13 @@ description: "The stateful, auth-aware detection primitives added by the fork (P
 
 These are the deterministic harnesses that *dispose* of agent proposals. Each emits a specific
 [evidence class](/engine/overview) and is unit- and property-tested. They live under
-`oriontrix/core/` (pure logic) and `oriontrix/tools/` (agent-facing function tools).
+`sagaward/core/` (pure logic) and `sagaward/tools/` (agent-facing function tools).
 
 ## Phase 0 — Foundation & impact gating
 
-- **Impact gate** in `oriontrix/report/state.py` — gates every `vulnerability_report` on an
+- **Impact gate** in `sagaward/report/state.py` — gates every `vulnerability_report` on an
   `evidence_class`; `none` downgrades severity.
-- **Pure network validators** (`oriontrix/core/net/`): URL normalization, alternate-IP decoding,
+- **Pure network validators** (`sagaward/core/net/`): URL normalization, alternate-IP decoding,
   `is_internal_target` (SSRF/metadata classification), redirect-chain validation. No Docker or
   network side effects.
 - **Pinned, reproducible toolchain image** with a build-time self-check
@@ -19,7 +19,7 @@ These are the deterministic harnesses that *dispose* of agent proposals. Each em
 
 ## Phase 1 — Identity state + semantic differential
 
-`oriontrix/core/identity/`, `oriontrix/core/diff/`
+`sagaward/core/identity/`, `sagaward/core/diff/`
 
 - **Identity store** — durable per-target store of role, cookies, tokens, headers, provenance,
   and freshness, with capture/import/export and redaction.
@@ -36,7 +36,7 @@ privilege succeeds where it should be denied) and stay silent on correctly-gated
 
 ## Phase 2 — Native out-of-band oracle
 
-`oriontrix/core/oob/`, `oriontrix/runtime/oob/`, `oriontrix/tools/oob/`
+`sagaward/core/oob/`, `sagaward/runtime/oob/`, `sagaward/tools/oob/`
 
 - **Self-hosted interactsh sidecar** (DNS/HTTP) captures inbound hits with protocol, token,
   source IP, timestamp, and raw payload — no third-party egress.
@@ -48,7 +48,7 @@ privilege succeeds where it should be denied) and stay silent on correctly-gated
 
 ## Phase 3 — Unified attack-surface inventory
 
-`oriontrix/core/inventory/`, `oriontrix/tools/inventory/`
+`sagaward/core/inventory/`, `sagaward/tools/inventory/`
 
 - **Ranked surface map** — per-target endpoint map with merged sources/params and a monotonic
   score.
@@ -60,7 +60,7 @@ privilege succeeds where it should be denied) and stay silent on correctly-gated
 
 ## Phase 4 — Race-condition harness
 
-`oriontrix/core/race/`
+`sagaward/core/race/`
 
 - **Concurrent dispatcher** — N copies over a shared session with jitter offsets.
 - **Precondition manager** — establishes a baseline state (or reports inconclusive) with reset.
@@ -70,7 +70,7 @@ privilege succeeds where it should be denied) and stay silent on correctly-gated
 
 ## Phase 5 — Business-logic state testing
 
-`oriontrix/core/logic/`, `oriontrix/tools/logic/`
+`sagaward/core/logic/`, `sagaward/tools/logic/`
 
 - **Orchestrator** — drives a flow under an invariant kind, producing an executed sequence plus a
   deterministic artifact.

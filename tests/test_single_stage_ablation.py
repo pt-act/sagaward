@@ -45,13 +45,13 @@ _agents.function_tool = lambda **_: lambda f: f
 sys.modules.setdefault("agents", _agents)
 sys.modules.setdefault("agents.usage", _agents_usage)
 
-from oriontrix.agents.funnel_emit import emit_harness_run  # noqa: E402
-from oriontrix.report.state import (  # noqa: E402
+from sagaward.agents.funnel_emit import emit_harness_run  # noqa: E402
+from sagaward.report.state import (  # noqa: E402
     ReportState,
     get_global_report_state,
     set_global_report_state,
 )
-from oriontrix.research.ablation.single_stage import (  # noqa: E402
+from sagaward.research.ablation.single_stage import (  # noqa: E402
     _ENABLE_SENTINEL,
     ABLATION_ENV_VAR,
     AblationProposal,
@@ -69,10 +69,10 @@ _ENV_SAFE_TEXT = st.text(st.characters(min_codepoint=32, max_codepoint=126), max
 _DETERMINISTIC_EVIDENCE = {"diff", "callback", "reachability", "race_result"}
 _ENDPOINT = "POST /api/v1/import"
 _PRODUCTION_ENTRY_MODULES = (
-    "oriontrix/agents/factory.py",
-    "oriontrix/core/runner.py",
-    "oriontrix/interface/main.py",
-    "oriontrix/interface/cli.py",
+    "sagaward/agents/factory.py",
+    "sagaward/core/runner.py",
+    "sagaward/interface/main.py",
+    "sagaward/interface/cli.py",
 )
 
 
@@ -124,7 +124,7 @@ class TestProductionOff(TestCase):
         repo_root = Path(__file__).resolve().parents[1]
         for rel in _PRODUCTION_ENTRY_MODULES:
             source = (repo_root / rel).read_text(encoding="utf-8")
-            self.assertNotIn("oriontrix.research", source, f"{rel} must not import research apparatus")
+            self.assertNotIn("sagaward.research", source, f"{rel} must not import research apparatus")
 
     @given(value=_ENV_SAFE_TEXT)
     def test_no_token_value_but_the_exact_one_enables(self, value: str) -> None:
@@ -135,7 +135,7 @@ class TestProductionOff(TestCase):
     @given(
         extra=st.dictionaries(
             keys=st.sampled_from(
-                ["ORIONTRIX_LLM", "ORIONTRIX_REASONING_EFFORT", "ORIONTRIX_IMAGE", "ORIONTRIX_TELEMETRY", "DEBUG"]
+                ["SAGAWARD_LLM", "SAGAWARD_REASONING_EFFORT", "SAGAWARD_IMAGE", "SAGAWARD_TELEMETRY", "DEBUG"]
             ),
             values=_ENV_SAFE_TEXT,
             max_size=5,
@@ -166,7 +166,7 @@ class TestGateNeutrality(TestCase):
         # Structural (AST, so docstrings that *name* these primitives don't count): the research
         # module imports nothing from the product report layer, so it has no handle to write.
         source = (
-            Path(__file__).resolve().parents[1] / "oriontrix/research/ablation/single_stage.py"
+            Path(__file__).resolve().parents[1] / "sagaward/research/ablation/single_stage.py"
         ).read_text(encoding="utf-8")
         imported: set[str] = set()
         for node in ast.walk(ast.parse(source)):
@@ -175,7 +175,7 @@ class TestGateNeutrality(TestCase):
             elif isinstance(node, ast.Import):
                 imported.update(alias.name for alias in node.names)
         self.assertFalse(
-            any(module.startswith("oriontrix.report") for module in imported),
+            any(module.startswith("sagaward.report") for module in imported),
             f"ablation must not import the product report layer; imported: {sorted(imported)}",
         )
 

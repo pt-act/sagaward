@@ -10,13 +10,13 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING
 
-from oriontrix.core.provenance import (
+from sagaward.core.provenance import (
     LedgerMiss,
     ProvenanceEnvelope,
     ProvenanceLedger,
     Source,
 )
-from oriontrix.core.provenance.reconcile import (
+from sagaward.core.provenance.reconcile import (
     RECONCILE_COMMAND,
     RECONCILE_MAX_DEPTH,
     RECONCILE_MAX_ENTRIES,
@@ -25,14 +25,14 @@ from oriontrix.core.provenance.reconcile import (
     paths_in_scratch_listing,
     record_scratch_artifacts,
 )
-from oriontrix.core.provenance.seed import (
+from sagaward.core.provenance.seed import (
     IMAGE_ROOTS,
     MAX_DEPTH,
     MAX_PATHS,
     is_agent_writable,
     seed_paths,
 )
-from oriontrix.runtime.provenance_reconcile import (
+from sagaward.runtime.provenance_reconcile import (
     RECONCILE_FAILURE_LIMIT,
     reconcile_after_exec,
     reconcile_scratch,
@@ -131,7 +131,7 @@ class TestListing:
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        monkeypatch.setattr("oriontrix.core.provenance.reconcile.RECONCILE_MAX_ENTRIES", 2)
+        monkeypatch.setattr("sagaward.core.provenance.reconcile.RECONCILE_MAX_ENTRIES", 2)
         listing = "\n".join(f"/workspace/scratch/f{i}" for i in range(10))
 
         paths = paths_in_scratch_listing(listing)
@@ -248,7 +248,7 @@ class TestFailurePosture:
         assert coordinator.reasons == []
 
     def test_success_resets_the_counter(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        from oriontrix.runtime import provenance_reconcile as rec  # noqa: PLC0415
+        from sagaward.runtime import provenance_reconcile as rec  # noqa: PLC0415
 
         async def _empty_sweep(_session: object, _ledger: object) -> int:
             return 0
@@ -295,7 +295,7 @@ class TestValidatorRound1Regressions:
         scratch = tmp_path / "scratch"
         quarantine.mkdir()
         scratch.mkdir()
-        monkeypatch.setattr("oriontrix.core.provenance.reconcile.SCRATCH_ROOT", scratch)
+        monkeypatch.setattr("sagaward.core.provenance.reconcile.SCRATCH_ROOT", scratch)
         implant = quarantine / "credman"
         implant.write_text("#!/bin/sh\n", encoding="utf-8")
         link = scratch / "innocent"

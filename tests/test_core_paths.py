@@ -9,11 +9,11 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
-from oriontrix.core.paths import RUNS_DIR_NAME, run_dir_for, validate_run_name
+from sagaward.core.paths import RUNS_DIR_NAME, run_dir_for, validate_run_name
 
 
-_UTILS_PATH = Path(__file__).resolve().parents[1] / "oriontrix" / "interface" / "utils.py"
-_UTILS_SPEC = importlib.util.spec_from_file_location("oriontrix_interface_utils_test", _UTILS_PATH)
+_UTILS_PATH = Path(__file__).resolve().parents[1] / "sagaward" / "interface" / "utils.py"
+_UTILS_SPEC = importlib.util.spec_from_file_location("sagaward_interface_utils_test", _UTILS_PATH)
 if _UTILS_SPEC is None or _UTILS_SPEC.loader is None:
     raise RuntimeError(f"Unable to load utils module from {_UTILS_PATH}")
 _UTILS_MODULE = importlib.util.module_from_spec(_UTILS_SPEC)
@@ -65,7 +65,7 @@ class TestCloneRepositoryHardening(unittest.TestCase):
             ):
                 result = clone_repository("-c core.sshCommand=evil", "scan-123")
 
-            expected = f"{tmp_dir}/oriontrix_repos/scan-123/-c core.sshCommand=evil"
+            expected = f"{tmp_dir}/sagaward_repos/scan-123/-c core.sshCommand=evil"
             self.assertEqual(result, expected)
             args = mock_run.call_args.args[0]
             self.assertEqual(args[:3], ["/usr/bin/git", "clone", "--"])

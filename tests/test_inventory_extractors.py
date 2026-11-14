@@ -7,19 +7,19 @@ import unittest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from oriontrix.core.inventory.classify import (
+from sagaward.core.inventory.classify import (
     agent_classify_param,
     classify_endpoint,
     classify_param,
 )
-from oriontrix.core.inventory.extractors import (
+from sagaward.core.inventory.extractors import (
     extract_form_params,
     extract_js_params,
     extract_openapi_params,
     extract_proxy_params,
     merge_extracted_params,
 )
-from oriontrix.core.inventory.models import Endpoint, Param, ParamObservation
+from sagaward.core.inventory.models import Endpoint, Param, ParamObservation
 
 
 class TestProxyExtractor(unittest.TestCase):

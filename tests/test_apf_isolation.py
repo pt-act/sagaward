@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-from oriontrix.core.isolation import (
+from sagaward.core.isolation import (
     CapabilityProfile,
     capabilities_for,
     declared_epoch_zero,
@@ -26,9 +26,9 @@ from oriontrix.core.isolation import (
     quarantine_mount,
     validate_mount_options,
 )
-from oriontrix.core.provenance import LedgerMiss, ProvenanceEnvelope, ProvenanceLedger
-from oriontrix.core.provenance.reconcile import record_scratch_artifacts
-from oriontrix.runtime.isolation_bringup import (
+from sagaward.core.provenance import LedgerMiss, ProvenanceEnvelope, ProvenanceLedger
+from sagaward.core.provenance.reconcile import record_scratch_artifacts
+from sagaward.runtime.isolation_bringup import (
     IsolationBringupError,
     assert_bringup_paths,
     scratch_baseline,
@@ -100,7 +100,7 @@ class TestQuarantineMount:
         mount = quarantine_mount("scan1", "agent1")
         options = mount.as_kwargs()["driver_config"]["options"]  # type: ignore[index]
         assert mount.target == "/workspace/quarantine"
-        assert mount.source == "oriontrix-quarantine-scan1-agent1"
+        assert mount.source == "sagaward-quarantine-scan1-agent1"
         for option in ("noexec", "nosuid", "nodev"):
             assert option in str(options["o"]).split(",")
 
@@ -184,7 +184,7 @@ class TestBringUpAssertions:
 
     def test_quarantine_inside_scratch_aborts(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Round-1 fence-override: a realpath-clean config can still be exec-capable scratch."""
-        from oriontrix.core.provenance import paths as provenance_paths  # noqa: PLC0415
+        from sagaward.core.provenance import paths as provenance_paths  # noqa: PLC0415
 
         monkeypatch.setattr(
             provenance_paths, "QUARANTINE_DIR", Path("/workspace/scratch/downloads")
@@ -193,7 +193,7 @@ class TestBringUpAssertions:
             asyncio.run(assert_bringup_paths(_Session()))
 
     def test_scratch_inside_quarantine_aborts(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        from oriontrix.core.provenance import paths as provenance_paths  # noqa: PLC0415
+        from sagaward.core.provenance import paths as provenance_paths  # noqa: PLC0415
 
         monkeypatch.setattr(provenance_paths, "QUARANTINE_DIR", Path("/workspace"))
         with pytest.raises(IsolationBringupError, match=r"scratch .* is inside quarantine"):
@@ -230,7 +230,7 @@ class TestBringUpAssertions:
 
 class TestPerAgentKeying:
     def test_two_agents_never_share_a_key(self) -> None:
-        from oriontrix.core.isolation import session_key  # noqa: PLC0415
+        from sagaward.core.isolation import session_key  # noqa: PLC0415
 
         assert session_key("scan1", "a") != session_key("scan1", "b")
         assert session_key("scan1", None) == "scan1:root"
@@ -241,7 +241,7 @@ class TestSourceInvariants:
     """Textual cells: the wiring lives in modules the SDK blocks us from importing."""
 
     def test_the_tool_user_is_pinned(self) -> None:
-        source = Path("oriontrix/agents/factory.py").read_text()
+        source = Path("sagaward/agents/factory.py").read_text()
         assert 'run_as = "pentester"' in source
         assert 'run_as = "pentester" if' not in source
 
@@ -252,6 +252,6 @@ class TestSourceInvariants:
 
     def test_the_client_never_grants_net_admin(self) -> None:
         """The old unconditional loop granted both caps on every container."""
-        source = Path("oriontrix/runtime/docker_client.py").read_text()
+        source = Path("sagaward/runtime/docker_client.py").read_text()
         assert 'for cap in ("NET_ADMIN", "NET_RAW")' not in source
         assert "capabilities_for(" in source

@@ -1,4 +1,4 @@
-# REPRODUCE.md — Oriontrix Propose–Dispose Validation
+# REPRODUCE.md — Sagaward Propose–Dispose Validation
 
 Minimal reproduction guide for E1–E4 experiments from the paper
 **"Propose–Dispose: Gap-Dictation in LLM-Assisted Vulnerability Triage"**.
@@ -20,8 +20,8 @@ and real Docker containers as the target fixtures. No simulation, no static prox
 ## 1. Clone and set up
 
 ```bash
-git clone https://github.com/pt-act/oriontrix.git
-cd oriontrix
+git clone https://github.com/pt-act/sagaward.git
+cd sagaward
 git checkout new
 uv sync
 ```
@@ -40,18 +40,18 @@ for fixture in \
   auth_bypass_admin auth_bypass_reset \
   mass_assign_profile sqli_search \
   bfla_arena_model bfla_kb_upload path_traversal_proxy; do
-  echo "building oriontrix-bv2p-${fixture}..."
-  sudo docker build -t oriontrix-bv2p-${fixture} benchmarks/bv2p/${fixture}/
+  echo "building sagaward-bv2p-${fixture}..."
+  sudo docker build -t sagaward-bv2p-${fixture} benchmarks/bv2p/${fixture}/
 done
 
 # ssrf_webhook and ssrf_redirect require repo-root build context:
-sudo docker build -f benchmarks/bv2p/ssrf_webhook/Dockerfile -t oriontrix-bv2p-ssrf_webhook .
-sudo docker build -f benchmarks/bv2p/ssrf_redirect/Dockerfile -t oriontrix-bv2p-ssrf_redirect .
+sudo docker build -f benchmarks/bv2p/ssrf_webhook/Dockerfile -t sagaward-bv2p-ssrf_webhook .
+sudo docker build -f benchmarks/bv2p/ssrf_redirect/Dockerfile -t sagaward-bv2p-ssrf_redirect .
 ```
 
 Verify all 13 images exist:
 ```bash
-sudo docker images | grep oriontrix-bv2p
+sudo docker images | grep sagaward-bv2p
 ```
 
 ---
@@ -63,7 +63,7 @@ then computes the FP-arm and FN-arm McNemar statistics.
 
 ```bash
 export OPENROUTER_API_KEY="<your-openrouter-key>"
-export ORIONTRIX_LLM="anthropic/claude-haiku-4-5"
+export SAGAWARD_LLM="anthropic/claude-haiku-4-5"
 export LLM_API_BASE="https://openrouter.ai/api/v1"
 
 uv run python artifacts/run_live_experiments.py
@@ -85,7 +85,7 @@ E1 (tradeoff curve), E3 (ablation), and E4 (perturbation invariance) are run tog
 
 ```bash
 export OPENROUTER_API_KEY="<your-openrouter-key>"
-export ORIONTRIX_LLM="anthropic/claude-haiku-4-5"
+export SAGAWARD_LLM="anthropic/claude-haiku-4-5"
 export LLM_API_BASE="https://openrouter.ai/api/v1"
 
 uv run python artifacts/run_live_e1e3e4.py
@@ -95,7 +95,7 @@ Expected output summary:
 ```
 E1 H1: confirmed=True | Prec_gate min=1.0
 E3 H3: directional=True | Full R_prop=1.0
-E4 H4: confirmed=True | oriontrix_flips=0 m4_flips=2
+E4 H4: confirmed=True | sagaward_flips=0 m4_flips=2
 ```
 
 Results saved to:
@@ -117,7 +117,7 @@ uv run pytest tests/ -q
 
 ## 6. Corpus
 
-The B-V2P corpus is defined in `oriontrix/research/corpus.py`. All 13 pairs:
+The B-V2P corpus is defined in `sagaward/research/corpus.py`. All 13 pairs:
 
 | Pair ID | CVE | Type | Harness |
 |---------|-----|------|---------|

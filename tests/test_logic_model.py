@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase
 
-from oriontrix.core.logic.models import (
+from sagaward.core.logic.models import (
     BusinessLogicModel,
     FlowModel,
     JourneyModel,
@@ -17,8 +17,8 @@ from oriontrix.core.logic.models import (
     Transition,
     TrustBoundary,
 )
-from oriontrix.core.logic.store import BusinessLogicStore
-from oriontrix.core.paths import logic_model_path
+from sagaward.core.logic.store import BusinessLogicStore
+from sagaward.core.paths import logic_model_path
 
 
 class TestBusinessLogicModelShapes(TestCase):

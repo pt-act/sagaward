@@ -28,10 +28,10 @@ import time
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from oriontrix.core.provenance import LedgerMiss, ProvenanceEnvelope, ProvenanceLedger
-from oriontrix.core.provenance.content import ABSENT, digest
-from oriontrix.core.provenance.write_hook import record_observed_writes, wrap_apply_patch_tool
-from oriontrix.runtime.provenance_reconcile import (
+from sagaward.core.provenance import LedgerMiss, ProvenanceEnvelope, ProvenanceLedger
+from sagaward.core.provenance.content import ABSENT, digest
+from sagaward.core.provenance.write_hook import record_observed_writes, wrap_apply_patch_tool
+from sagaward.runtime.provenance_reconcile import (
     PROBE_SCRIPT,
     SYMLINK_MARKER,
     hash_paths,
@@ -193,7 +193,7 @@ class TestRecorderCanonicality:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        from oriontrix.core.provenance import paths as provenance_paths  # noqa: PLC0415
+        from sagaward.core.provenance import paths as provenance_paths  # noqa: PLC0415
 
         quarantine = tmp_path / "quarantine"
         quarantine.mkdir()
@@ -327,7 +327,7 @@ class TestQuarantineAlias:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        from oriontrix.core.provenance import paths as provenance_paths  # noqa: PLC0415
+        from sagaward.core.provenance import paths as provenance_paths  # noqa: PLC0415
 
         quarantine = tmp_path / "quarantine"
         quarantine.mkdir()

@@ -10,7 +10,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}🦉 Oriontrix Build Script${NC}"
+echo -e "${BLUE}🦉 Sagaward Build Script${NC}"
 echo "================================"
 
 OS="$(uname -s)"
@@ -49,20 +49,20 @@ echo -e "\n${BLUE}Cleaning previous builds...${NC}"
 rm -rf build/ dist/
 
 echo -e "\n${BLUE}Building binary with PyInstaller...${NC}"
-uv run pyinstaller oriontrix.spec --noconfirm
+uv run pyinstaller sagaward.spec --noconfirm
 
 RELEASE_DIR="dist/release"
 mkdir -p "$RELEASE_DIR"
 
-BINARY_NAME="oriontrix-${VERSION}-${OS_NAME}-${ARCH_NAME}"
+BINARY_NAME="sagaward-${VERSION}-${OS_NAME}-${ARCH_NAME}"
 
 if [ "$OS_NAME" = "windows" ]; then
-    if [ ! -f "dist/oriontrix.exe" ]; then
+    if [ ! -f "dist/sagaward.exe" ]; then
         echo -e "${RED}Build failed: Binary not found${NC}"
         exit 1
     fi
     BINARY_NAME="${BINARY_NAME}.exe"
-    cp "dist/oriontrix.exe" "$RELEASE_DIR/$BINARY_NAME"
+    cp "dist/sagaward.exe" "$RELEASE_DIR/$BINARY_NAME"
     echo -e "\n${BLUE}Creating zip...${NC}"
     ARCHIVE_NAME="${BINARY_NAME%.exe}.zip"
 
@@ -73,11 +73,11 @@ if [ "$OS_NAME" = "windows" ]; then
     fi
     echo -e "${GREEN}Created:${NC} $RELEASE_DIR/$ARCHIVE_NAME"
 else
-    if [ ! -f "dist/oriontrix" ]; then
+    if [ ! -f "dist/sagaward" ]; then
         echo -e "${RED}Build failed: Binary not found${NC}"
         exit 1
     fi
-    cp "dist/oriontrix" "$RELEASE_DIR/$BINARY_NAME"
+    cp "dist/sagaward" "$RELEASE_DIR/$BINARY_NAME"
     chmod +x "$RELEASE_DIR/$BINARY_NAME"
     echo -e "\n${BLUE}Creating tarball...${NC}"
     ARCHIVE_NAME="${BINARY_NAME}.tar.gz"

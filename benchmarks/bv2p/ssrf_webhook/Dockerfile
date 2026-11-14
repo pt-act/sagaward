@@ -1,5 +1,5 @@
-# Build from the REPO ROOT so the oriontrix package (for oriontrix.core.net) is in the context:
-#   docker build -f benchmarks/bv2p/ssrf_webhook/Dockerfile -t oriontrix-bv2p-ssrf_webhook .
+# Build from the REPO ROOT so the sagaward package (for sagaward.core.net) is in the context:
+#   docker build -f benchmarks/bv2p/ssrf_webhook/Dockerfile -t sagaward-bv2p-ssrf_webhook .
 FROM python:3.12-slim
 
 WORKDIR /app
@@ -10,7 +10,7 @@ RUN pip install --no-cache-dir \
     "pydantic>=2.11.0" \
     "httpx>=0.28.0"
 
-COPY oriontrix /src/oriontrix
+COPY sagaward /src/sagaward
 ENV PYTHONPATH=/src
 
 COPY benchmarks/bv2p/ssrf_webhook/core.py .

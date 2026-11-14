@@ -259,9 +259,9 @@ RUN set -eux; \
     find . -type d -empty -delete; \
     chmod -R a+rX /opt/opengrep-rules
 
-# Oriontrix-authored rules that close gaps in the community ruleset.
-COPY containers/opengrep-rules/ /opt/opengrep-rules/oriontrix/
-RUN chmod -R a+rX /opt/opengrep-rules/oriontrix
+# Sagaward-authored rules that close gaps in the community ruleset.
+COPY containers/opengrep-rules/ /opt/opengrep-rules/sagaward/
+RUN chmod -R a+rX /opt/opengrep-rules/sagaward
 
 USER pentester
 
@@ -317,8 +317,8 @@ RUN python3 -m venv /app/.venv && \
         > /home/pentester/.local/bin/jwt_tool && \
     chmod +x /home/pentester/.local/bin/jwt_tool
 
-COPY --chown=pentester:pentester oriontrix/tools/proxy/caido_api.py /opt/oriontrix-python/caido_api.py
-ENV PYTHONPATH=/opt/oriontrix-python
+COPY --chown=pentester:pentester sagaward/tools/proxy/caido_api.py /opt/sagaward-python/caido_api.py
+ENV PYTHONPATH=/opt/sagaward-python
 
 # Login shells (e.g. `bash -lc`) source /etc/profile, which on Debian/Kali
 # hard-resets PATH and drops the image's ENV PATH entries. Re-add the same

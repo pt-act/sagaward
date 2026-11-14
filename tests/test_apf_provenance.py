@@ -1,4 +1,4 @@
-"""Tests for oriontrix.core.provenance — the action-fence origin ledger.
+"""Tests for sagaward.core.provenance — the action-fence origin ledger.
 
 Covers AC-1..AC-9 of apf-provenance. AC-10 (tool-boundary wiring) lives in
 ``tests/test_apf_provenance_wiring.py``.
@@ -14,8 +14,8 @@ from pathlib import Path
 
 import pytest
 
-from oriontrix.core.govern.scope import AuthzTier
-from oriontrix.core.provenance import (
+from sagaward.core.govern.scope import AuthzTier
+from sagaward.core.provenance import (
     ArtifactRef,
     DeclassifyForbidden,
     Label,
@@ -30,9 +30,9 @@ from oriontrix.core.provenance import (
 )
 
 
-PACKAGE_DIR = Path(__file__).resolve().parent.parent / "oriontrix" / "core" / "provenance"
-_GOVERN_DIR = Path(__file__).resolve().parent.parent / "oriontrix" / "core" / "govern"
-_RULED_EDGE_MODULE = "oriontrix.core.govern.scope"
+PACKAGE_DIR = Path(__file__).resolve().parent.parent / "sagaward" / "core" / "provenance"
+_GOVERN_DIR = Path(__file__).resolve().parent.parent / "sagaward" / "core" / "govern"
+_RULED_EDGE_MODULE = "sagaward.core.govern.scope"
 
 
 def _absolute(module_file: Path, node: ast.ImportFrom) -> str:
@@ -66,7 +66,7 @@ ALLOWED_IMPORT_ROOTS = frozenset(
         "time",
         "typing",
         "pydantic",
-        "oriontrix",
+        "sagaward",
         # apf-action-gate G2a: the shell parser for classify.py. One root, one
         # consumer; no other third-party import may join this set silently.
         "bashlex",
@@ -370,11 +370,11 @@ class TestPackagePurity:
 
         assert roots <= ALLOWED_IMPORT_ROOTS
 
-    def test_oriontrix_imports_are_package_local_only(self) -> None:
+    def test_sagaward_imports_are_package_local_only(self) -> None:
         """Package-local, with ONE ruled edge (operator ruling 2026-11-04, option a).
 
         ``gate.py`` may import the ``AuthzTier`` enum — a type, used for the decision's
-        tier label, never for decide logic — from ``oriontrix.core.govern.scope``. Nothing
+        tier label, never for decide logic — from ``sagaward.core.govern.scope``. Nothing
         else crosses the package boundary, and no other module may take that edge.
         """
         for module in PACKAGE_DIR.glob("*.py"):
@@ -382,14 +382,14 @@ class TestPackagePurity:
             for node in ast.walk(tree):
                 if isinstance(node, ast.Import):
                     for alias in node.names:
-                        assert not alias.name.startswith("oriontrix") or alias.name.startswith(
-                            "oriontrix.core.provenance"
+                        assert not alias.name.startswith("sagaward") or alias.name.startswith(
+                            "sagaward.core.provenance"
                         ), f"{module.name} imports outside the package: {alias.name}"
                 if isinstance(node, ast.ImportFrom):
                     target = _absolute(module, node)
-                    if not target.startswith("oriontrix"):
+                    if not target.startswith("sagaward"):
                         continue
-                    if target.startswith("oriontrix.core.provenance"):
+                    if target.startswith("sagaward.core.provenance"):
                         continue
                     names = {alias.name for alias in node.names}
                     assert (module.name, target, names) == (
@@ -412,7 +412,7 @@ class TestPackagePurity:
                 elif isinstance(node, ast.Import):
                     mods = [alias.name for alias in node.names]
                 for mod in mods:
-                    assert not mod.startswith("oriontrix.core.provenance"), (
+                    assert not mod.startswith("sagaward.core.provenance"), (
                         f"govern/{module.name} imports provenance: {mod}"
                     )
 
@@ -421,7 +421,7 @@ class TestPackagePurity:
         shim, and no SDK/Docker/network libs."""
         code = (
             "import sys\n"
-            "import oriontrix.core.provenance.gate\n"
+            "import sagaward.core.provenance.gate\n"
             "print('\\n'.join(sorted(sys.modules)))\n"
         )
         out = subprocess.run(  # noqa: S603 - fixed argv, test-only
@@ -431,18 +431,18 @@ class TestPackagePurity:
             text=True,
             cwd=Path(__file__).resolve().parent.parent,
         ).stdout.split()
-        oriontrix_mods = {m for m in out if m.startswith("oriontrix.")}
+        sagaward_mods = {m for m in out if m.startswith("sagaward.")}
         assert all(
             m
             in {
-                "oriontrix._env_compat",
-                "oriontrix.core",
-                "oriontrix.core.govern",
-                "oriontrix.core.provenance",
+                "sagaward._env_compat",
+                "sagaward.core",
+                "sagaward.core.govern",
+                "sagaward.core.provenance",
             }
-            or m.startswith(("oriontrix.core.govern.", "oriontrix.core.provenance."))
-            for m in oriontrix_mods
-        ), oriontrix_mods
+            or m.startswith(("sagaward.core.govern.", "sagaward.core.provenance."))
+            for m in sagaward_mods
+        ), sagaward_mods
         roots = {m.split(".")[0] for m in out}
         assert not roots & _ENGINE_ROOTS, roots & _ENGINE_ROOTS
 

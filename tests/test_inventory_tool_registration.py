@@ -8,7 +8,7 @@ from typing import Any, ClassVar
 from unittest import TestCase
 
 
-# Minimal mock of the agents SDK so build_oriontrix_agent can be imported and tested
+# Minimal mock of the agents SDK so build_sagaward_agent can be imported and tested
 # hermetically without the real SDK/sandbox dependencies.
 _agents: Any = ModuleType("agents")
 _agents_usage: Any = ModuleType("agents.usage")
@@ -101,8 +101,8 @@ sys.modules["agents.sandbox.errors"] = _agents.sandbox.errors
 sys.modules["agents.tool"] = _agents.tool
 
 # Clear any stale namespace-module mocks left by other tests so the real
-# oriontrix.tools.proxy package is loaded for the factory import.
-for _stale in ("oriontrix.tools.proxy", "oriontrix.tools.proxy.caido_api"):
+# sagaward.tools.proxy package is loaded for the factory import.
+for _stale in ("sagaward.tools.proxy", "sagaward.tools.proxy.caido_api"):
     sys.modules.pop(_stale, None)
 
 # Mock caido_sdk_client so proxy tools can import without the real client.
@@ -118,7 +118,7 @@ _caido_sdk_client.types.UpdateScopeOptions = object
 sys.modules["caido_sdk_client"] = _caido_sdk_client
 sys.modules["caido_sdk_client.types"] = _caido_sdk_client.types
 
-from oriontrix.agents.factory import build_oriontrix_agent  # noqa: E402
+from sagaward.agents.factory import build_sagaward_agent  # noqa: E402
 
 
 def _tool_names(agent: Any) -> set[str]:
@@ -151,17 +151,17 @@ class TestInventoryToolRegistration(TestCase):
     }
 
     def test_blackbox_agent_exposes_inventory_tools(self) -> None:
-        agent = build_oriontrix_agent(is_root=True, is_whitebox=False)
+        agent = build_sagaward_agent(is_root=True, is_whitebox=False)
         self.assertTrue(self.BLACKBOX_TOOLS.issubset(_tool_names(agent)))
 
     def test_blackbox_agent_omits_code_collector(self) -> None:
-        agent = build_oriontrix_agent(is_root=True, is_whitebox=False)
+        agent = build_sagaward_agent(is_root=True, is_whitebox=False)
         self.assertNotIn("collect_inventory_from_code", _tool_names(agent))
 
     def test_whitebox_agent_adds_code_collector(self) -> None:
-        agent = build_oriontrix_agent(is_root=True, is_whitebox=True)
+        agent = build_sagaward_agent(is_root=True, is_whitebox=True)
         self.assertIn("collect_inventory_from_code", _tool_names(agent))
 
     def test_blackbox_agent_exposes_oob_tools(self) -> None:
-        agent = build_oriontrix_agent(is_root=True, is_whitebox=False)
+        agent = build_sagaward_agent(is_root=True, is_whitebox=False)
         self.assertTrue(self.OOB_TOOLS.issubset(_tool_names(agent)))

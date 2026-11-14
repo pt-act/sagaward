@@ -1,4 +1,4 @@
-"""Oriontrix Live E1/E3/E4 Runner — PM-governed, haiku as external producer.
+"""Sagaward Live E1/E3/E4 Runner — PM-governed, haiku as external producer.
 
 ROLE PROTOCOL:
   PM/Dispatcher (Nyx/Eragon): designs harness, writes this file, validates outputs.
@@ -15,7 +15,7 @@ EXPERIMENTS:
            R_prop measured per condition and per FN-category (C3/C5/C7).
   E4 (H4): Perturbation invariance. Same 5 vuln-side pairs from E2 seed.
            3 semantic-preserving perturbations applied to the surface description haiku sees.
-           Oriontrix verdict (harness-grounded) must not flip. M4 (model-grounded) may flip.
+           Sagaward verdict (harness-grounded) must not flip. M4 (model-grounded) may flip.
 
 All raw haiku JSON responses recorded verbatim.
 
@@ -36,11 +36,11 @@ from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Any
 
-ORIONTRIX_ROOT = Path(__file__).parent.parent
-sys.path.insert(0, str(ORIONTRIX_ROOT))
+SAGAWARD_ROOT = Path(__file__).parent.parent
+sys.path.insert(0, str(SAGAWARD_ROOT))
 
-from oriontrix.research.corpus import BV2P_CORPUS, BV2PPair, small_gap_pairs
-from oriontrix.research.ablation.single_stage import (
+from sagaward.research.corpus import BV2P_CORPUS, BV2PPair, small_gap_pairs
+from sagaward.research.ablation.single_stage import (
     ABLATION_ENV_VAR, _ENABLE_SENTINEL, require_single_stage_ablation,
 )
 
@@ -51,7 +51,7 @@ _LLM_API_KEY  = (os.environ.get("LLM_API_KEY")
                  or os.environ.get("OPENROUTER_API_KEY")
                  or os.environ.get("OPENAI_API_KEY") or "")
 _LLM_API_BASE = os.environ.get("LLM_API_BASE", "https://openrouter.ai/api/v1")
-_LLM_MODEL    = os.environ.get("ORIONTRIX_LLM", "anthropic/claude-haiku-4-5")
+_LLM_MODEL    = os.environ.get("SAGAWARD_LLM", "anthropic/claude-haiku-4-5")
 
 # ─── LLM CLIENT ────────────────────────────────────────────────────────────────
 
@@ -63,7 +63,7 @@ def _llm_call(prompt: str, system: str = "", temperature: float = 0.0) -> str:
                or os.environ.get("OPENROUTER_API_KEY")
                or os.environ.get("OPENAI_API_KEY"))
     api_base = os.environ.get("LLM_API_BASE", "https://openrouter.ai/api/v1")
-    model = os.environ.get("ORIONTRIX_LLM", "anthropic/claude-haiku-4-5")
+    model = os.environ.get("SAGAWARD_LLM", "anthropic/claude-haiku-4-5")
 
     if not api_key:
         raise RuntimeError("No LLM API key set.")
@@ -85,7 +85,7 @@ def _llm_call(prompt: str, system: str = "", temperature: float = 0.0) -> str:
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
             "HTTP-Referer": "https://quantumreef.eragon.ai",
-            "X-Title": "oriontrix-research",
+            "X-Title": "sagaward-research",
         },
         method="POST",
     )
@@ -103,7 +103,7 @@ def _free_port() -> int:
 
 def _start_fixture(pair: BV2PPair, vuln_mode: bool) -> tuple[str, int]:
     port = _free_port()
-    tag = f"oriontrix-bv2p-{pair.fixture_dir}"
+    tag = f"sagaward-bv2p-{pair.fixture_dir}"
     result = subprocess.run(
         ["sudo", "docker", "run", "-d", "--rm",
          "-e", f"VULN_MODE={'1' if vuln_mode else '0'}",
@@ -510,7 +510,7 @@ def run_e1(pairs: list[BV2PPair]) -> dict[str, Any]:
     raw_records = []
 
     for pair in pairs:
-        tag = f"oriontrix-bv2p-{pair.fixture_dir}"
+        tag = f"sagaward-bv2p-{pair.fixture_dir}"
         img_check = subprocess.run(
             ["sudo", "docker", "image", "inspect", tag], capture_output=True
         )
@@ -708,7 +708,7 @@ def run_e3(pairs: list[BV2PPair]) -> dict[str, Any]:
     harness_cache: dict[str, dict] = {}  # cache harness runs — deterministic, no need to re-run
 
     for pair in pairs:
-        tag = f"oriontrix-bv2p-{pair.fixture_dir}"
+        tag = f"sagaward-bv2p-{pair.fixture_dir}"
         img_check = subprocess.run(
             ["sudo", "docker", "image", "inspect", tag], capture_output=True
         )
@@ -853,9 +853,9 @@ def run_e4(pairs: list[BV2PPair]) -> dict[str, Any]:
     For each perturbation variant:
       - haiku proposes on the perturbed surface
       - Deterministic harness runs on the LIVE Docker container (unchanged)
-      - Oriontrix verdict = harness result (must not flip across perturbations)
+      - Sagaward verdict = harness result (must not flip across perturbations)
       - M4 verdict = haiku self-confirms on perturbed surface (may flip)
-    H4: oriontrix_flip_count=0; proxy_flip_count>0.
+    H4: sagaward_flip_count=0; proxy_flip_count>0.
     """
     print("\n" + "="*70)
     print("E4 — Perturbation Invariance (H4) — live haiku + Docker harness")
@@ -866,7 +866,7 @@ def run_e4(pairs: list[BV2PPair]) -> dict[str, Any]:
     raw_records = []
 
     for pair in seed_pairs:
-        tag = f"oriontrix-bv2p-{pair.fixture_dir}"
+        tag = f"sagaward-bv2p-{pair.fixture_dir}"
         img_check = subprocess.run(
             ["sudo", "docker", "image", "inspect", tag], capture_output=True
         )
@@ -908,13 +908,13 @@ def run_e4(pairs: list[BV2PPair]) -> dict[str, Any]:
                 if pert_name == "baseline":
                     baseline_m4_confirms = m4_confirms
 
-                # Oriontrix harness verdict: deterministic — same containers, same result
+                # Sagaward harness verdict: deterministic — same containers, same result
                 # We re-run harness for each perturbation to confirm invariance
                 harness_pert = _run_harness(pair, port_vuln, port_patch)
-                oriontrix_confirmed = harness_pert["flip_confirmed"]
+                sagaward_confirmed = harness_pert["flip_confirmed"]
 
                 # Flip detection vs baseline
-                oriontrix_flipped = (oriontrix_confirmed != baseline_confirmed)
+                sagaward_flipped = (sagaward_confirmed != baseline_confirmed)
                 m4_flipped = (m4_confirms != baseline_m4_confirms) if baseline_m4_confirms is not None else False
 
                 rows.append({
@@ -923,8 +923,8 @@ def run_e4(pairs: list[BV2PPair]) -> dict[str, Any]:
                     "perturbation": pert_name,
                     "haiku_proposed": pd_proposed,
                     "pd_confidence": pd_conf,
-                    "oriontrix_harness_confirmed": oriontrix_confirmed,
-                    "oriontrix_flipped_vs_baseline": oriontrix_flipped,
+                    "sagaward_harness_confirmed": sagaward_confirmed,
+                    "sagaward_flipped_vs_baseline": sagaward_flipped,
                     "m4_confirms": m4_confirms,
                     "m4_confidence": m4_conf,
                     "m4_flipped_vs_baseline": m4_flipped,
@@ -936,7 +936,7 @@ def run_e4(pairs: list[BV2PPair]) -> dict[str, Any]:
                     "m4_raw": m4_raw,
                 })
                 print(f"    [{pert_name}] haiku_proposed={pd_proposed}({pd_conf:.2f}) "
-                      f"oriontrix={oriontrix_confirmed}(flipped={oriontrix_flipped}) "
+                      f"sagaward={sagaward_confirmed}(flipped={sagaward_flipped}) "
                       f"m4={m4_confirms}(flipped={m4_flipped})")
 
         except Exception as e:
@@ -949,9 +949,9 @@ def run_e4(pairs: list[BV2PPair]) -> dict[str, Any]:
 
     # Summary
     non_baseline = [r for r in rows if r["perturbation"] != "baseline"]
-    oriontrix_flip_count = sum(1 for r in non_baseline if r["oriontrix_flipped_vs_baseline"])
+    sagaward_flip_count = sum(1 for r in non_baseline if r["sagaward_flipped_vs_baseline"])
     m4_flip_count = sum(1 for r in non_baseline if r["m4_flipped_vs_baseline"])
-    h4_confirmed = oriontrix_flip_count == 0
+    h4_confirmed = sagaward_flip_count == 0
 
     result = {
         "experiment": "E4",
@@ -960,16 +960,16 @@ def run_e4(pairs: list[BV2PPair]) -> dict[str, Any]:
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "model": _LLM_MODEL,
         "api_base": _LLM_API_BASE,
-        "oriontrix_flip_count": oriontrix_flip_count,
+        "sagaward_flip_count": sagaward_flip_count,
         "m4_flip_count": m4_flip_count,
         "H4_confirmed": h4_confirmed,
         "pair_level_rows": rows,
         "raw_llm_outputs": raw_records,
         "note": (
-            f"H4 confirmed: oriontrix flipped 0/{len(non_baseline)} perturbations; "
+            f"H4 confirmed: sagaward flipped 0/{len(non_baseline)} perturbations; "
             f"M4 flipped {m4_flip_count}/{len(non_baseline)}."
             if h4_confirmed else
-            f"H4 NOT confirmed: oriontrix flipped {oriontrix_flip_count}/{len(non_baseline)} perturbations."
+            f"H4 NOT confirmed: sagaward flipped {sagaward_flip_count}/{len(non_baseline)} perturbations."
         ),
     }
 
@@ -987,7 +987,7 @@ def run_e4(pairs: list[BV2PPair]) -> dict[str, Any]:
 
 def main() -> None:
     print("=" * 70)
-    print("Oriontrix Live E1/E3/E4 — PM: Nyx/Eragon | Producer: haiku via OpenRouter")
+    print("Sagaward Live E1/E3/E4 — PM: Nyx/Eragon | Producer: haiku via OpenRouter")
     print("=" * 70)
 
     if not (os.environ.get("LLM_API_KEY") or os.environ.get("OPENROUTER_API_KEY")
@@ -1046,7 +1046,7 @@ def main() -> None:
           f"Full R_prop={h3.get('full_R_prop')} -Control={h3.get('no_control_R_prop')} "
           f"-Knowledge={h3.get('no_knowledge_R_prop')}")
     print(f"E4 H4: confirmed={e4.get('H4_confirmed')} | "
-          f"oriontrix_flips={e4.get('oriontrix_flip_count')} m4_flips={e4.get('m4_flip_count')}")
+          f"sagaward_flips={e4.get('sagaward_flip_count')} m4_flips={e4.get('m4_flip_count')}")
     print(f"\n[saved] live_e1e3e4_results.json + e1/e3/e4_live.json/csv")
     print("\nAll raw haiku outputs recorded verbatim.")
 

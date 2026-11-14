@@ -1,22 +1,22 @@
 ---
 title: "CI/CD Integration"
-description: "Run Oriontrix in any CI/CD pipeline"
+description: "Run Sagaward in any CI/CD pipeline"
 ---
 
-Oriontrix runs in headless mode for automated pipelines.
+Sagaward runs in headless mode for automated pipelines.
 
 ## Headless Mode
 
 Use the `-n` or `--non-interactive` flag:
 
 ```bash
-oriontrix -n --target ./app --scan-mode quick
+sagaward -n --target ./app --scan-mode quick
 ```
 
-For pull-request style CI runs, Oriontrix automatically scopes quick scans to changed files. You can force this behavior and set a base ref explicitly:
+For pull-request style CI runs, Sagaward automatically scopes quick scans to changed files. You can force this behavior and set a base ref explicitly:
 
 ```bash
-oriontrix -n --target ./app --scan-mode quick --scope-mode diff --diff-base origin/main
+sagaward -n --target ./app --scan-mode quick --scope-mode diff --diff-base origin/main
 ```
 
 ## Exit Codes
@@ -35,11 +35,11 @@ security-scan:
   services:
     - docker:dind
   variables:
-    ORIONTRIX_LLM: $ORIONTRIX_LLM
+    SAGAWARD_LLM: $SAGAWARD_LLM
     LLM_API_KEY: $LLM_API_KEY
   script:
-    - git clone https://github.com/pt-act/oriontrix.git && cd oriontrix && uv sync && ./scripts/docker.sh ci
-    - ORIONTRIX_IMAGE=oriontrix-sandbox:ci uv run oriontrix -n -t ../ --scan-mode quick
+    - git clone https://github.com/pt-act/sagaward.git && cd sagaward && uv sync && ./scripts/docker.sh ci
+    - SAGAWARD_IMAGE=sagaward-sandbox:ci uv run sagaward -n -t ../ --scan-mode quick
 ```
 
 ## Jenkins
@@ -48,14 +48,14 @@ security-scan:
 pipeline {
     agent any
     environment {
-        ORIONTRIX_LLM = credentials('oriontrix-llm')
+        SAGAWARD_LLM = credentials('sagaward-llm')
         LLM_API_KEY = credentials('llm-api-key')
     }
     stages {
         stage('Security Scan') {
             steps {
-                sh 'git clone https://github.com/pt-act/oriontrix.git && cd oriontrix && uv sync && ./scripts/docker.sh ci'
-                sh 'cd oriontrix && ORIONTRIX_IMAGE=oriontrix-sandbox:ci uv run oriontrix -n -t ../ --scan-mode quick'
+                sh 'git clone https://github.com/pt-act/sagaward.git && cd sagaward && uv sync && ./scripts/docker.sh ci'
+                sh 'cd sagaward && SAGAWARD_IMAGE=sagaward-sandbox:ci uv run sagaward -n -t ../ --scan-mode quick'
             }
         }
     }
@@ -75,10 +75,10 @@ jobs:
       - setup_remote_docker
       - run:
           name: Install & build
-          command: git clone https://github.com/pt-act/oriontrix.git && cd oriontrix && uv sync && ./scripts/docker.sh ci
+          command: git clone https://github.com/pt-act/sagaward.git && cd sagaward && uv sync && ./scripts/docker.sh ci
       - run:
           name: Run Scan
-          command: cd oriontrix && ORIONTRIX_IMAGE=oriontrix-sandbox:ci uv run oriontrix -n -t ../ --scan-mode quick
+          command: cd sagaward && SAGAWARD_IMAGE=sagaward-sandbox:ci uv run sagaward -n -t ../ --scan-mode quick
 ```
 
 <Note>

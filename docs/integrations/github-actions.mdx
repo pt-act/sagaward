@@ -1,9 +1,9 @@
 ---
 title: "GitHub Actions"
-description: "Run Oriontrix security scans on every pull request"
+description: "Run Sagaward security scans on every pull request"
 ---
 
-Integrate Oriontrix into your GitHub workflow to catch vulnerabilities before they reach production.
+Integrate Sagaward into your GitHub workflow to catch vulnerabilities before they reach production.
 
 ## Basic Workflow
 
@@ -14,7 +14,7 @@ on:
   pull_request:
 
 jobs:
-  oriontrix-scan:
+  sagaward-scan:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,10 +31,10 @@ jobs:
 
       - name: Run Security Scan
         env:
-          ORIONTRIX_LLM: ${{ secrets.ORIONTRIX_LLM }}
+          SAGAWARD_LLM: ${{ secrets.SAGAWARD_LLM }}
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
-          ORIONTRIX_IMAGE: oriontrix-sandbox:ci
-        run: uv run oriontrix -n -t ./ --scan-mode quick
+          SAGAWARD_IMAGE: sagaward-sandbox:ci
+        run: uv run sagaward -n -t ./ --scan-mode quick
 ```
 
 ## Required Secrets
@@ -43,7 +43,7 @@ Add these secrets to your repository:
 
 | Secret | Description |
 |--------|-------------|
-| `ORIONTRIX_LLM` | Model name (e.g., `openai/gpt-5.4`) |
+| `SAGAWARD_LLM` | Model name (e.g., `openai/gpt-5.4`) |
 | `LLM_API_KEY` | API key for your LLM provider |
 
 ## Exit Codes
@@ -68,5 +68,5 @@ Use `quick` mode for PRs to keep feedback fast. Schedule `deep` scans nightly.
 </Tip>
 
 <Note>
-For pull_request workflows, Oriontrix automatically uses changed-files diff-scope in CI/headless runs. If diff resolution fails, ensure full history is fetched (`fetch-depth: 0`) or set `--diff-base`.
+For pull_request workflows, Sagaward automatically uses changed-files diff-scope in CI/headless runs. If diff resolution fails, ensure full history is fetched (`fetch-depth: 0`) or set `--diff-base`.
 </Note>

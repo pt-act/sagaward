@@ -7,8 +7,8 @@ import unittest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from oriontrix.core.inventory.models import EndpointObservation, ParamObservation
-from oriontrix.core.inventory.normalizer import (
+from sagaward.core.inventory.models import EndpointObservation, ParamObservation
+from sagaward.core.inventory.normalizer import (
     dedup_endpoints,
     dedup_observations,
     endpoint_key,

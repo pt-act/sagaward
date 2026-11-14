@@ -2,9 +2,9 @@
 
 Disposer checks use the *real* deterministic disposers, hermetically:
 - IDOR/BFLA/auth-bypass/mass-assign/SQLi pairs -> the P2 differential engine
-  (`oriontrix.core.diff.diff`): the attacker's cross-user request is 2xx on the vuln deployment and
+  (`sagaward.core.diff.diff`): the attacker's cross-user request is 2xx on the vuln deployment and
   4xx on the patch, so the engine flags ``gained_access`` across the pair.
-- SSRF pairs -> the P0 net classifier (`oriontrix.core.net.is_internal_target`) via the fixture's
+- SSRF pairs -> the P0 net classifier (`sagaward.core.net.is_internal_target`) via the fixture's
   patched guard: internal/metadata targets are blocked, externals allowed; the vuln guard allows
   everything. (Full OOB-callback confirmation is a live/Docker step, run on the operator's host.)
 
@@ -25,13 +25,13 @@ from typing import TYPE_CHECKING, Any
 from unittest import TestCase
 from unittest.mock import patch
 
-from oriontrix.core.diff import diff
+from sagaward.core.diff import diff
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
     from types import ModuleType
-from oriontrix.research.corpus import (
+from sagaward.research.corpus import (
     BV2P_CORPUS,
     ground_truth_labels,
     power_check,

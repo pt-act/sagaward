@@ -1,6 +1,6 @@
 ---
 title: "Custom Instructions"
-description: "Guide Oriontrix with custom testing instructions"
+description: "Guide Sagaward with custom testing instructions"
 ---
 
 Use instructions to provide context, credentials, or focus areas for your scan.
@@ -8,7 +8,7 @@ Use instructions to provide context, credentials, or focus areas for your scan.
 ## Inline Instructions
 
 ```bash
-oriontrix --target https://app.com --instruction "Focus on authentication vulnerabilities"
+sagaward --target https://app.com --instruction "Focus on authentication vulnerabilities"
 ```
 
 ## File-Based Instructions
@@ -16,7 +16,7 @@ oriontrix --target https://app.com --instruction "Focus on authentication vulner
 For complex instructions, use a file:
 
 ```bash
-oriontrix --target https://app.com --instruction-file ./pentest-instructions.md
+sagaward --target https://app.com --instruction-file ./pentest-instructions.md
 ```
 
 ## Common Use Cases
@@ -24,28 +24,28 @@ oriontrix --target https://app.com --instruction-file ./pentest-instructions.md
 ### Authenticated Testing
 
 ```bash
-oriontrix --target https://app.com \
+sagaward --target https://app.com \
   --instruction "Login with email: test@example.com, password: TestPass123"
 ```
 
 ### Focused Scope
 
 ```bash
-oriontrix --target https://api.example.com \
+sagaward --target https://api.example.com \
   --instruction "Focus on IDOR vulnerabilities in the /api/users endpoints"
 ```
 
 ### Exclusions
 
 ```bash
-oriontrix --target https://app.com \
+sagaward --target https://app.com \
   --instruction "Do not test /admin or /internal endpoints"
 ```
 
 ### API Testing
 
 ```bash
-oriontrix --target https://api.example.com \
+sagaward --target https://api.example.com \
   --instruction "Use API key header: X-API-Key: abc123. Focus on rate limiting bypass."
 ```
 
@@ -69,5 +69,5 @@ oriontrix --target https://api.example.com \
 ```
 
 <Tip>
-Be specific. Good instructions help Oriontrix prioritize the most valuable attack paths.
+Be specific. Good instructions help Sagaward prioritize the most valuable attack paths.
 </Tip>

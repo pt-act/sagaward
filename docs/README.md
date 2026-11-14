@@ -1,6 +1,6 @@
-# Oriontrix Documentation
+# Sagaward Documentation
 
-Documentation source files for Oriontrix, powered by [Mintlify](https://mintlify.com).
+Documentation source files for Sagaward, powered by [Mintlify](https://mintlify.com).
 
 ## Local Preview
 

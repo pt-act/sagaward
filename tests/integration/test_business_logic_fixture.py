@@ -23,13 +23,13 @@ from typing import Any
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import MagicMock, patch
 
-import oriontrix.core.identity.replay as _identity_replay_module
-import oriontrix.core.race.dispatch as _dispatch_module
-import oriontrix.core.race.harness as _harness_module
-import oriontrix.core.race.precondition as _precondition_module
-from oriontrix.core.identity import IdentityStore, identity_store_path
-from oriontrix.core.identity.models import Freshness, Identity
-from oriontrix.core.logic.models import (
+import sagaward.core.identity.replay as _identity_replay_module
+import sagaward.core.race.dispatch as _dispatch_module
+import sagaward.core.race.harness as _harness_module
+import sagaward.core.race.precondition as _precondition_module
+from sagaward.core.identity import IdentityStore, identity_store_path
+from sagaward.core.identity.models import Freshness, Identity
+from sagaward.core.logic.models import (
     BusinessLogicModel,
     ConfirmedViolation,
     FlowModel,
@@ -39,10 +39,10 @@ from oriontrix.core.logic.models import (
     Step,
     UnconfirmedHypothesis,
 )
-from oriontrix.core.logic.orchestrator import BusinessLogicOrchestrator
-from oriontrix.core.logic.store import BusinessLogicStore
-from oriontrix.core.paths import logic_model_path
-from oriontrix.tools.proxy import caido_api as _caido_api_module
+from sagaward.core.logic.orchestrator import BusinessLogicOrchestrator
+from sagaward.core.logic.store import BusinessLogicStore
+from sagaward.core.paths import logic_model_path
+from sagaward.tools.proxy import caido_api as _caido_api_module
 
 
 _cvss: Any = ModuleType("cvss")
@@ -62,7 +62,7 @@ class _CVSS3:
 _cvss.CVSS3 = _CVSS3
 sys.modules["cvss"] = _cvss
 
-_dedupe: Any = ModuleType("oriontrix.report.dedupe")
+_dedupe: Any = ModuleType("sagaward.report.dedupe")
 
 
 async def _check_duplicate(_candidate: Any, _existing: Any) -> dict[str, Any]:
@@ -70,7 +70,7 @@ async def _check_duplicate(_candidate: Any, _existing: Any) -> dict[str, Any]:
 
 
 _dedupe.check_duplicate = _check_duplicate
-sys.modules["oriontrix.report.dedupe"] = _dedupe
+sys.modules["sagaward.report.dedupe"] = _dedupe
 
 
 def _docker_available() -> bool:
@@ -99,7 +99,7 @@ class _DockerFixture:
     def __init__(self, vuln_mode: bool) -> None:
         self.vuln_mode = "1" if vuln_mode else "0"
         self.port = _free_port()
-        self.container_name = f"oriontrix-bl-fixture-{self.port}"
+        self.container_name = f"sagaward-bl-fixture-{self.port}"
         self.base_url = f"http://127.0.0.1:{self.port}"
         self._image_built = False
         self._container_id: str | None = None
@@ -107,7 +107,7 @@ class _DockerFixture:
     def build(self) -> None:
         fixture_dir = Path(__file__).parent.parent.parent / "benchmarks" / "business_logic_fixture"
         subprocess.run(
-            ["docker", "build", "-t", "oriontrix-business-logic-fixture", str(fixture_dir)],
+            ["docker", "build", "-t", "sagaward-business-logic-fixture", str(fixture_dir)],
             check=True,
             capture_output=True,
             text=True,
@@ -129,7 +129,7 @@ class _DockerFixture:
                 f"127.0.0.1:{self.port}:8080",
                 "-e",
                 f"VULN_MODE={self.vuln_mode}",
-                "oriontrix-business-logic-fixture",
+                "sagaward-business-logic-fixture",
             ],
             check=True,
             capture_output=True,

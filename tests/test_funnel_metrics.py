@@ -9,8 +9,8 @@ from __future__ import annotations
 
 from unittest import TestCase
 
-from oriontrix.report.proposals import FunnelLog
-from oriontrix.research.metrics import cross_check, summarize_funnel, traceability
+from sagaward.report.proposals import FunnelLog
+from sagaward.research.metrics import cross_check, summarize_funnel, traceability
 
 
 # Labeled-known vulnerable set V.

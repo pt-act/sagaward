@@ -1,4 +1,4 @@
-"""Tests for oriontrix.core.net outbound-trust hardening."""
+"""Tests for sagaward.core.net outbound-trust hardening."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import ipaddress
 
 import pytest
 
-from oriontrix.core.net import (
+from sagaward.core.net import (
     EXTERNAL_PUBLIC_CORPUS,
     INTERNAL_CORPUS,
     METADATA_CORPUS,

@@ -26,9 +26,9 @@ from typing import Any
 
 import pytest
 
-from oriontrix.core.provenance import LedgerMiss, ProvenanceEnvelope, ProvenanceLedger
-from oriontrix.core.provenance import install as install_policy
-from oriontrix.core.provenance.install import (
+from sagaward.core.provenance import LedgerMiss, ProvenanceEnvelope, ProvenanceLedger
+from sagaward.core.provenance import install as install_policy
+from sagaward.core.provenance.install import (
     INSTALL_MAX_DEPTH,
     INSTALL_MAX_ENTRIES,
     INSTALL_PROBE_SCRIPT,
@@ -36,19 +36,19 @@ from oriontrix.core.provenance.install import (
     record_install_artifacts,
     under_install_prefix,
 )
-from oriontrix.core.provenance.reconcile import (
+from sagaward.core.provenance.reconcile import (
     artifacts_in_quarantine_listing,
     record_quarantine_artifacts,
     record_scratch_artifacts,
 )
-from oriontrix.runtime.provenance_install import (
+from sagaward.runtime.provenance_install import (
     command_tokens,
     install_action_id,
     looks_like_install,
     reconcile_install_prefixes,
     snapshot_install_prefixes,
 )
-from oriontrix.runtime.provenance_reconcile import reconcile_after_exec, reconcile_quarantine
+from sagaward.runtime.provenance_reconcile import reconcile_after_exec, reconcile_quarantine
 
 
 class _Result:
@@ -134,13 +134,13 @@ class TestTrigger:
         ],
     )
     def test_options_before_the_verb_still_trigger(self, command: str, trigger: str) -> None:
-        from oriontrix.runtime.provenance_install import install_trigger  # noqa: PLC0415
+        from sagaward.runtime.provenance_install import install_trigger  # noqa: PLC0415
 
         assert install_trigger(command) == trigger
 
     def test_a_separate_value_option_is_named_untreated(self) -> None:
         """`npm --prefix /opt/app install` makes the value look like a verb: a miss."""
-        from oriontrix.runtime.provenance_install import install_trigger  # noqa: PLC0415
+        from sagaward.runtime.provenance_install import install_trigger  # noqa: PLC0415
 
         assert install_trigger("npm --prefix /opt/app install left-pad") is None
 
@@ -317,7 +317,7 @@ class TestRecording:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        from oriontrix.core.provenance import paths as provenance_paths  # noqa: PLC0415
+        from sagaward.core.provenance import paths as provenance_paths  # noqa: PLC0415
 
         prefix = tmp_path / "prefix"
         quarantined = prefix / "quarantine" / "credman"
@@ -434,14 +434,14 @@ class TestRuntime:
     ) -> None:
         prefix = tmp_path / "prefix"
         (prefix / "bin").mkdir(parents=True)
-        from oriontrix.core.provenance import paths as provenance_paths  # noqa: PLC0415
+        from sagaward.core.provenance import paths as provenance_paths  # noqa: PLC0415
 
         monkeypatch.setattr(install_policy, "INSTALL_PREFIXES", (str(prefix),))
         monkeypatch.setitem(install_policy.TRIGGER_PREFIXES, "pip", (str(prefix),))
         scratch_empty = b""
         install_empty = b"[]"
 
-        from oriontrix.runtime import provenance_reconcile as rec  # noqa: PLC0415
+        from sagaward.runtime import provenance_reconcile as rec  # noqa: PLC0415
 
         monkeypatch.setattr(rec, "RECONCILE_ARGV", rec.RECONCILE_ARGV)
 
@@ -467,7 +467,7 @@ class TestRuntime:
         (prefix / "bin").mkdir(parents=True)
         monkeypatch.setattr(install_policy, "INSTALL_PREFIXES", (str(prefix),))
         monkeypatch.setitem(install_policy.TRIGGER_PREFIXES, "pip", (str(prefix),))
-        from oriontrix.runtime import provenance_install as rt_install  # noqa: PLC0415
+        from sagaward.runtime import provenance_install as rt_install  # noqa: PLC0415
 
         captured: dict[str, object] = {}
 
@@ -498,7 +498,7 @@ class TestManagerPrefixes:
     """R15-TRIGPREF: every declared trigger must have roots that can see its writes."""
 
     def test_every_declared_trigger_has_its_own_roots(self) -> None:
-        from oriontrix.runtime.provenance_install import _INSTALL_PAIRS  # noqa: PLC0415
+        from sagaward.runtime.provenance_install import _INSTALL_PAIRS  # noqa: PLC0415
 
         for pair, trigger in _INSTALL_PAIRS.items():
             assert trigger in install_policy.TRIGGER_PREFIXES, pair
@@ -550,7 +550,7 @@ class TestQuarantineSweep:
     def test_the_listing_keeps_only_quarantine_paths(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        from oriontrix.core.provenance import paths as provenance_paths  # noqa: PLC0415
+        from sagaward.core.provenance import paths as provenance_paths  # noqa: PLC0415
 
         quarantine = tmp_path / "quarantine"
         quarantine.mkdir()
@@ -574,7 +574,7 @@ class TestQuarantineSweep:
     def test_the_sweep_taints_the_path_and_indexes_the_bytes(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        from oriontrix.core.provenance import paths as provenance_paths  # noqa: PLC0415
+        from sagaward.core.provenance import paths as provenance_paths  # noqa: PLC0415
 
         quarantine = tmp_path / "quarantine"
         quarantine.mkdir()
@@ -603,7 +603,7 @@ class TestQuarantineSweep:
     def test_the_sweep_runs_through_the_channel(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        from oriontrix.core.provenance import paths as provenance_paths  # noqa: PLC0415
+        from sagaward.core.provenance import paths as provenance_paths  # noqa: PLC0415
 
         quarantine = tmp_path / "quarantine"
         quarantine.mkdir()
@@ -626,8 +626,8 @@ class TestQuarantineSweep:
     def test_the_sweep_pages_past_the_cap(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        from oriontrix.core.provenance import paths as provenance_paths  # noqa: PLC0415
-        from oriontrix.runtime import provenance_reconcile as rec  # noqa: PLC0415
+        from sagaward.core.provenance import paths as provenance_paths  # noqa: PLC0415
+        from sagaward.runtime import provenance_reconcile as rec  # noqa: PLC0415
 
         quarantine = tmp_path / "quarantine"
         quarantine.mkdir()
@@ -652,8 +652,8 @@ class TestQuarantineSweep:
     def test_the_page_bound_stops_the_sweep_and_says_so(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
     ) -> None:
-        from oriontrix.core.provenance import paths as provenance_paths  # noqa: PLC0415
-        from oriontrix.runtime import provenance_reconcile as rec  # noqa: PLC0415
+        from sagaward.core.provenance import paths as provenance_paths  # noqa: PLC0415
+        from sagaward.runtime import provenance_reconcile as rec  # noqa: PLC0415
 
         quarantine = tmp_path / "quarantine"
         quarantine.mkdir()
@@ -729,7 +729,7 @@ class TestSnapshotTruthPath:
         assert isinstance(ledger.lookup(installed), ProvenanceEnvelope)
 
     def test_a_malformed_snapshot_is_unavailable(self) -> None:
-        from oriontrix.core.provenance.install import parse_snapshot_listing  # noqa: PLC0415
+        from sagaward.core.provenance.install import parse_snapshot_listing  # noqa: PLC0415
 
         assert parse_snapshot_listing("not json") is None
         assert parse_snapshot_listing('{"x": 1}') is None
@@ -742,7 +742,7 @@ class TestQuarantineProbePagination:
     """The shipped probe: globally sorted pages, cursor strictly advancing."""
 
     def _run(self, root: Path, cursor: str, cap: int) -> list[list[str]]:
-        from oriontrix.core.provenance.reconcile import QUARANTINE_PROBE_SCRIPT  # noqa: PLC0415
+        from sagaward.core.provenance.reconcile import QUARANTINE_PROBE_SCRIPT  # noqa: PLC0415
 
         completed = subprocess.run(  # noqa: S603 - fixed argv, module-owned script
             [
@@ -911,8 +911,8 @@ class TestSnapshotFailClosed:
         assert recorded == 1
 
     def test_a_truncated_snapshot_is_unusable(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        from oriontrix.core.provenance import install as policy  # noqa: PLC0415
-        from oriontrix.core.provenance.install import parse_snapshot_listing  # noqa: PLC0415
+        from sagaward.core.provenance import install as policy  # noqa: PLC0415
+        from sagaward.core.provenance.install import parse_snapshot_listing  # noqa: PLC0415
 
         monkeypatch.setattr(policy, "INSTALL_MAX_ENTRIES", 3)
         at_cap = json.dumps([[f"/usr/local/bin/t{i}", "a" * 64] for i in range(3)])

@@ -36,23 +36,23 @@ jobs:
         shell: bash
         run: |
           uv sync --frozen
-          uv run pyinstaller oriontrix.spec --noconfirm
+          uv run pyinstaller sagaward.spec --noconfirm
 
           VERSION=$(grep '^version' pyproject.toml | head -1 | sed 's/.*"\(.*\)"/\1/')
           mkdir -p dist/release
 
           if [[ "${{ runner.os }}" == "Windows" ]]; then
-            cp dist/oriontrix.exe "dist/release/oriontrix-${VERSION}-${{ matrix.target }}.exe"
-            (cd dist/release && 7z a "oriontrix-${VERSION}-${{ matrix.target }}.zip" "oriontrix-${VERSION}-${{ matrix.target }}.exe")
+            cp dist/sagaward.exe "dist/release/sagaward-${VERSION}-${{ matrix.target }}.exe"
+            (cd dist/release && 7z a "sagaward-${VERSION}-${{ matrix.target }}.zip" "sagaward-${VERSION}-${{ matrix.target }}.exe")
           else
-            cp dist/oriontrix "dist/release/oriontrix-${VERSION}-${{ matrix.target }}"
-            chmod +x "dist/release/oriontrix-${VERSION}-${{ matrix.target }}"
-            tar -C dist/release -czvf "dist/release/oriontrix-${VERSION}-${{ matrix.target }}.tar.gz" "oriontrix-${VERSION}-${{ matrix.target }}"
+            cp dist/sagaward "dist/release/sagaward-${VERSION}-${{ matrix.target }}"
+            chmod +x "dist/release/sagaward-${VERSION}-${{ matrix.target }}"
+            tar -C dist/release -czvf "dist/release/sagaward-${VERSION}-${{ matrix.target }}.tar.gz" "sagaward-${VERSION}-${{ matrix.target }}"
           fi
 
       - uses: actions/upload-artifact@v4
         with:
-          name: oriontrix-${{ matrix.target }}
+          name: sagaward-${{ matrix.target }}
           path: |
             dist/release/*.tar.gz
             dist/release/*.zip

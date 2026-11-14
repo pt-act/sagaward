@@ -59,11 +59,11 @@ def plot_e2() -> str:
             f"  {r['pair_id'][:30]:<30} gap={r['gap_score']:.2f} ({r['gap_class']})"
         )
         lines.append(
-            f"    FP-arm: oriontrix={'✓' if r['oriontrix_fp_arm_correct'] else '✗'}, "
+            f"    FP-arm: sagaward={'✓' if r['sagaward_fp_arm_correct'] else '✗'}, "
             f"proxy={'✓' if r['proxy_fp_arm_correct'] else '✗'}"
         )
         lines.append(
-            f"    FN-arm: oriontrix={'✓' if r['oriontrix_fn_arm_correct'] else '✗'}, "
+            f"    FN-arm: sagaward={'✓' if r['sagaward_fn_arm_correct'] else '✗'}, "
             f"proxy={'✓' if r['proxy_fn_arm_correct'] else '✗'}"
         )
     lines.append("")
@@ -73,7 +73,7 @@ def plot_e2() -> str:
     lines.append(f"FN-arm McNemar: b={fn['b']}, c={fn['c']}, χ²={fn['chi2']:.3f}, p≈{fn['p_approx']:.3f}")
     lines.append("")
     interp = data["interpretation"]
-    lines.append(f"H2a (FP win): {interp['H2a_FP_win']} — oriontrix has b={fp['b']} wins vs c={fp['c']} losses on FP-arm")
+    lines.append(f"H2a (FP win): {interp['H2a_FP_win']} — sagaward has b={fp['b']} wins vs c={fp['c']} losses on FP-arm")
     lines.append(f"H2b (FN honest): {interp['H2b_FN_honest']}")
     lines.append("NOTE: Corpus underpowered (n=2). Results are directionally consistent with H2a")
     lines.append("      but cannot be reported as statistically significant. More pairs needed.")
@@ -118,25 +118,25 @@ def plot_e4() -> str:
     lines = [
         "E4 — Perturbation Invariance",
         "=" * 60,
-        f"{'Perturbation':>22} | {'Oriontrix verdict':>13} | {'Proxy conf':>10} | {'Proxy verdict':>13}",
+        f"{'Perturbation':>22} | {'Sagaward verdict':>13} | {'Proxy conf':>10} | {'Proxy verdict':>13}",
         "-" * 60,
     ]
     for r in data["perturbations"]:
         lines.append(
-            f"{r['perturbation']:>22} | {r['oriontrix_verdict']:>13} | "
+            f"{r['perturbation']:>22} | {r['sagaward_verdict']:>13} | "
             f"{r['proxy_confidence']:>10.3f} | {r['proxy_verdict']:>13}"
         )
     lines.append("")
-    lines.append(f"Oriontrix invariant: {data['oriontrix_invariant']}")
+    lines.append(f"Sagaward invariant: {data['sagaward_invariant']}")
     lines.append(f"Proxy flip count: {data['proxy_flip_count']}")
     lines.append(f"H4 result: {data['H4_confirmed']}")
     lines.append("")
     lines.append("Notes:")
-    lines.append("  Oriontrix harness verdict rests on HTTP status code (200 vs 403), not body/header text.")
+    lines.append("  Sagaward harness verdict rests on HTTP status code (200 vs 403), not body/header text.")
     lines.append("  Proxy confidence degrades slightly under perturbation but stays above 0.5 threshold.")
     lines.append("  H4 not fully demonstrated: need proxy degradation to cross verdict threshold.")
     lines.append("  Strongest test: use an LLM-based proxy with header/body text sensitivity.")
-    lines.append("  The invariance property is *structural* in oriontrix (harness is response-code-based).")
+    lines.append("  The invariance property is *structural* in sagaward (harness is response-code-based).")
     return "\n".join(lines)
 
 

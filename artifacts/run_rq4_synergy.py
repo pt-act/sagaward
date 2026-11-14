@@ -1,26 +1,26 @@
 """RQ4 — Triangle-synergy A–F runner (EXPLORATORY; not pre-registered).
 
-  Question (triangle paper §5.1 RQ4): is the full triangle (DispatchLayer + oriontrix +
+  Question (triangle paper §5.1 RQ4): is the full triangle (DispatchLayer + sagaward +
   wallbreaker) more effective than any single component or pair, on a composite security
   metric? Conditions A–F toggle the three legs (triangle paper §5.2):
 
-      A Unguarded        dispatch ✗  oriontrix ✗  wallbreaker ✗
-      B Gate only        dispatch ✓  oriontrix ✗  wallbreaker ✗
-      C Scanner only     dispatch ✗  oriontrix ✓  wallbreaker ✗
-      D Red-team only    dispatch ✗  oriontrix ✗  wallbreaker ✓
-      E Gate + Scanner   dispatch ✓  oriontrix ✓  wallbreaker ✗
-      F Triangle (all)   dispatch ✓  oriontrix ✓  wallbreaker ✓        # F exercises ALL 3 → F ≠ E
+      A Unguarded        dispatch ✗  sagaward ✗  wallbreaker ✗
+      B Gate only        dispatch ✓  sagaward ✗  wallbreaker ✗
+      C Scanner only     dispatch ✗  sagaward ✓  wallbreaker ✗
+      D Red-team only    dispatch ✗  sagaward ✗  wallbreaker ✓
+      E Gate + Scanner   dispatch ✓  sagaward ✓  wallbreaker ✗
+      F Triangle (all)   dispatch ✓  sagaward ✓  wallbreaker ✓        # F exercises ALL 3 → F ≠ E
 
   --- Authoritative measurement rule (PM ruling, supersedes recipe Step 7 line 94) ---
   ``confirmed_findings`` is FUNNEL-BACKED: the count of proposals with a matching *confirmed
   harness verdict* in funnel.json — NOT the agent-asserted ``evidence_class`` in the report
   dict. The deployed ``create_vulnerability_report`` path is observability-by-design: an agent
   can assert ``evidence_class="diff"`` the funnel does not back. Only harness-observed
-  confirmations count (C ⊆ P). We reuse ``oriontrix.research.metrics.summarize_funnel`` — the same
+  confirmations count (C ⊆ P). We reuse ``sagaward.research.metrics.summarize_funnel`` — the same
   read-only funnel logic the E1/E2 pipeline uses — so this metric is byte-consistent with the
   study and changes NO engine behavior and needs NO re-run of E1/E2.
 
-  This script is a research harness: it launches the deployed oriontrix engagement per condition,
+  This script is a research harness: it launches the deployed sagaward engagement per condition,
   then reconciles the persisted funnel against ground-truth labels. It is EXPLORATORY — the
   confirmatory RQ4 run requires a locked pre-registration (DEV-6-style) first.
 
@@ -29,7 +29,7 @@
                        (proves the A–F conditions differentiate and F ≠ E; use for structure CI)
     RQ4_CONDITIONS     comma list, subset of A,B,C,D,E,F (default: all)
     RQ4_PAIRS          comma list of pair_ids (default: all in BV2P_CORPUS)
-    ORIONTRIX_LLM          orchestration model (live only)
+    SAGAWARD_LLM          orchestration model (live only)
     RQ4_PRODUCER_MODEL proposer pin (live only; default anthropic/claude-haiku-4-5 for
                        comparability with E1–E4)
 
@@ -52,9 +52,9 @@ from pathlib import Path
 from typing import Any
 
 # Reuse the study's own read-only funnel metrics — never re-derive (H-3, Spec B TG1.3).
-from oriontrix.report.proposals import FunnelLog
-from oriontrix.research.corpus import BV2P_CORPUS, BV2PPair, ground_truth_labels
-from oriontrix.research.metrics import summarize_funnel
+from sagaward.report.proposals import FunnelLog
+from sagaward.research.corpus import BV2P_CORPUS, BV2PPair, ground_truth_labels
+from sagaward.research.metrics import summarize_funnel
 
 ARTIFACTS = Path(__file__).resolve().parent
 FIXTURE_PORT = 8080  # every B-V2P fixture listens on :8080 (NOT :8000 — that bug made all unreachable)
@@ -69,17 +69,17 @@ POLL_TIMEOUT_S = 180  # engagements take minutes
 class Condition:
     name: str
     dispatch: bool
-    oriontrix: bool
+    sagaward: bool
     wallbreaker: bool
 
 
 CONDITIONS: dict[str, Condition] = {
-    "A": Condition("A — Unguarded", dispatch=False, oriontrix=False, wallbreaker=False),
-    "B": Condition("B — Gate only", dispatch=True, oriontrix=False, wallbreaker=False),
-    "C": Condition("C — Scanner only", dispatch=False, oriontrix=True, wallbreaker=False),
-    "D": Condition("D — Red-team only", dispatch=False, oriontrix=False, wallbreaker=True),
-    "E": Condition("E — Gate + Scanner", dispatch=True, oriontrix=True, wallbreaker=False),
-    "F": Condition("F — Triangle (all)", dispatch=True, oriontrix=True, wallbreaker=True),
+    "A": Condition("A — Unguarded", dispatch=False, sagaward=False, wallbreaker=False),
+    "B": Condition("B — Gate only", dispatch=True, sagaward=False, wallbreaker=False),
+    "C": Condition("C — Scanner only", dispatch=False, sagaward=True, wallbreaker=False),
+    "D": Condition("D — Red-team only", dispatch=False, sagaward=False, wallbreaker=True),
+    "E": Condition("E — Gate + Scanner", dispatch=True, sagaward=True, wallbreaker=False),
+    "F": Condition("F — Triangle (all)", dispatch=True, sagaward=True, wallbreaker=True),
 }
 
 
@@ -87,7 +87,7 @@ CONDITIONS: dict[str, Condition] = {
 class ConditionResult:
     condition: str
     dispatch: bool
-    oriontrix: bool
+    sagaward: bool
     wallbreaker: bool
     pairs_run: list[str] = field(default_factory=list)
     # FUNNEL-BACKED metrics (from summarize_funnel — harness-observed, not agent-asserted):
@@ -111,14 +111,14 @@ class ConditionResult:
 # confirmed metric is wired correctly, without any external dependency.
 # ---------------------------------------------------------------------------
 def _dry_run_condition(cond: Condition, pairs: list[BV2PPair]) -> ConditionResult:
-    from oriontrix.core.proposals.models import ProposalRecord
+    from sagaward.core.proposals.models import ProposalRecord
 
     labels = ground_truth_labels(tuple(pairs))
     records: list[ProposalRecord] = []
 
-    # Synthetic funnel: oriontrix leg (if present) proposes + the harness confirms the real-vuln
-    # side deterministically. No oriontrix leg → no proposals reach the funnel → confirmed=0.
-    if cond.oriontrix:
+    # Synthetic funnel: sagaward leg (if present) proposes + the harness confirms the real-vuln
+    # side deterministically. No sagaward leg → no proposals reach the funnel → confirmed=0.
+    if cond.sagaward:
         for p in pairs:
             rec = ProposalRecord(
                 proposal_id=f"dry-{p.pair_id}",
@@ -127,7 +127,7 @@ def _dry_run_condition(cond: Condition, pairs: list[BV2PPair]) -> ConditionResul
                 harnesses_selected=[p.disposer_evidence],
             )
             # Harness-observed confirmation on the vuln side (the 200/403 flip in a real run).
-            from oriontrix.core.proposals.models import HarnessVerdict
+            from sagaward.core.proposals.models import HarnessVerdict
 
             rec.add_verdict(
                 HarnessVerdict(
@@ -143,7 +143,7 @@ def _dry_run_condition(cond: Condition, pairs: list[BV2PPair]) -> ConditionResul
     res = ConditionResult(
         condition=cond.name,
         dispatch=cond.dispatch,
-        oriontrix=cond.oriontrix,
+        sagaward=cond.sagaward,
         wallbreaker=cond.wallbreaker,
         pairs_run=[p.pair_id for p in pairs],
         num_proposed=summary.num_proposed,
@@ -201,7 +201,7 @@ def _reconcile_funnel(run_dir: Path, labels: set[str]) -> dict[str, Any]:
 
 
 def _live_condition(cond: Condition, pairs: list[BV2PPair]) -> ConditionResult:
-    # NOTE: the live leg-drivers (dispatch gate wiring, oriontrix engagement launch, wb_judge)
+    # NOTE: the live leg-drivers (dispatch gate wiring, sagaward engagement launch, wb_judge)
     # are intentionally minimal here — a live confirmatory run is gated on a locked
     # pre-registration (PM). This path is written so that, once Docker + creds + the
     # pre-registration are in place, each leg is wired at its marked TODO without touching
@@ -297,7 +297,7 @@ def main(argv: list[str] | None = None) -> int:
     for key in selected:
         cond = CONDITIONS[key]
         print(f"\n── Condition {key}: {cond.name} "
-              f"(dispatch={cond.dispatch} oriontrix={cond.oriontrix} wallbreaker={cond.wallbreaker})")
+              f"(dispatch={cond.dispatch} sagaward={cond.sagaward} wallbreaker={cond.wallbreaker})")
         res = _dry_run_condition(cond, pairs) if dry else _live_condition(cond, pairs)
         print(f"   confirmed(funnel-backed)={res.num_confirmed} "
               f"proposed={res.num_proposed} prec_gate={res.prec_gate:.3f} "

@@ -12,8 +12,8 @@ from pathlib import Path
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from oriontrix.core.oob.models import OobConfig, OobHit
-from oriontrix.runtime.oob.provider import InteractshProvider
+from sagaward.core.oob.models import OobConfig, OobHit
+from sagaward.runtime.oob.provider import InteractshProvider
 
 
 class _FakeProcess:
@@ -137,8 +137,8 @@ class TestInteractshProviderTier1(IsolatedAsyncioTestCase):
         provider = InteractshProvider()
         await self._start_with_fake_process(provider)
 
-        from oriontrix.core.oob.registry import TokenRegistry
-        from oriontrix.core.paths import oob_registry_path
+        from sagaward.core.oob.registry import TokenRegistry
+        from sagaward.core.paths import oob_registry_path
 
         registry = TokenRegistry(oob_registry_path(self.run_dir))
         try:
@@ -158,7 +158,7 @@ class TestInteractshProviderTier1(IsolatedAsyncioTestCase):
 
             hits = await provider.poll_interactions()
             self.assertEqual(len(hits), 1)
-            from oriontrix.core.oob.correlator import Correlator
+            from sagaward.core.oob.correlator import Correlator
 
             correlator = Correlator(registry)
             record = correlator.correlate(hits[0], "eng-1")

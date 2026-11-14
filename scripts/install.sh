@@ -2,9 +2,9 @@
 
 set -euo pipefail
 
-APP=oriontrix
-REPO="pt-act/oriontrix"
-ORIONTRIX_IMAGE="ghcr.io/pt-act/oriontrix-sandbox:1.4.0"
+APP=sagaward
+REPO="pt-act/sagaward"
+SAGAWARD_IMAGE="ghcr.io/pt-act/sagaward-sandbox:1.4.0"
 
 MUTED='\033[0;2m'
 RED='\033[0;31m'
@@ -70,7 +70,7 @@ if [ "$os" = "windows" ]; then
     fi
 fi
 
-INSTALL_DIR=$HOME/.oriontrix/bin
+INSTALL_DIR=$HOME/.sagaward/bin
 mkdir -p "$INSTALL_DIR"
 
 if [ -z "$requested_version" ]; then
@@ -103,21 +103,21 @@ check_existing_installation() {
     local found_paths=()
     while IFS= read -r -d '' path; do
         found_paths+=("$path")
-    done < <(which -a oriontrix 2>/dev/null | tr '\n' '\0' || true)
+    done < <(which -a sagaward 2>/dev/null | tr '\n' '\0' || true)
 
     if [ ${#found_paths[@]} -gt 0 ]; then
         for path in "${found_paths[@]}"; do
-            if [[ ! -e "$path" ]] || [[ "$path" == "$INSTALL_DIR/oriontrix"* ]]; then
+            if [[ ! -e "$path" ]] || [[ "$path" == "$INSTALL_DIR/sagaward"* ]]; then
                 continue
             fi
 
             if [[ -n "$path" ]]; then
-                echo -e "${MUTED}Found existing oriontrix at: ${NC}$path"
+                echo -e "${MUTED}Found existing sagaward at: ${NC}$path"
 
                 if [[ "$path" == *".local/bin"* ]]; then
                     echo -e "${MUTED}Removing old pipx installation...${NC}"
                     if command -v pipx >/dev/null 2>&1; then
-                        pipx uninstall oriontrix-agent 2>/dev/null || true
+                        pipx uninstall sagaward 2>/dev/null || true
                     fi
                     rm -f "$path" 2>/dev/null || true
                 elif [[ -L "$path" || -f "$path" ]]; then
@@ -132,10 +132,10 @@ check_existing_installation() {
 check_version() {
     check_existing_installation
 
-    if [[ -x "$INSTALL_DIR/oriontrix" ]]; then
-        installed_version=$("$INSTALL_DIR/oriontrix" --version 2>/dev/null | awk '{print $2}' || echo "")
+    if [[ -x "$INSTALL_DIR/sagaward" ]]; then
+        installed_version=$("$INSTALL_DIR/sagaward" --version 2>/dev/null | awk '{print $2}' || echo "")
         if [[ "$installed_version" == "$specific_version" ]]; then
-            print_message info "${GREEN}✓ Oriontrix ${NC}$specific_version${GREEN} already installed${NC}"
+            print_message info "${GREEN}✓ Sagaward ${NC}$specific_version${GREEN} already installed${NC}"
             SKIP_DOWNLOAD=true
         elif [[ -n "$installed_version" ]]; then
             print_message info "${MUTED}Installed: ${NC}$installed_version ${MUTED}→ Upgrading to ${NC}$specific_version"
@@ -144,7 +144,7 @@ check_version() {
 }
 
 download_and_install() {
-    print_message info "\n${CYAN}🦉 Installing Oriontrix${NC} ${MUTED}version: ${NC}$specific_version"
+    print_message info "\n${CYAN}🦉 Installing Sagaward${NC} ${MUTED}version: ${NC}$specific_version"
     print_message info "${MUTED}Platform: ${NC}$target\n"
 
     local tmp_dir=$(mktemp -d)
@@ -161,24 +161,24 @@ download_and_install() {
     echo -e "${MUTED}Extracting...${NC}"
     if [ "$os" = "windows" ]; then
         unzip -q "$filename"
-        mv "oriontrix-${specific_version}-${target}.exe" "$INSTALL_DIR/oriontrix.exe"
+        mv "sagaward-${specific_version}-${target}.exe" "$INSTALL_DIR/sagaward.exe"
     else
         tar -xzf "$filename"
-        mv "oriontrix-${specific_version}-${target}" "$INSTALL_DIR/oriontrix"
-        chmod 755 "$INSTALL_DIR/oriontrix"
+        mv "sagaward-${specific_version}-${target}" "$INSTALL_DIR/sagaward"
+        chmod 755 "$INSTALL_DIR/sagaward"
     fi
 
     cd - > /dev/null
     rm -rf "$tmp_dir"
 
-    echo -e "${GREEN}✓ Oriontrix installed to $INSTALL_DIR${NC}"
+    echo -e "${GREEN}✓ Sagaward installed to $INSTALL_DIR${NC}"
 }
 
 check_docker() {
     echo ""
     if ! command -v docker >/dev/null 2>&1; then
         echo -e "${YELLOW}⚠ Docker not found${NC}"
-        echo -e "${MUTED}Oriontrix requires Docker to run the security sandbox.${NC}"
+        echo -e "${MUTED}Sagaward requires Docker to run the security sandbox.${NC}"
         echo -e "${MUTED}Please install Docker: ${NC}https://docs.docker.com/get-docker/"
         echo ""
         return 1
@@ -186,21 +186,21 @@ check_docker() {
 
     if ! docker info >/dev/null 2>&1; then
         echo -e "${YELLOW}⚠ Docker daemon not running${NC}"
-        echo -e "${MUTED}Please start Docker and run: ${NC}docker pull $ORIONTRIX_IMAGE"
+        echo -e "${MUTED}Please start Docker and run: ${NC}docker pull $SAGAWARD_IMAGE"
         echo ""
         return 1
     fi
 
     echo -e "${MUTED}Checking for sandbox image...${NC}"
-    if docker image inspect "$ORIONTRIX_IMAGE" >/dev/null 2>&1; then
+    if docker image inspect "$SAGAWARD_IMAGE" >/dev/null 2>&1; then
         echo -e "${GREEN}✓ Sandbox image already available${NC}"
     else
         echo -e "${MUTED}Pulling sandbox image (this may take a few minutes)...${NC}"
-        if docker pull "$ORIONTRIX_IMAGE"; then
+        if docker pull "$SAGAWARD_IMAGE"; then
             echo -e "${GREEN}✓ Sandbox image pulled successfully${NC}"
         else
             echo -e "${YELLOW}⚠ Failed to pull sandbox image${NC}"
-            echo -e "${MUTED}You can pull it manually later: ${NC}docker pull $ORIONTRIX_IMAGE"
+            echo -e "${MUTED}You can pull it manually later: ${NC}docker pull $SAGAWARD_IMAGE"
         fi
     fi
     return 0
@@ -213,9 +213,9 @@ add_to_path() {
     if grep -Fxq "$command" "$config_file" 2>/dev/null; then
         print_message info "${MUTED}PATH already configured in ${NC}$config_file"
     elif [[ -w $config_file ]]; then
-        echo -e "\n# oriontrix" >> "$config_file"
+        echo -e "\n# sagaward" >> "$config_file"
         echo "$command" >> "$config_file"
-        print_message info "${MUTED}Successfully added ${NC}oriontrix ${MUTED}to \$PATH in ${NC}$config_file"
+        print_message info "${MUTED}Successfully added ${NC}sagaward ${MUTED}to \$PATH in ${NC}$config_file"
     else
         print_message warning "Manually add the directory to $config_file (or similar):"
         print_message info "  $command"
@@ -292,25 +292,25 @@ setup_path() {
 verify_installation() {
     export PATH="$INSTALL_DIR:$PATH"
 
-    local which_oriontrix=$(which oriontrix 2>/dev/null || echo "")
+    local which_sagaward=$(which sagaward 2>/dev/null || echo "")
 
-    if [[ "$which_oriontrix" != "$INSTALL_DIR/oriontrix" && "$which_oriontrix" != "$INSTALL_DIR/oriontrix.exe" ]]; then
-        if [[ -n "$which_oriontrix" ]]; then
-            echo -e "${YELLOW}⚠ Found conflicting oriontrix at: ${NC}$which_oriontrix"
+    if [[ "$which_sagaward" != "$INSTALL_DIR/sagaward" && "$which_sagaward" != "$INSTALL_DIR/sagaward.exe" ]]; then
+        if [[ -n "$which_sagaward" ]]; then
+            echo -e "${YELLOW}⚠ Found conflicting sagaward at: ${NC}$which_sagaward"
             echo -e "${MUTED}Attempting to remove...${NC}"
 
-            if rm -f "$which_oriontrix" 2>/dev/null; then
+            if rm -f "$which_sagaward" 2>/dev/null; then
                 echo -e "${GREEN}✓ Removed conflicting installation${NC}"
             else
                 echo -e "${YELLOW}Could not remove automatically.${NC}"
-                echo -e "${MUTED}Please remove manually: ${NC}rm $which_oriontrix"
+                echo -e "${MUTED}Please remove manually: ${NC}rm $which_sagaward"
             fi
         fi
     fi
 
-    if [[ -x "$INSTALL_DIR/oriontrix" ]]; then
-        local version=$("$INSTALL_DIR/oriontrix" --version 2>/dev/null | awk '{print $2}' || echo "unknown")
-        echo -e "${GREEN}✓ Oriontrix ${NC}$version${GREEN} ready${NC}"
+    if [[ -x "$INSTALL_DIR/sagaward" ]]; then
+        local version=$("$INSTALL_DIR/sagaward" --version 2>/dev/null | awk '{print $2}' || echo "unknown")
+        echo -e "${GREEN}✓ Sagaward ${NC}$version${GREEN} ready${NC}"
     fi
 }
 
@@ -337,13 +337,13 @@ echo -e "${MUTED}To get started:${NC}"
 echo ""
 echo -e "  ${CYAN}1.${NC} Set your environment:"
 echo -e "     ${MUTED}export LLM_API_KEY='your-api-key'${NC}"
-echo -e "     ${MUTED}export ORIONTRIX_LLM='openai/gpt-5.4'${NC}"
+echo -e "     ${MUTED}export SAGAWARD_LLM='openai/gpt-5.4'${NC}"
 echo ""
 echo -e "  ${CYAN}2.${NC} Run a penetration test:"
-echo -e "     ${MUTED}oriontrix --target https://example.com${NC}"
+echo -e "     ${MUTED}sagaward --target https://example.com${NC}"
 echo ""
-echo -e "${MUTED}For more information visit ${NC}https://github.com/pt-act/oriontrix"
-echo -e "${MUTED}Supported models ${NC}https://github.com/pt-act/oriontrix#readme"
+echo -e "${MUTED}For more information visit ${NC}https://github.com/pt-act/sagaward"
+echo -e "${MUTED}Supported models ${NC}https://github.com/pt-act/sagaward#readme"
 echo ""
 
 echo -e "${YELLOW}→${NC} Run ${MUTED}source ~/.$(basename $SHELL)rc${NC} or open a new terminal"

@@ -1,4 +1,4 @@
-"""Oriontrix Live E1–E4 Experiment Runner — PM-governed, glm-5.2 as external producer.
+"""Sagaward Live E1–E4 Experiment Runner — PM-governed, glm-5.2 as external producer.
 
 ROLE PROTOCOL:
   PM/Dispatcher (Nyx/Eragon): designs the spec, writes this harness, validates outputs.
@@ -13,12 +13,12 @@ ARCHITECTURE:
   - Evidence: glm-5.2 raw verdict JSON recorded verbatim; harness verdict is deterministic
 
 QUARANTINE:
-  M4 single-stage mode is gated by ORIONTRIX_RESEARCH_SINGLE_STAGE_ABLATION env var.
+  M4 single-stage mode is gated by SAGAWARD_RESEARCH_SINGLE_STAGE_ABLATION env var.
   This script sets it only for the M4 baseline runs, never during PD runs.
 
 Usage:
-    ORIONTRIX_RESEARCH_SINGLE_STAGE_ABLATION=enable-single-stage-self-confirm-research-only \\
-    LLM_API_KEY=sk-... LLM_API_BASE=https://agentrouter.org/v1 ORIONTRIX_LLM=glm-5.2 \\
+    SAGAWARD_RESEARCH_SINGLE_STAGE_ABLATION=enable-single-stage-self-confirm-research-only \\
+    LLM_API_KEY=sk-... LLM_API_BASE=https://agentrouter.org/v1 SAGAWARD_LLM=glm-5.2 \\
     uv run python artifacts/run_live_experiments.py
 """
 
@@ -33,11 +33,11 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
-ORIONTRIX_ROOT = Path(__file__).parent.parent
-sys.path.insert(0, str(ORIONTRIX_ROOT))
+SAGAWARD_ROOT = Path(__file__).parent.parent
+sys.path.insert(0, str(SAGAWARD_ROOT))
 
-from oriontrix.research.corpus import BV2P_CORPUS, BV2PPair, power_check, small_gap_pairs
-from oriontrix.research.ablation.single_stage import (
+from sagaward.research.corpus import BV2P_CORPUS, BV2PPair, power_check, small_gap_pairs
+from sagaward.research.ablation.single_stage import (
     ABLATION_ENV_VAR,
     _ENABLE_SENTINEL,
     AblationProposal,
@@ -48,9 +48,9 @@ from oriontrix.research.ablation.single_stage import (
 ARTIFACTS = Path(__file__).parent
 
 # Docker invocation is host-portable: default ``docker`` (Docker Desktop / rootless / docker
-# group); set ``ORIONTRIX_DOCKER_CMD="sudo docker"`` on hosts where the user isn't in the docker
+# group); set ``SAGAWARD_DOCKER_CMD="sudo docker"`` on hosts where the user isn't in the docker
 # group. Split so a multi-word value ("sudo docker") expands correctly in argv.
-DOCKER = os.environ.get("ORIONTRIX_DOCKER_CMD", "docker").split()
+DOCKER = os.environ.get("SAGAWARD_DOCKER_CMD", "docker").split()
 ARTIFACTS.mkdir(exist_ok=True)
 
 # Runtime provenance — resolved at startup for JSON metadata accuracy
@@ -58,7 +58,7 @@ _LLM_API_KEY  = (os.environ.get("LLM_API_KEY")
                  or os.environ.get("OPENROUTER_API_KEY")
                  or os.environ.get("OPENAI_API_KEY") or "")
 _LLM_API_BASE = os.environ.get("LLM_API_BASE", "https://openrouter.ai/api/v1")
-_LLM_MODEL    = os.environ.get("ORIONTRIX_LLM", "anthropic/claude-haiku-4-5")
+_LLM_MODEL    = os.environ.get("SAGAWARD_LLM", "anthropic/claude-haiku-4-5")
 
 
 # ─── LLM CLIENT ────────────────────────────────────────────────────────────────
@@ -71,7 +71,7 @@ def _llm_call(prompt: str, system: str = "", temperature: float = 0.0) -> str:
                or os.environ.get("OPENROUTER_API_KEY")
                or os.environ.get("OPENAI_API_KEY"))
     api_base = os.environ.get("LLM_API_BASE", "https://openrouter.ai/api/v1")
-    model = os.environ.get("ORIONTRIX_LLM", "anthropic/claude-haiku-4-5")
+    model = os.environ.get("SAGAWARD_LLM", "anthropic/claude-haiku-4-5")
 
     if not api_key:
         raise RuntimeError("LLM_API_KEY not set. Export your agentrouter key.")
@@ -92,10 +92,10 @@ def _llm_call(prompt: str, system: str = "", temperature: float = 0.0) -> str:
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
         "HTTP-Referer": "https://quantumreef.eragon.ai",
-        "X-Title": "oriontrix-research",
+        "X-Title": "sagaward-research",
     }
-    # Some LLM endpoints require a specific User-Agent; set ORIONTRIX_LLM_USER_AGENT to supply one.
-    _ua = os.environ.get("ORIONTRIX_LLM_USER_AGENT")
+    # Some LLM endpoints require a specific User-Agent; set SAGAWARD_LLM_USER_AGENT to supply one.
+    _ua = os.environ.get("SAGAWARD_LLM_USER_AGENT")
     if _ua:
         _hdrs["User-Agent"] = _ua
 
@@ -116,7 +116,7 @@ def _llm_call(prompt: str, system: str = "", temperature: float = 0.0) -> str:
 
 def _start_fixture(pair: BV2PPair, vuln_mode: bool) -> tuple[str, int]:
     """Start a B-V2P fixture container. Returns (container_id, port)."""
-    tag = f"oriontrix-bv2p-{pair.fixture_dir}"
+    tag = f"sagaward-bv2p-{pair.fixture_dir}"
     port = _free_port()
     mode = "1" if vuln_mode else "0"
 
@@ -128,7 +128,7 @@ def _start_fixture(pair: BV2PPair, vuln_mode: bool) -> tuple[str, int]:
         capture_output=True, text=True, check=True
     )
     container_id = result.stdout.strip()
-    # ssrf fixtures import oriontrix.core.net which takes longer to initialise
+    # ssrf fixtures import sagaward.core.net which takes longer to initialise
     wait = 3.0 if "ssrf" in pair.fixture_dir else 1.5
     time.sleep(wait)
     return container_id, port
@@ -440,8 +440,8 @@ class PairResult:
     m4_model_confidence: float = 0.0
 
     # Derived (PM computes from raw)
-    oriontrix_pd_correct_vuln: bool = False    # FN-arm: PD detects vuln
-    oriontrix_pd_correct_patch: bool = False   # FP-arm: PD does not false-positive on patched
+    sagaward_pd_correct_vuln: bool = False    # FN-arm: PD detects vuln
+    sagaward_pd_correct_patch: bool = False   # FP-arm: PD does not false-positive on patched
     proxy_m4_correct_vuln: bool = False    # FN-arm: M4 detects vuln
     proxy_m4_correct_patch: bool = False   # FP-arm: M4 does not false-positive on patched
 
@@ -456,7 +456,7 @@ def run_pair(pair: BV2PPair) -> PairResult:
         cve=pair.cve,
     )
 
-    tag = f"oriontrix-bv2p-{pair.fixture_dir}"
+    tag = f"sagaward-bv2p-{pair.fixture_dir}"
 
     # Check image exists
     img_check = subprocess.run(
@@ -498,20 +498,20 @@ def run_pair(pair: BV2PPair) -> PairResult:
 
         # PD verdict: proposed AND harness confirmed
         pd_vuln_correct = result.pd_proposed and harness["flip_confirmed"]
-        # PD PATCHED side: oriontrix's FP-arm = does the HARNESS fire on the patched container?
+        # PD PATCHED side: sagaward's FP-arm = does the HARNESS fire on the patched container?
         # The proposer may say "vulnerable" on both surfaces — that's irrelevant.
         # What matters is whether proposed=True AND harness confirmed on the PATCHED side.
         # We already ran the harness against both containers; harness on patched is always
         # deterministic (no flip) — but we need to verify the *full pipeline* doesn't fire.
-        # oriontrix_pd_correct_patch = True iff harness did NOT confirm on patched side.
+        # sagaward_pd_correct_patch = True iff harness did NOT confirm on patched side.
         # Since harness is run against BOTH containers in _run_harness, we need a patched probe.
         print(f"  [{pair.pair_id}] running harness on PATCHED container (FP-arm check)...")
         harness_patch = _run_harness(pair, port_patch, port_patch)  # both ports = patched only
         pd_patch_confirmed = harness_patch["flip_confirmed"]  # should always be False
         pd_patch_correct = not pd_patch_confirmed  # correct = harness does NOT fire on patched
 
-        result.oriontrix_pd_correct_vuln = pd_vuln_correct
-        result.oriontrix_pd_correct_patch = pd_patch_correct
+        result.sagaward_pd_correct_vuln = pd_vuln_correct
+        result.sagaward_pd_correct_patch = pd_patch_correct
 
         # ── M4 SINGLE-STAGE MODE: glm-5.2 self-confirms ───────────────────────
         # Set ablation env before call, restore after
@@ -574,35 +574,35 @@ def compute_mcnemar(results: list[PairResult]) -> dict:
     small_results = [r for r in results if r.gap_class == "small" and not r.error]
     pc = power_check(required_discordant=10)
 
-    fp_b = fp_c = 0  # FP-arm: (oriontrix_correct, m4_wrong) and reverse
-    fn_b = fn_c = 0  # FN-arm: (oriontrix_correct, m4_wrong) and reverse
+    fp_b = fp_c = 0  # FP-arm: (sagaward_correct, m4_wrong) and reverse
+    fn_b = fn_c = 0  # FN-arm: (sagaward_correct, m4_wrong) and reverse
 
     rows = []
     for r in small_results:
-        # FP-arm (patched side): oriontrix = no false positive, m4 = may false positive
-        oriontrix_fp_ok = r.oriontrix_pd_correct_patch
+        # FP-arm (patched side): sagaward = no false positive, m4 = may false positive
+        sagaward_fp_ok = r.sagaward_pd_correct_patch
         m4_fp_ok = r.proxy_m4_correct_patch
-        # FN-arm (vuln side): oriontrix = detects vuln, m4 = may miss
-        oriontrix_fn_ok = r.oriontrix_pd_correct_vuln
+        # FN-arm (vuln side): sagaward = detects vuln, m4 = may miss
+        sagaward_fn_ok = r.sagaward_pd_correct_vuln
         m4_fn_ok = r.proxy_m4_correct_vuln
 
-        if oriontrix_fp_ok and not m4_fp_ok:
+        if sagaward_fp_ok and not m4_fp_ok:
             fp_b += 1
-        elif not oriontrix_fp_ok and m4_fp_ok:
+        elif not sagaward_fp_ok and m4_fp_ok:
             fp_c += 1
 
-        if oriontrix_fn_ok and not m4_fn_ok:
+        if sagaward_fn_ok and not m4_fn_ok:
             fn_b += 1
-        elif not oriontrix_fn_ok and m4_fn_ok:
+        elif not sagaward_fn_ok and m4_fn_ok:
             fn_c += 1
 
         rows.append({
             "pair_id": r.pair_id,
             "gap_class": r.gap_class,
             "primitive": r.primitive,
-            "oriontrix_fp_arm_correct": oriontrix_fp_ok,
+            "sagaward_fp_arm_correct": sagaward_fp_ok,
             "m4_fp_arm_correct": m4_fp_ok,
-            "oriontrix_fn_arm_correct": oriontrix_fn_ok,
+            "sagaward_fn_arm_correct": sagaward_fn_ok,
             "m4_fn_arm_correct": m4_fn_ok,
             "pd_proposed": r.pd_proposed,
             "pd_harness_verdict": r.pd_harness_verdict,
@@ -647,7 +647,7 @@ def compute_mcnemar(results: list[PairResult]) -> dict:
 
 def main() -> None:
     print("=" * 70)
-    print("Oriontrix Live Experiment — PM: Nyx/Eragon | Producer: glm-5.2")
+    print("Sagaward Live Experiment — PM: Nyx/Eragon | Producer: glm-5.2")
     print("=" * 70)
 
     # Verify API key present
@@ -658,7 +658,7 @@ def main() -> None:
     # Verify Docker
     check = subprocess.run([*DOCKER, "ps"], capture_output=True)
     if check.returncode != 0:
-        print("[ERROR] Docker not running (set ORIONTRIX_DOCKER_CMD='sudo docker' if the user isn't in the docker group).")
+        print("[ERROR] Docker not running (set SAGAWARD_DOCKER_CMD='sudo docker' if the user isn't in the docker group).")
         sys.exit(1)
 
     pairs = list(BV2P_CORPUS)
@@ -688,9 +688,9 @@ def main() -> None:
             print(f"  PD: proposed={result.pd_proposed} harness={result.pd_harness_verdict} "
                   f"flip={result.pd_flip_confirmed}")
             print(f"  M4: self_confirms={result.m4_model_confirms} conf={result.m4_model_confidence:.2f}")
-            print(f"  FP-arm: oriontrix={'✓' if result.oriontrix_pd_correct_patch else '✗'} "
+            print(f"  FP-arm: sagaward={'✓' if result.sagaward_pd_correct_patch else '✗'} "
                   f"m4={'✓' if result.proxy_m4_correct_patch else '✗'}")
-            print(f"  FN-arm: oriontrix={'✓' if result.oriontrix_pd_correct_vuln else '✗'} "
+            print(f"  FN-arm: sagaward={'✓' if result.sagaward_pd_correct_vuln else '✗'} "
                   f"m4={'✓' if result.proxy_m4_correct_vuln else '✗'}")
         all_results.append(result)
 

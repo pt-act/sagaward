@@ -1,4 +1,4 @@
-"""Tests for oriontrix.core.govern.limiter — SGL-S2.
+"""Tests for sagaward.core.govern.limiter — SGL-S2.
 
 Tiers
 -----
@@ -18,7 +18,7 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from oriontrix.core.govern.limiter import (
+from sagaward.core.govern.limiter import (
     CredGuard,
     CredLimitExceeded,
     CredLockedOut,

@@ -12,7 +12,7 @@ from unittest import TestCase
 from hypothesis import given
 from hypothesis import strategies as st
 
-from oriontrix.core.inventory.models import (
+from sagaward.core.inventory.models import (
     Endpoint,
     Param,
     ParamClassEvidence,
@@ -20,10 +20,10 @@ from oriontrix.core.inventory.models import (
     ReachabilityAnnotation,
     ReachabilityStatus,
 )
-from oriontrix.core.proposals import assembler as assembler_mod
-from oriontrix.core.proposals.assembler import assemble_proposal_context
-from oriontrix.core.proposals.models import C1C8Checklist, InterventionFlags, ProposalContext
-from oriontrix.report.state import ReportState
+from sagaward.core.proposals import assembler as assembler_mod
+from sagaward.core.proposals.assembler import assemble_proposal_context
+from sagaward.core.proposals.models import C1C8Checklist, InterventionFlags, ProposalContext
+from sagaward.report.state import ReportState
 
 
 class _AssemblerTestCase(TestCase):

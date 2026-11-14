@@ -5,14 +5,14 @@ from __future__ import annotations
 from typing import Any
 from unittest import IsolatedAsyncioTestCase
 
-from oriontrix.core.diff.models import SemanticDelta
-from oriontrix.core.logic.catalog import (
+from sagaward.core.diff.models import SemanticDelta
+from sagaward.core.logic.catalog import (
     describe_invariant,
     list_invariant_kinds,
     run_violation_test,
 )
-from oriontrix.core.logic.context import ExecutionContext
-from oriontrix.core.logic.models import (
+from sagaward.core.logic.context import ExecutionContext
+from sagaward.core.logic.models import (
     BusinessLogicModel,
     FlowModel,
     JourneyModel,
@@ -22,7 +22,7 @@ from oriontrix.core.logic.models import (
     Step,
     Transition,
 )
-from oriontrix.core.race.models import (
+from sagaward.core.race.models import (
     CopyOutcome,
     Precondition,
     RaceResult,

@@ -1,4 +1,4 @@
-"""Tests for oriontrix.core.govern.audit — SGL-S6.
+"""Tests for sagaward.core.govern.audit — SGL-S6.
 
 SP10: every governance decision ⇒ exactly one audit entry; replayable.
 """
@@ -12,7 +12,7 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from oriontrix.core.govern.audit import (
+from sagaward.core.govern.audit import (
     AuditAction,
     AuditEntry,
     AuditLog,

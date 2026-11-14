@@ -1,1 +1,1 @@
-"""Test package for Oriontrix regression coverage."""
+"""Test package for Sagaward regression coverage."""

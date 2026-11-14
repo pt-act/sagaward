@@ -9,10 +9,10 @@ from unittest import TestCase
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from oriontrix.core.diff.models import SemanticDelta
-from oriontrix.core.race.aggregator import count_commits
-from oriontrix.core.race.models import CopyOutcome, StateDelta
-from oriontrix.core.race.verdict import verdict
+from sagaward.core.diff.models import SemanticDelta
+from sagaward.core.race.aggregator import count_commits
+from sagaward.core.race.models import CopyOutcome, StateDelta
+from sagaward.core.race.verdict import verdict
 
 
 def _make_response(

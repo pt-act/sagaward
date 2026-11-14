@@ -1,5 +1,5 @@
 [project]
-name = "oriontrix-agent"
+name = "sagaward"
 version = "1.0.4"
 description = "Open-source AI Hackers for your apps"
 readme = "README.md"
@@ -46,7 +46,7 @@ dependencies = [
 ]
 
 [project.scripts]
-oriontrix = "oriontrix.interface.main:main"
+sagaward = "sagaward.interface.main:main"
 
 [dependency-groups]
 dev = [
@@ -69,7 +69,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["oriontrix"]
+packages = ["sagaward"]
 
 # ============================================================================
 # Type Checking Configuration
@@ -114,7 +114,7 @@ ignore_missing_imports = true
 disable_error_code = ["import-untyped"]
 
 [[tool.mypy.overrides]]
-module = ["oriontrix.tools.scanner_runner.tool"]
+module = ["sagaward.tools.scanner_runner.tool"]
 disallow_untyped_decorators = false
 
 [[tool.mypy.overrides]]
@@ -208,18 +208,18 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 # Lazy imports inside functions to avoid circular dependency with
-# oriontrix.telemetry / oriontrix.report.dedupe / cvss.
-"oriontrix/tools/notes/tools.py" = ["PLC0415", "TC002"]
-"oriontrix/tools/finish/tool.py" = ["PLC0415", "TC002"]
-"oriontrix/tools/reporting/tool.py" = ["PLC0415", "TC002"]
-"oriontrix/tools/**/*.py" = [
+# sagaward.telemetry / sagaward.report.dedupe / cvss.
+"sagaward/tools/notes/tools.py" = ["PLC0415", "TC002"]
+"sagaward/tools/finish/tool.py" = ["PLC0415", "TC002"]
+"sagaward/tools/reporting/tool.py" = ["PLC0415", "TC002"]
+"sagaward/tools/**/*.py" = [
     "ARG001", # Unused function argument (tools may have unused args for interface consistency)
 ]
 # Custom Docker subclass duplicates parent body; some imports are for annotations.
 # Backend factories import their backend's deps lazily so deployments
 # that pick a different backend don't need every backend's libs installed.
-"oriontrix/runtime/backends.py" = ["PLC0415"]
-"oriontrix/runtime/docker_client.py" = [
+"sagaward/runtime/backends.py" = ["PLC0415"]
+"sagaward/runtime/docker_client.py" = [
     "TC002",  # Manifest, Container imported for annotations
     "TC003",  # uuid imported for annotation
 ]
@@ -227,17 +227,17 @@ ignore = [
 # time to derive the JSON schema, which evaluates annotations at runtime —
 # so RunContextWrapper / Tool / TResponseInputItem must be imported eagerly,
 # not under TYPE_CHECKING.
-"oriontrix/tools/todo/tools.py" = ["TC002"]
-"oriontrix/tools/thinking/tool.py" = ["TC002"]
-"oriontrix/tools/web_search/tool.py" = ["TC002"]
-"oriontrix/tools/proxy/tools.py" = ["TC002", "PLR0911"]
-"oriontrix/tools/oob/tools.py" = ["TC002", "PLR0911"]
-"oriontrix/tools/agents_graph/tools.py" = ["TC002"]
-"oriontrix/agents/factory.py" = ["TC002"]
+"sagaward/tools/todo/tools.py" = ["TC002"]
+"sagaward/tools/thinking/tool.py" = ["TC002"]
+"sagaward/tools/web_search/tool.py" = ["TC002"]
+"sagaward/tools/proxy/tools.py" = ["TC002", "PLR0911"]
+"sagaward/tools/oob/tools.py" = ["TC002", "PLR0911"]
+"sagaward/tools/agents_graph/tools.py" = ["TC002"]
+"sagaward/agents/factory.py" = ["TC002"]
 # Entry point: ``Path`` is used at runtime by the typing of the
 # session_manager call; importing under TYPE_CHECKING would defer
 # resolution past where mypy needs it.
-"oriontrix/core/runner.py" = ["TC003", "PLR0912", "PLR0915", "PLC0415"]
+"sagaward/core/runner.py" = ["TC003", "PLR0912", "PLR0915", "PLC0415"]
 # Race-harness tests need to install mocks before importing the modules under
 # test, so lazy imports and non-top-level imports are intentional.
 "tests/test_race_harness.py" = ["E402", "PLC0415", "TC001"]
@@ -245,19 +245,19 @@ ignore = [
 "tests/test_race_verdict.py" = ["TC001"]
 # ReportState carries scan artifact/report fields and
 # a runtime ``Callable`` annotation on ``vulnerability_found_callback``.
-"oriontrix/report/state.py" = ["TC003", "PLR0912", "PLR0915", "E501", "PERF401"]
-"oriontrix/report/usage.py" = ["PLC0415"]
-"oriontrix/report/__init__.py" = ["PLC0415"]  # Lazy package exports via __getattr__
-"oriontrix/config/models.py" = ["PLC0415"]
+"sagaward/report/state.py" = ["TC003", "PLR0912", "PLR0915", "E501", "PERF401"]
+"sagaward/report/usage.py" = ["PLC0415"]
+"sagaward/report/__init__.py" = ["PLC0415"]  # Lazy package exports via __getattr__
+"sagaward/config/models.py" = ["PLC0415"]
 # Interface utility branches per scope-mode / target-type combination;
 # splitting would obscure the decision tree without simplifying it.
-"oriontrix/interface/utils.py" = ["PLR0912", "BLE001", "PLC0415"]
+"sagaward/interface/utils.py" = ["PLR0912", "BLE001", "PLC0415"]
 # CLI / TUI / main keep extensive lazy imports + broad exception
 # swallows for resilience around terminal-rendering errors.
-"oriontrix/interface/cli.py" = ["BLE001", "PLC0415"]
-"oriontrix/interface/tui/app.py" = ["BLE001", "PLC0415", "PLR0912", "PLR0915", "SIM105"]
-"oriontrix/interface/main.py" = ["BLE001", "PLC0415", "PLR0912", "PLR0915"]
-"oriontrix/interface/tui/renderers/agent_message_renderer.py" = ["PLC0415"]
+"sagaward/interface/cli.py" = ["BLE001", "PLC0415"]
+"sagaward/interface/tui/app.py" = ["BLE001", "PLC0415", "PLR0912", "PLR0915", "SIM105"]
+"sagaward/interface/main.py" = ["BLE001", "PLC0415", "PLR0912", "PLR0915"]
+"sagaward/interface/tui/renderers/agent_message_renderer.py" = ["PLC0415"]
 # Tests assert on deterministic, well-known paths (e.g. ``/tmp/...``) as fixtures;
 # these are literals under mock, never real temp files.
 "tests/**/*.py" = ["S108"]
@@ -276,8 +276,8 @@ ignore = [
 
 [[tool.mypy.overrides]]
 module = [
-    "oriontrix.interface.tui.app",
-    "oriontrix.interface.tui.renderers.*",
+    "sagaward.interface.tui.app",
+    "sagaward.interface.tui.renderers.*",
 ]
 # The TUI module targets an older textual API and uses pygments without stubs;
 # upgrading it is a separate piece of work. These overrides keep the
@@ -302,7 +302,7 @@ disable_error_code = [
 [tool.ruff.lint.isort]
 force-single-line = false
 lines-after-imports = 2
-known-first-party = ["oriontrix"]
+known-first-party = ["sagaward"]
 known-third-party = ["pydantic"]
 
 [tool.ruff.lint.pylint]
@@ -319,7 +319,7 @@ line-ending = "auto"
 # ============================================================================
 
 [tool.pyright]
-include = ["oriontrix"]
+include = ["sagaward"]
 exclude = ["**/__pycache__", "build", "dist"]
 pythonVersion = "3.12"
 pythonPlatform = "Linux"
@@ -345,21 +345,21 @@ reportUnusedVariable = true
 reportDuplicateImport = true
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/core/inventory/extractors.py"
+root = "sagaward/core/inventory/extractors.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
 reportPrivateUsage = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/tools/inventory"
+root = "sagaward/tools/inventory"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
 reportPrivateUsage = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/tools/race/tools.py"
+root = "sagaward/tools/race/tools.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -373,23 +373,14 @@ reportUnusedImport = false
 # (_EVIDENCE_TO_HARNESS) for byte-identity with the report path — same untyped-boundary posture
 # as the inventory/race tool modules above.
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/agents/funnel_emit.py"
+root = "sagaward/agents/funnel_emit.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
 reportPrivateUsage = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/core/race/harness.py"
-reportUnknownVariableType = false
-reportUnknownMemberType = false
-reportUnknownArgumentType = false
-reportPrivateUsage = false
-reportUnusedFunction = false
-reportUnusedImport = false
-
-[[tool.pyright.executionEnvironments]]
-root = "oriontrix/core/race/dispatch.py"
+root = "sagaward/core/race/harness.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -398,7 +389,7 @@ reportUnusedFunction = false
 reportUnusedImport = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/core/race/models.py"
+root = "sagaward/core/race/dispatch.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -407,7 +398,7 @@ reportUnusedFunction = false
 reportUnusedImport = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/core/race/__init__.py"
+root = "sagaward/core/race/models.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -416,7 +407,7 @@ reportUnusedFunction = false
 reportUnusedImport = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/core/race/collector.py"
+root = "sagaward/core/race/__init__.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -425,7 +416,7 @@ reportUnusedFunction = false
 reportUnusedImport = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/core/race/aggregator.py"
+root = "sagaward/core/race/collector.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -434,7 +425,7 @@ reportUnusedFunction = false
 reportUnusedImport = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/core/race/precondition.py"
+root = "sagaward/core/race/aggregator.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -443,7 +434,7 @@ reportUnusedFunction = false
 reportUnusedImport = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/core/race/verdict.py"
+root = "sagaward/core/race/precondition.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -452,7 +443,7 @@ reportUnusedFunction = false
 reportUnusedImport = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/core/logic/catalog.py"
+root = "sagaward/core/race/verdict.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -461,7 +452,7 @@ reportUnusedFunction = false
 reportUnusedImport = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/core/logic/context.py"
+root = "sagaward/core/logic/catalog.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -470,7 +461,7 @@ reportUnusedFunction = false
 reportUnusedImport = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/core/logic/models.py"
+root = "sagaward/core/logic/context.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -479,7 +470,7 @@ reportUnusedFunction = false
 reportUnusedImport = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/core/logic/orchestrator.py"
+root = "sagaward/core/logic/models.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -488,7 +479,7 @@ reportUnusedFunction = false
 reportUnusedImport = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/core/logic/store.py"
+root = "sagaward/core/logic/orchestrator.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -497,7 +488,16 @@ reportUnusedFunction = false
 reportUnusedImport = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/tools/logic/tools.py"
+root = "sagaward/core/logic/store.py"
+reportUnknownVariableType = false
+reportUnknownMemberType = false
+reportUnknownArgumentType = false
+reportPrivateUsage = false
+reportUnusedFunction = false
+reportUnusedImport = false
+
+[[tool.pyright.executionEnvironments]]
+root = "sagaward/tools/logic/tools.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -596,7 +596,7 @@ reportCallIssue = false
 reportAttributeAccessIssue = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/agents/factory.py"
+root = "sagaward/agents/factory.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -608,7 +608,7 @@ reportUnusedFunction = false
 reportUnusedImport = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/report/state.py"
+root = "sagaward/report/state.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -618,7 +618,7 @@ reportUnusedImport = false
 reportImportCycles = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/tools/inventory/tools.py"
+root = "sagaward/tools/inventory/tools.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -666,35 +666,35 @@ reportUnknownArgumentType = false
 reportPrivateUsage = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/core/inventory/classify.py"
+root = "sagaward/core/inventory/classify.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
 reportPrivateUsage = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/core/inventory/collectors"
+root = "sagaward/core/inventory/collectors"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
 reportPrivateUsage = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/core/inventory/parsers/reachability.py"
+root = "sagaward/core/inventory/parsers/reachability.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
 reportPrivateUsage = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/core/inventory/parsers"
+root = "sagaward/core/inventory/parsers"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
 reportPrivateUsage = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/tools/inventory"
+root = "sagaward/tools/inventory"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -704,7 +704,7 @@ reportPrivateUsage = false
 # These overrides are scoped to the affected files and do not cover the new correctness-pass
 # modules (core/diff, core/oob/registry, runtime/oob/provider) which remain clean.
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/core/logic"
+root = "sagaward/core/logic"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -716,7 +716,7 @@ reportUnusedImport = false
 reportImportCycles = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/core/proposals"
+root = "sagaward/core/proposals"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -728,7 +728,7 @@ reportUnusedImport = false
 reportImportCycles = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/tools/logic"
+root = "sagaward/tools/logic"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -755,7 +755,7 @@ reportUnusedImport = false
 reportImportCycles = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/agents/prompt.py"
+root = "sagaward/agents/prompt.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -766,7 +766,7 @@ reportCallIssue = false
 reportArgumentType = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/config"
+root = "sagaward/config"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -776,7 +776,7 @@ reportCallIssue = false
 reportDeprecated = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/core/agents.py"
+root = "sagaward/core/agents.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -785,7 +785,7 @@ reportAttributeAccessIssue = false
 reportCallIssue = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/core/execution.py"
+root = "sagaward/core/execution.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -794,7 +794,7 @@ reportAttributeAccessIssue = false
 reportCallIssue = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/core/hooks.py"
+root = "sagaward/core/hooks.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -803,7 +803,7 @@ reportAttributeAccessIssue = false
 reportCallIssue = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/core/identity"
+root = "sagaward/core/identity"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -813,7 +813,7 @@ reportAttributeAccessIssue = false
 reportCallIssue = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/core/inputs.py"
+root = "sagaward/core/inputs.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -821,7 +821,7 @@ reportAttributeAccessIssue = false
 reportCallIssue = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/core/net"
+root = "sagaward/core/net"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -830,7 +830,7 @@ reportCallIssue = false
 reportArgumentType = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/core/oob"
+root = "sagaward/core/oob"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -839,7 +839,7 @@ reportAttributeAccessIssue = false
 reportCallIssue = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/core/runner.py"
+root = "sagaward/core/runner.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -849,7 +849,7 @@ reportAttributeAccessIssue = false
 reportCallIssue = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/core/sessions.py"
+root = "sagaward/core/sessions.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -858,7 +858,7 @@ reportAttributeAccessIssue = false
 reportCallIssue = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/interface"
+root = "sagaward/interface"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -880,7 +880,7 @@ reportUnsupportedDunderAll = false
 reportGeneralTypeIssues = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/report"
+root = "sagaward/report"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -892,7 +892,7 @@ reportUnsupportedDunderAll = false
 reportImportCycles = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/runtime/docker_client.py"
+root = "sagaward/runtime/docker_client.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -901,7 +901,7 @@ reportAttributeAccessIssue = false
 reportCallIssue = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/telemetry"
+root = "sagaward/telemetry"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -912,7 +912,7 @@ reportAttributeAccessIssue = false
 reportCallIssue = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/tools/agents_graph/tools.py"
+root = "sagaward/tools/agents_graph/tools.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -923,7 +923,7 @@ reportGeneralTypeIssues = false
 reportArgumentType = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/tools/finish/tool.py"
+root = "sagaward/tools/finish/tool.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -932,7 +932,7 @@ reportAttributeAccessIssue = false
 reportCallIssue = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/tools/identity/tools.py"
+root = "sagaward/tools/identity/tools.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -941,7 +941,7 @@ reportAttributeAccessIssue = false
 reportCallIssue = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/tools/notes/tools.py"
+root = "sagaward/tools/notes/tools.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -950,7 +950,7 @@ reportAttributeAccessIssue = false
 reportCallIssue = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/tools/oob/tools.py"
+root = "sagaward/tools/oob/tools.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -959,7 +959,7 @@ reportAttributeAccessIssue = false
 reportCallIssue = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/tools/proxy"
+root = "sagaward/tools/proxy"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -969,7 +969,7 @@ reportCallIssue = false
 reportArgumentType = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/tools/reporting/tool.py"
+root = "sagaward/tools/reporting/tool.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -979,7 +979,7 @@ reportAttributeAccessIssue = false
 reportCallIssue = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/tools/scanner_runner/tool.py"
+root = "sagaward/tools/scanner_runner/tool.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -988,7 +988,7 @@ reportAttributeAccessIssue = false
 reportCallIssue = false
 
 [[tool.pyright.executionEnvironments]]
-root = "oriontrix/tools/todo/tools.py"
+root = "sagaward/tools/todo/tools.py"
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
@@ -1030,7 +1030,7 @@ include_trailing_comma = true
 force_grid_wrap = 0
 use_parentheses = true
 ensure_newline_before_comments = true
-known_first_party = ["oriontrix"]
+known_first_party = ["sagaward"]
 known_third_party = ["pydantic", "litellm"]
 
 # ============================================================================

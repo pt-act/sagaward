@@ -7,8 +7,8 @@ from pathlib import Path
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
-from oriontrix.core.provenance.artifact import ArtifactRef
-from oriontrix.core.provenance.gate import (
+from sagaward.core.provenance.artifact import ArtifactRef
+from sagaward.core.provenance.gate import (
     Action,
     ActionDecision,
     ActionKind,
@@ -19,8 +19,8 @@ from oriontrix.core.provenance.gate import (
     SourceShape,
     decide_action,
 )
-from oriontrix.core.provenance.ledger import ProvenanceLedger
-from oriontrix.core.provenance.model import ProvenanceEnvelope, Source
+from sagaward.core.provenance.ledger import ProvenanceLedger
+from sagaward.core.provenance.model import ProvenanceEnvelope, Source
 
 
 TXNS = settings(max_examples=120, deadline=None, suppress_health_check=[HealthCheck.too_slow])

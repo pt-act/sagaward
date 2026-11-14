@@ -10,9 +10,9 @@ from typing import ClassVar
 from hypothesis import given
 from hypothesis import strategies as st
 
-from oriontrix.core.inventory.collectors.code import collect_code
-from oriontrix.core.inventory.parsers.fastapi import collect_routes
-from oriontrix.core.inventory.parsers.reachability import (
+from sagaward.core.inventory.collectors.code import collect_code
+from sagaward.core.inventory.parsers.fastapi import collect_routes
+from sagaward.core.inventory.parsers.reachability import (
     analyze_handler,
     analyze_source_tree,
     annotate_reachability,

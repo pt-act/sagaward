@@ -14,10 +14,10 @@ from pathlib import Path
 from typing import Any
 from unittest import IsolatedAsyncioTestCase
 
-from oriontrix.core.diff import diff as _diff
-from oriontrix.core.diff.models import DiffResult, SemanticDelta
-from oriontrix.core.logic.context import ExecutionContext
-from oriontrix.core.logic.models import (
+from sagaward.core.diff import diff as _diff
+from sagaward.core.diff.models import DiffResult, SemanticDelta
+from sagaward.core.logic.context import ExecutionContext
+from sagaward.core.logic.models import (
     BusinessLogicModel,
     ConfirmedViolation,
     FlowModel,
@@ -27,11 +27,11 @@ from oriontrix.core.logic.models import (
     Step,
     UnconfirmedHypothesis,
 )
-from oriontrix.core.logic.orchestrator import BusinessLogicOrchestrator
-from oriontrix.core.logic.store import BusinessLogicStore
-from oriontrix.core.paths import logic_model_path
-from oriontrix.core.race.models import CopyOutcome, Precondition, RaceResult, ScopeDecision, StateDelta
-from oriontrix.core.race.verdict import verdict as _verdict
+from sagaward.core.logic.orchestrator import BusinessLogicOrchestrator
+from sagaward.core.logic.store import BusinessLogicStore
+from sagaward.core.paths import logic_model_path
+from sagaward.core.race.models import CopyOutcome, Precondition, RaceResult, ScopeDecision, StateDelta
+from sagaward.core.race.verdict import verdict as _verdict
 
 
 class _FixtureMockTarget:

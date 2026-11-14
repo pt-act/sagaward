@@ -1,20 +1,20 @@
 ---
 title: "Google Vertex AI"
-description: "Configure Oriontrix with Gemini models via Google Cloud"
+description: "Configure Sagaward with Gemini models via Google Cloud"
 ---
 
 ## Installation
 
-Vertex AI requires the Google Cloud dependency. Install Oriontrix with the vertex extra:
+Vertex AI requires the Google Cloud dependency. Install Sagaward with the vertex extra:
 
 ```bash
-pipx install "oriontrix-agent[vertex]"
+pipx install "sagaward[vertex]"
 ```
 
 ## Setup
 
 ```bash
-export ORIONTRIX_LLM="vertex_ai/gemini-3-pro-preview"
+export SAGAWARD_LLM="vertex_ai/gemini-3-pro-preview"
 ```
 
 No API key required—uses Google Cloud Application Default Credentials.

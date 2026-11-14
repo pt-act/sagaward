@@ -10,9 +10,9 @@ from unittest import TestCase
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from oriontrix.core.oob.correlator import Correlator
-from oriontrix.core.oob.models import OobHit
-from oriontrix.core.oob.registry import TokenRegistry
+from sagaward.core.oob.correlator import Correlator
+from sagaward.core.oob.models import OobHit
+from sagaward.core.oob.registry import TokenRegistry
 
 
 _ID_ALPHABET = st.characters(whitelist_categories=("L", "N"))

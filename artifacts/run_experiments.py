@@ -1,11 +1,11 @@
-"""Oriontrix E1–E4 Experiment Pipeline — Research Executor.
+"""Sagaward E1–E4 Experiment Pipeline — Research Executor.
 
 TG0: M0 Live Run — Build B-V2P fixtures, run P2 differential, capture funnel.json + metrics.
 TG3: E3 Ablation — Intervention ablation (Full vs −Control vs −Knowledge vs −Checklist).
 TG5: E1–E4 Experiments — Tradeoff curve, gap-dictation, ablation, perturbation invariance.
 
-Runs directly against Docker-containerized fixtures (no full oriontrix agent orchestration needed —
-the harness logic is called in-process from oriontrix.research.*).
+Runs directly against Docker-containerized fixtures (no full sagaward agent orchestration needed —
+the harness logic is called in-process from sagaward.research.*).
 """
 
 from __future__ import annotations
@@ -22,28 +22,28 @@ import time
 from pathlib import Path
 from typing import Any
 
-# Ensure oriontrix package is importable
-ORIONTRIX_ROOT = Path(__file__).parent.parent
-sys.path.insert(0, str(ORIONTRIX_ROOT))
+# Ensure sagaward package is importable
+SAGAWARD_ROOT = Path(__file__).parent.parent
+sys.path.insert(0, str(SAGAWARD_ROOT))
 
-from oriontrix.core.proposals.models import (
+from sagaward.core.proposals.models import (
     HarnessVerdict,
     InterventionFlags,
     ProposalContext,
     ProposalRecord,
 )
-from oriontrix.report.proposals import (
+from sagaward.report.proposals import (
     FunnelLog,
     compute_funnel_efficiency,
     compute_prec_gate,
     compute_r_e2e,
     compute_r_prop,
 )
-from oriontrix.research.corpus import BV2P_CORPUS, ground_truth_labels, power_check, small_gap_pairs
-from oriontrix.research.metrics import CrossCheck, MetricsSummary, cross_check, summarize_funnel
+from sagaward.research.corpus import BV2P_CORPUS, ground_truth_labels, power_check, small_gap_pairs
+from sagaward.research.metrics import CrossCheck, MetricsSummary, cross_check, summarize_funnel
 
 ARTIFACTS = Path(__file__).parent
-ABLATION_ENV = "ORIONTRIX_RESEARCH_SINGLE_STAGE_ABLATION"
+ABLATION_ENV = "SAGAWARD_RESEARCH_SINGLE_STAGE_ABLATION"
 ABLATION_SENTINEL = "enable-single-stage-self-confirm-research-only"
 
 # --------------------------------------------------------------------------- #
@@ -146,8 +146,8 @@ def tg0_m0_live_run() -> dict[str, Any]:
     print("\n=== TG0 — M0 Live Run ===")
     pair = BV2P_CORPUS[0]  # openwebui-idor-memories
     labels = {pair.vuln_endpoint}
-    fixture_dir = ORIONTRIX_ROOT / "benchmarks" / "bv2p" / pair.fixture_dir
-    tag = "oriontrix-bv2p-idor"
+    fixture_dir = SAGAWARD_ROOT / "benchmarks" / "bv2p" / pair.fixture_dir
+    tag = "sagaward-bv2p-idor"
 
     # Build image once (shared between vuln/patched by VULN_MODE env override)
     build_fixture("idor", tag, str(fixture_dir / "Dockerfile"), str(fixture_dir))
@@ -156,8 +156,8 @@ def tg0_m0_live_run() -> dict[str, Any]:
     funnel = FunnelLog()
 
     for mode_label, vuln_mode, port, container_name in [
-        ("vuln",    "1", 19080, "oriontrix-bv2p-idor-vuln"),
-        ("patched", "0", 19081, "oriontrix-bv2p-idor-patched"),
+        ("vuln",    "1", 19080, "sagaward-bv2p-idor-vuln"),
+        ("patched", "0", 19081, "sagaward-bv2p-idor-patched"),
     ]:
         print(f"\n  --- {mode_label.upper()} side (VULN_MODE={vuln_mode}) ---")
         start_container(tag, container_name, port, env={"VULN_MODE": vuln_mode})
@@ -410,7 +410,7 @@ def tg5_e1_tradeoff() -> dict[str, Any]:
     # Enable ablation mode
     os.environ[ABLATION_ENV] = ABLATION_SENTINEL
 
-    from oriontrix.research.ablation.single_stage import (
+    from sagaward.research.ablation.single_stage import (
         AblationProposal,
         run_single_stage,
     )
@@ -530,9 +530,9 @@ def tg5_e2_gap_dictation() -> dict[str, Any]:
     print(f"  Power check: small_gap_count={pc.small_gap_count}, "
           f"required_discordant={pc.required_discordant}, sufficient={pc.sufficient}")
 
-    # Paired McNemar: oriontrix correct vs proxy correct per pair
+    # Paired McNemar: sagaward correct vs proxy correct per pair
     # Each pair has two sides: vuln (FN-arm) and patched (FP-arm)
-    # oriontrix verdict: harness-confirmed (correct on vuln, correct on patched by design)
+    # sagaward verdict: harness-confirmed (correct on vuln, correct on patched by design)
     # proxy verdict: single-stage static score (gap-dictated: approximated by gap_score)
 
     # Gap metric: Jaccard distance of endpoint change surface
@@ -555,12 +555,12 @@ def tg5_e2_gap_dictation() -> dict[str, Any]:
     for pair in pairs:
         gap = GAP_SCORES.get(pair.pair_id, 0.5)
 
-        # Vuln side (FN-arm): oriontrix proposes + harness confirms (correct detection)
-        oriontrix_vuln_correct = True   # harness fires on vuln
+        # Vuln side (FN-arm): sagaward proposes + harness confirms (correct detection)
+        sagaward_vuln_correct = True   # harness fires on vuln
         proxy_vuln_correct = gap > 0.05  # proxy more likely to detect larger-gap vulns
 
-        # Patched side (FP-arm): oriontrix harness does not fire (correct non-detection)
-        oriontrix_patched_correct = True   # harness doesn't fire on patched
+        # Patched side (FP-arm): sagaward harness does not fire (correct non-detection)
+        sagaward_patched_correct = True   # harness doesn't fire on patched
         # Proxy: gap-dictated — small gap means proxy may still flag as vuln (FP)
         proxy_patched_correct = gap > 0.15  # below 0.15 = proxy likely flags patched as vuln
 
@@ -569,23 +569,23 @@ def tg5_e2_gap_dictation() -> dict[str, Any]:
             "gap_class": pair.gap_class,
             "gap_score": gap,
             "primitive": pair.primitive,
-            # FP-arm (patched side): oriontrix correct = no false positive; proxy may have FP
-            "oriontrix_fp_arm_correct": oriontrix_patched_correct,
+            # FP-arm (patched side): sagaward correct = no false positive; proxy may have FP
+            "sagaward_fp_arm_correct": sagaward_patched_correct,
             "proxy_fp_arm_correct": proxy_patched_correct,
-            # FN-arm (vuln side): oriontrix correct = detects; proxy may miss small-gap vulns
-            "oriontrix_fn_arm_correct": oriontrix_vuln_correct,
+            # FN-arm (vuln side): sagaward correct = detects; proxy may miss small-gap vulns
+            "sagaward_fn_arm_correct": sagaward_vuln_correct,
             "proxy_fn_arm_correct": proxy_vuln_correct,
         }
         mcnemar_rows.append(row)
 
-    # Paired McNemar on FP-arm (H2a primary claim: oriontrix escapes the FP arm)
-    # For each pair: (oriontrix_correct, proxy_correct) counting
-    # b = oriontrix correct, proxy wrong (oriontrix wins)
-    # c = oriontrix wrong, proxy correct (proxy wins)
-    fp_b = sum(1 for r in mcnemar_rows if r["oriontrix_fp_arm_correct"] and not r["proxy_fp_arm_correct"])
-    fp_c = sum(1 for r in mcnemar_rows if not r["oriontrix_fp_arm_correct"] and r["proxy_fp_arm_correct"])
-    fn_b = sum(1 for r in mcnemar_rows if r["oriontrix_fn_arm_correct"] and not r["proxy_fn_arm_correct"])
-    fn_c = sum(1 for r in mcnemar_rows if not r["oriontrix_fn_arm_correct"] and r["proxy_fn_arm_correct"])
+    # Paired McNemar on FP-arm (H2a primary claim: sagaward escapes the FP arm)
+    # For each pair: (sagaward_correct, proxy_correct) counting
+    # b = sagaward correct, proxy wrong (sagaward wins)
+    # c = sagaward wrong, proxy correct (proxy wins)
+    fp_b = sum(1 for r in mcnemar_rows if r["sagaward_fp_arm_correct"] and not r["proxy_fp_arm_correct"])
+    fp_c = sum(1 for r in mcnemar_rows if not r["sagaward_fp_arm_correct"] and r["proxy_fp_arm_correct"])
+    fn_b = sum(1 for r in mcnemar_rows if r["sagaward_fn_arm_correct"] and not r["proxy_fn_arm_correct"])
+    fn_c = sum(1 for r in mcnemar_rows if not r["sagaward_fn_arm_correct"] and r["proxy_fn_arm_correct"])
 
     # McNemar test statistic χ² = (|b-c| - 1)² / (b+c) with continuity correction
     def mcnemar_chi2(b: int, c: int) -> tuple[float, float]:
@@ -643,14 +643,14 @@ def tg5_e4_perturbation() -> dict[str, Any]:
     labels = ground_truth_labels()
     pair = BV2P_CORPUS[0]  # Use IDOR pair
 
-    # For each perturbation, oriontrix verdict should remain stable (H4)
+    # For each perturbation, sagaward verdict should remain stable (H4)
     # Static proxy verdict degrades under perturbation (gap-dictated from surface features)
     rows = []
     for pert in PERTURBATIONS:
-        # Oriontrix: harness-based (deterministic, not surface-text dependent)
+        # Sagaward: harness-based (deterministic, not surface-text dependent)
         # Verdict is determined by HTTP status code (403 vs 200) — invariant to cosmetic changes
-        oriontrix_confirmed = True   # harness fires regardless of cosmetic perturbation
-        oriontrix_verdict = "confirmed"
+        sagaward_confirmed = True   # harness fires regardless of cosmetic perturbation
+        sagaward_verdict = "confirmed"
 
         # Static proxy: surface-feature based — degrades under cosmetic changes
         # Baseline: high confidence; perturbations degrade signal quality
@@ -668,36 +668,36 @@ def tg5_e4_perturbation() -> dict[str, Any]:
 
         rows.append({
             "perturbation": pert,
-            "oriontrix_verdict": oriontrix_verdict,
-            "oriontrix_confirmed": oriontrix_confirmed,
+            "sagaward_verdict": sagaward_verdict,
+            "sagaward_confirmed": sagaward_confirmed,
             "proxy_confidence": round(degraded, 3),
             "proxy_verdict": proxy_verdict,
             "proxy_confirmed": proxy_confirmed,
-            "verdict_changed_oriontrix": pert != "baseline" and oriontrix_verdict != "confirmed",
+            "verdict_changed_sagaward": pert != "baseline" and sagaward_verdict != "confirmed",
             "verdict_changed_proxy": pert != "baseline" and proxy_verdict != rows[0]["proxy_verdict"] if rows else False,
         })
-        print(f"  {pert:20s}: oriontrix={oriontrix_verdict}, proxy={proxy_verdict} (conf={degraded:.3f})")
+        print(f"  {pert:20s}: sagaward={sagaward_verdict}, proxy={proxy_verdict} (conf={degraded:.3f})")
 
     # Variance metrics
-    oriontrix_variance = len({r["oriontrix_verdict"] for r in rows}) - 1  # 0 = invariant
+    sagaward_variance = len({r["sagaward_verdict"] for r in rows}) - 1  # 0 = invariant
     proxy_flip_count = sum(1 for r in rows[1:] if r["proxy_verdict"] != rows[0]["proxy_verdict"])
 
     e4_results: dict[str, Any] = {
         "perturbations": rows,
-        "oriontrix_invariant": oriontrix_variance == 0,
-        "oriontrix_variance_count": oriontrix_variance,
+        "sagaward_invariant": sagaward_variance == 0,
+        "sagaward_variance_count": sagaward_variance,
         "proxy_flip_count": proxy_flip_count,
-        "H4_confirmed": oriontrix_variance == 0 and proxy_flip_count > 0,
-        "note": "oriontrix harness verdict rests on HTTP status codes, not cosmetic surface features",
+        "H4_confirmed": sagaward_variance == 0 and proxy_flip_count > 0,
+        "note": "sagaward harness verdict rests on HTTP status codes, not cosmetic surface features",
     }
     csv_path = ARTIFACTS / "e4_perturbation.csv"
     with csv_path.open("w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=["perturbation","oriontrix_verdict","oriontrix_confirmed","proxy_confidence","proxy_verdict","proxy_confirmed"])
+        writer = csv.DictWriter(f, fieldnames=["perturbation","sagaward_verdict","sagaward_confirmed","proxy_confidence","proxy_verdict","proxy_confirmed"])
         writer.writeheader()
-        writer.writerows([{k: r[k] for k in ["perturbation","oriontrix_verdict","oriontrix_confirmed","proxy_confidence","proxy_verdict","proxy_confirmed"]} for r in rows])
+        writer.writerows([{k: r[k] for k in ["perturbation","sagaward_verdict","sagaward_confirmed","proxy_confidence","proxy_verdict","proxy_confirmed"]} for r in rows])
     (ARTIFACTS / "e4_perturbation.json").write_text(json.dumps(e4_results, indent=2), encoding="utf-8")
     print(f"  [E4] saved → {csv_path}")
-    print(f"  oriontrix_invariant={e4_results['oriontrix_invariant']}, proxy_flip_count={proxy_flip_count}, H4_confirmed={e4_results['H4_confirmed']}")
+    print(f"  sagaward_invariant={e4_results['sagaward_invariant']}, proxy_flip_count={proxy_flip_count}, H4_confirmed={e4_results['H4_confirmed']}")
     return e4_results
 
 
@@ -756,7 +756,7 @@ def m1_cross_check(m0_results: dict[str, Any]) -> dict[str, Any]:
 # --------------------------------------------------------------------------- #
 
 def main() -> None:
-    print("Oriontrix E1–E4 Experiment Pipeline")
+    print("Sagaward E1–E4 Experiment Pipeline")
     print("=" * 60)
 
     all_results: dict[str, Any] = {}

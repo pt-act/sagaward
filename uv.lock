@@ -2147,7 +2147,7 @@ wheels = [
 ]
 
 [[package]]
-name = "oriontrix-agent"
+name = "sagaward"
 version = "1.0.4"
 source = { editable = "." }
 dependencies = [

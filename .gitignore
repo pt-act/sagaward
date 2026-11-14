@@ -69,6 +69,7 @@ logs/
 tensorboard/
 
 # Agent execution traces
+sagaward_runs/
 oriontrix_runs/
 strix_runs/
 agent_runs/

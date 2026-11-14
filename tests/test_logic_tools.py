@@ -130,7 +130,7 @@ sys.modules["agents.tool"] = _agents.tool
 sys.modules["agents.usage"] = _agents_usage
 
 # Mock dedupe so the report layer can run without LLM-based duplicate checks.
-_dedupe: Any = ModuleType("oriontrix.report.dedupe")
+_dedupe: Any = ModuleType("sagaward.report.dedupe")
 
 
 async def _check_duplicate(_candidate: Any, _existing: Any) -> dict[str, Any]:
@@ -138,10 +138,10 @@ async def _check_duplicate(_candidate: Any, _existing: Any) -> dict[str, Any]:
 
 
 _dedupe.check_duplicate = _check_duplicate
-sys.modules["oriontrix.report.dedupe"] = _dedupe
+sys.modules["sagaward.report.dedupe"] = _dedupe
 
-from oriontrix.agents.factory import _BASE_TOOLS  # noqa: E402
-from oriontrix.tools.logic.tools import (  # noqa: E402
+from sagaward.agents.factory import _BASE_TOOLS  # noqa: E402
+from sagaward.tools.logic.tools import (  # noqa: E402
     list_flow_invariants,
     propose_business_logic_model,
     read_business_logic_model,

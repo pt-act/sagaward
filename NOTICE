@@ -1,4 +1,4 @@
-Oriontrix
+Sagaward
 Copyright 2026 pt-act
 
 This product is a derivative work based on Strix:
@@ -6,6 +6,8 @@ This product is a derivative work based on Strix:
     Strix
     Copyright 2025 OmniSecure Inc.
     https://github.com/usestrix/strix
+
+Sagaward is the harness; Sága is the agent running inside it.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 this software except in compliance with the License. A copy of the License is
@@ -21,15 +23,15 @@ Fence (apf-provenance, apf-action-gate, apf-isolation) and its gate wiring.
 See CHANGELOG.md for the full list of changes.
 
 Modifications made by this distribution include the removal of the telemetry
-transports (PostHog and Scarf), so Oriontrix sends no telemetry and has no
+transports (PostHog and Scarf), so Sagaward sends no telemetry and has no
 default-on analytics path, and the removal of the managed-cloud client, so
-Oriontrix is local-only and runs on the user's keys. The package, CLI,
+Sagaward is local-only and runs on the user's keys. The package, CLI,
 environment prefixes, home directory, and container images were renamed from
-Strix to Oriontrix.
+Strix to Sagaward.
 
 "Strix" is used solely to identify the upstream work for provenance and
 attribution, as permitted by Apache License 2.0 section 6. No trademark license
-is granted. Oriontrix is an independent project and is not affiliated with, nor
+is granted. Sagaward is an independent project and is not affiliated with, nor
 endorsed by, OmniSecure Inc. or the upstream Strix project.
 
 This software bundles or builds upon other open-source components, each under

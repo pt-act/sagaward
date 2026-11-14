@@ -2,14 +2,14 @@
 #
 # Extends the existing Dockerfile (dev base) with the SGL egress-enforcement
 # substrate:
-#   1. A dedicated low-privilege user (oriontrix-proxy) whose UID the iptables
+#   1. A dedicated low-privilege user (sagaward-proxy) whose UID the iptables
 #      owner-match rule exempts from redirection — prevents loopback.
 #   2. iptables + nftables packages (already present in Kali; listed
 #      explicitly to pin and fail-fast if removed upstream).
 #   3. The egress-enforcer.sh script and the Python decision proxy installed
 #      under /usr/local/sbin/.
 #   4. The entrypoint delegates to egress-enforcer.sh when
-#      ORIONTRIX_EGRESS_ENFORCE=1; otherwise falls through (dev mode preserved).
+#      SAGAWARD_EGRESS_ENFORCE=1; otherwise falls through (dev mode preserved).
 #
 # Build targets
 # -------------
@@ -18,7 +18,7 @@
 #
 # Usage
 #   docker build -f containers/Dockerfile.prod \
-#     --target prod -t oriontrix-sandbox:prod .
+#     --target prod -t sagaward-sandbox:prod .
 #
 # Required capabilities at runtime (see docker_client.py SGL delta)
 #   --cap-add NET_ADMIN   — iptables rule installation
@@ -27,7 +27,7 @@
 # SP3 adversarial test (operator step — NOT verified by this file)
 #   See containers/egress-enforcer.sh header for the exact test commands.
 
-ARG BASE_IMAGE=oriontrix-sandbox:dev
+ARG BASE_IMAGE=sagaward-sandbox:dev
 
 # ── dev stage (unchanged existing image) ─────────────────────────────────────
 FROM ${BASE_IMAGE} AS dev
@@ -49,7 +49,7 @@ RUN apt-get update && \
 
 # Dedicated proxy user — runs the decision proxy as root (see egress-enforcer.sh).
 # uid 9999 is belt-and-suspenders; the root exemption in iptables is the active one.
-RUN useradd -r -M -s /usr/sbin/nologin -u 9999 oriontrix-proxy
+RUN useradd -r -M -s /usr/sbin/nologin -u 9999 sagaward-proxy
 
 # Revoke all sudo for pentester in the prod image.
 # 1. gpasswd -d pentester sudo — removes the group path (%sudo rule in Kali).
@@ -72,8 +72,8 @@ RUN gpasswd -d pentester sudo && \
     visudo -c
 
 # Install the egress enforcer init script.
-COPY containers/egress-enforcer.sh /usr/local/sbin/oriontrix-egress-enforcer
-RUN chmod +x /usr/local/sbin/oriontrix-egress-enforcer
+COPY containers/egress-enforcer.sh /usr/local/sbin/sagaward-egress-enforcer
+RUN chmod +x /usr/local/sbin/sagaward-egress-enforcer
 
 # Preserve the dev entrypoint under a stable path so the prod entrypoint
 # can delegate to it.  The prod entrypoint replaces the default path.
@@ -83,9 +83,9 @@ RUN cp /usr/local/bin/docker-entrypoint.sh /usr/local/bin/docker-entrypoint-dev.
 COPY containers/docker-entrypoint.prod.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Install oriontrix governance modules (scope decision service + egress proxy)
+# Install sagaward governance modules (scope decision service + egress proxy)
 # into the system Python path.  Only the minimal dependency set is installed
-# (pydantic + typing_extensions); the full oriontrix-agent package with its
+# (pydantic + typing_extensions); the full sagaward package with its
 # heavyweight deps (openai-agents, textual, docker, …) is NOT needed here.
 # Force-reinstall to purge any stale .pyc / cached artifacts that shadow
 # the real module (observed: typing_extensions 4.15 metadata present but
@@ -94,21 +94,21 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 RUN /app/.venv/bin/pip install --no-cache-dir --force-reinstall \
     'pydantic==2.13.4' 'typing_extensions==4.15.0' 'pydantic-core==2.46.4'
 
-COPY oriontrix/__init__.py                   /opt/oriontrix-python/oriontrix/__init__.py
-COPY oriontrix/core/__init__.py              /opt/oriontrix-python/oriontrix/core/__init__.py
-COPY oriontrix/core/govern/__init__.py       /opt/oriontrix-python/oriontrix/core/govern/__init__.py
-COPY oriontrix/core/govern/scope.py          /opt/oriontrix-python/oriontrix/core/govern/scope.py
-COPY oriontrix/core/govern/limiter.py        /opt/oriontrix-python/oriontrix/core/govern/limiter.py
-COPY oriontrix/core/govern/ownership.py      /opt/oriontrix-python/oriontrix/core/govern/ownership.py
-COPY oriontrix/core/govern/breaker.py        /opt/oriontrix-python/oriontrix/core/govern/breaker.py
-COPY oriontrix/core/govern/cost_ceiling.py   /opt/oriontrix-python/oriontrix/core/govern/cost_ceiling.py
-COPY oriontrix/core/govern/audit.py          /opt/oriontrix-python/oriontrix/core/govern/audit.py
-COPY oriontrix/runtime/__init__.py           /opt/oriontrix-python/oriontrix/runtime/__init__.py
-COPY oriontrix/runtime/egress_proxy.py       /opt/oriontrix-python/oriontrix/runtime/egress_proxy.py
-RUN chown -R root:root /opt/oriontrix-python/oriontrix
+COPY sagaward/__init__.py                   /opt/sagaward-python/sagaward/__init__.py
+COPY sagaward/core/__init__.py              /opt/sagaward-python/sagaward/core/__init__.py
+COPY sagaward/core/govern/__init__.py       /opt/sagaward-python/sagaward/core/govern/__init__.py
+COPY sagaward/core/govern/scope.py          /opt/sagaward-python/sagaward/core/govern/scope.py
+COPY sagaward/core/govern/limiter.py        /opt/sagaward-python/sagaward/core/govern/limiter.py
+COPY sagaward/core/govern/ownership.py      /opt/sagaward-python/sagaward/core/govern/ownership.py
+COPY sagaward/core/govern/breaker.py        /opt/sagaward-python/sagaward/core/govern/breaker.py
+COPY sagaward/core/govern/cost_ceiling.py   /opt/sagaward-python/sagaward/core/govern/cost_ceiling.py
+COPY sagaward/core/govern/audit.py          /opt/sagaward-python/sagaward/core/govern/audit.py
+COPY sagaward/runtime/__init__.py           /opt/sagaward-python/sagaward/runtime/__init__.py
+COPY sagaward/runtime/egress_proxy.py       /opt/sagaward-python/sagaward/runtime/egress_proxy.py
+RUN chown -R root:root /opt/sagaward-python/sagaward
 
 # Governance audit log directory (writable by pentester for the proxy log).
-RUN mkdir -p /var/log/oriontrix && chown oriontrix-proxy:oriontrix-proxy /var/log/oriontrix
+RUN mkdir -p /var/log/sagaward && chown sagaward-proxy:sagaward-proxy /var/log/sagaward
 
 # Final USER is pentester: this is the default user for `docker exec`, which is
 # how the SDK runs agent tools.  Pentester has NO sudo in the prod image
@@ -116,7 +116,7 @@ RUN mkdir -p /var/log/oriontrix && chown oriontrix-proxy:oriontrix-proxy /var/lo
 #
 # The container's PRIMARY process (the prod entrypoint, which installs the
 # iptables rules) runs as root via ``user="root"`` passed at container-create
-# time in ``oriontrix/runtime/docker_client.py`` — NOT via a Dockerfile USER root.
+# time in ``sagaward/runtime/docker_client.py`` — NOT via a Dockerfile USER root.
 # Docker separates the entrypoint user (create-time ``user=``) from the exec
 # default (Dockerfile ``USER``); this directive controls only the latter.
 USER pentester

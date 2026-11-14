@@ -18,13 +18,17 @@ Forked from upstream `v1.0.4`. Work landed 2026-06-14 → 2026-06-18. The additi
 organised as the implementation phases (0–5) plus the propose–dispose architecture and its
 measurement track. Upstream behaviour is preserved unless noted under *Changed*.
 
-### Changed — Oriontrix pre-publication
-- Renamed the product, package (`oriontrix-agent`), CLI (`oriontrix`), environment
-  prefixes (`ORIONTRIX_*`, with a one-time legacy `STRIX_*` compatibility shim),
-  home directory, skills, and container images to Oriontrix.
-- Removed the telemetry transports (PostHog and Scarf); Oriontrix is local-only and
+### Changed — Sagaward pre-publication
+- Renamed the product, package (`sagaward`), CLI (`sagaward`), environment
+  prefixes (`SAGAWARD_*`, with a one-time legacy `STRIX_*` compatibility shim),
+  home directory, skills, and container images to Sagaward. The interim
+  Oriontrix rename was superseded before publication; no public release carried
+  it.
+- The agent running inside is Sága, the seeress of the record; the name is prose
+  in the prompts and the skills, not a package or a registry mark.
+- Removed the telemetry transports (PostHog and Scarf); Sagaward is local-only and
   sends no telemetry.
-- Removed the managed-cloud client and the hosted-product links; Oriontrix runs on
+- Removed the managed-cloud client and the hosted-product links; Sagaward runs on
   the user's keys.
 
 ### Added — Foundation & impact gating (Phase 0)
@@ -140,4 +144,4 @@ measurement track. Upstream behaviour is preserved unless noted under *Changed*.
 - This fork retains the upstream Apache-2.0 `LICENSE` and copyright. It is an independent
   derivative and is not affiliated with or endorsed by the upstream project or OmniSecure Inc.
 
-[Unreleased]: https://github.com/pt-act/oriontrix
+[Unreleased]: https://github.com/pt-act/sagaward

@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pytest
 
-from oriontrix.core.provenance import (
+from sagaward.core.provenance import (
     LedgerMiss,
     Principal,
     ProvenanceEnvelope,
@@ -24,13 +24,13 @@ from oriontrix.core.provenance import (
     Source,
     reconcile,
 )
-from oriontrix.core.provenance.content import ABSENT, digest
-from oriontrix.core.provenance.reconcile import artifacts_in_scratch_listing, record_scratch_artifacts
-from oriontrix.core.provenance.seed import is_agent_writable, seed_image_inventory
-from oriontrix.core.provenance.surfacing import surface_texts, wrap_surfacing_tool
-from oriontrix.core.provenance.write_hook import record_observed_writes, wrap_apply_patch_tool
-from oriontrix.core.provenance.writes import record_written_files, touched_paths
-from oriontrix.runtime.provenance_reconcile import (
+from sagaward.core.provenance.content import ABSENT, digest
+from sagaward.core.provenance.reconcile import artifacts_in_scratch_listing, record_scratch_artifacts
+from sagaward.core.provenance.seed import is_agent_writable, seed_image_inventory
+from sagaward.core.provenance.surfacing import surface_texts, wrap_surfacing_tool
+from sagaward.core.provenance.write_hook import record_observed_writes, wrap_apply_patch_tool
+from sagaward.core.provenance.writes import record_written_files, touched_paths
+from sagaward.runtime.provenance_reconcile import (
     PROBE_BINARIES,
     PROBE_ENV,
     PROBE_INTERPRETER,
@@ -529,7 +529,7 @@ class TestProductionVerifierPath:
         evil.write_text("#!/bin/sh\n", encoding="utf-8")
         evil.chmod(0o755)
         monkeypatch.setattr(
-            "oriontrix.core.provenance.seed.AGENT_WRITABLE_ROOTS",
+            "sagaward.core.provenance.seed.AGENT_WRITABLE_ROOTS",
             (str(writable),),
         )
         ledger = ProvenanceLedger()
@@ -602,7 +602,7 @@ class TestRound5Blockers:
         link = image_root / "tool"
         link.symlink_to(target)
         monkeypatch.setattr(
-            "oriontrix.core.provenance.seed.AGENT_WRITABLE_ROOTS",
+            "sagaward.core.provenance.seed.AGENT_WRITABLE_ROOTS",
             (str(writable),),
         )
 
@@ -799,7 +799,7 @@ class TestRound7RecorderBranches:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """N5 — the exclusion is load-bearing when quarantine is configured inside scratch."""
-        from oriontrix.core.provenance import paths as provenance_paths  # noqa: PLC0415
+        from sagaward.core.provenance import paths as provenance_paths  # noqa: PLC0415
 
         monkeypatch.setattr(reconcile, "SCRATCH_ROOT", Path("/workspace/scratch"))
         monkeypatch.setattr(provenance_paths, "QUARANTINE_DIR", Path("/workspace/scratch/q"))
@@ -1004,7 +1004,7 @@ class TestRound10Mitigations:
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        from oriontrix.runtime import provenance_exec as mod  # noqa: PLC0415 - call-site patch
+        from sagaward.runtime import provenance_exec as mod  # noqa: PLC0415 - call-site patch
 
         monkeypatch.setattr(mod, "OBSERVATION_BINARIES", ("/home/pentester/.local/bin/python3",))
         with pytest.raises(RuntimeError, match="agent-writable"):

@@ -9,10 +9,10 @@ from pathlib import Path
 
 import pytest
 
-from oriontrix.core.govern.scope import AuthzTier
-from oriontrix.core.provenance.artifact import ArtifactRef
-from oriontrix.core.provenance.content import digest
-from oriontrix.core.provenance.gate import (
+from sagaward.core.govern.scope import AuthzTier
+from sagaward.core.provenance.artifact import ArtifactRef
+from sagaward.core.provenance.content import digest
+from sagaward.core.provenance.gate import (
     OFFICIAL_INDEX_HOSTS,
     POLICY_RULES,
     Action,
@@ -26,8 +26,8 @@ from oriontrix.core.provenance.gate import (
     SourceShape,
     decide_action,
 )
-from oriontrix.core.provenance.ledger import LedgerMiss, ProvenanceLedger
-from oriontrix.core.provenance.model import ProvenanceEnvelope, Source
+from sagaward.core.provenance.ledger import LedgerMiss, ProvenanceLedger
+from sagaward.core.provenance.model import ProvenanceEnvelope, Source
 
 
 CLEAN = ProvenanceEnvelope(sources=frozenset({Source.SANDBOX_IMAGE}))

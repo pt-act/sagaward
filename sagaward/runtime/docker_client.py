@@ -1,0 +1,232 @@
+"""SagawardDockerSandboxClient — preserves the image's ENTRYPOINT and adds
+NET_ADMIN/NET_RAW capabilities + host-gateway.
+
+The SDK's ``DockerSandboxClient._create_container`` does not expose a hook for
+extending ``create_kwargs`` before ``containers.create`` is called. We subclass
+and reimplement the method body verbatim from the SDK source, with four
+deltas:
+
+1. Drop the SDK's ``entrypoint=["tail"]`` override; supply ``["tail", "-f",
+   "/dev/null"]`` as ``command`` instead. This lets our image's
+   ``docker-entrypoint.sh`` actually run — without it, ``caido-cli`` never
+   starts inside the container and ``bootstrap_caido`` retries against a
+   dead port.
+2. Grant capabilities from the declared profile only (isolation unit): DEFAULT
+   adds none, RAW_SOCKETS adds NET_RAW for ``nmap -sS``. NET_ADMIN is never
+   granted to the agent's exec context; the SGL enforcer runs as root in the
+   entrypoint.
+3. ``host.docker.internal`` → host-gateway only when the profile declares it,
+   because reaching the host is a capability, not a default.
+4. Mount the per-agent quarantine volume ``noexec,nosuid,nodev`` at
+   ``/workspace/quarantine`` (isolation unit).
+5. SGL-S0: inject SAGAWARD_EGRESS_ENFORCE + SAGAWARD_SCOPE_RULES into the
+   container environment when governance is active so the egress-enforcer
+   entrypoint and decision proxy load the correct engagement context.
+
+Pinned to ``openai-agents==0.14.6``. Bumping the SDK requires
+re-merging the parent body. Track upstream for an injection hook.
+"""
+
+from __future__ import annotations
+
+import contextlib
+import logging
+import os
+import uuid
+from typing import Any
+
+from agents.sandbox.manifest import Manifest
+from agents.sandbox.sandboxes.docker import (
+    DockerSandboxClient,
+    _build_docker_volume_mounts,
+    _docker_port_key,
+    _manifest_requires_fuse,
+    _manifest_requires_sys_admin,
+)
+from agents.sandbox.session.sandbox_session import SandboxSession
+from docker import errors as docker_errors  # type: ignore[import-untyped, unused-ignore]
+from docker.models.containers import Container  # type: ignore[import-untyped, unused-ignore]
+from docker.types import Mount  # type: ignore[import-untyped, unused-ignore]
+from docker.utils import parse_repository_tag  # type: ignore[import-untyped, unused-ignore]
+
+from sagaward.core.isolation import (
+    capabilities_for,
+    extra_hosts_for,
+    quarantine_mount,
+    validate_mount_options,
+)
+
+
+logger = logging.getLogger(__name__)
+
+
+class SagawardDockerSandboxClient(DockerSandboxClient):
+    def __init__(
+        self,
+        docker_client: Any,
+        *,
+        profile: str = "default",
+        scan_id: str = "",
+        agent_id: str = "root",
+    ) -> None:
+        super().__init__(docker_client)
+        self._profile = profile
+        self._scan_id = scan_id
+        self._agent_id = agent_id
+
+    async def _create_container(
+        self,
+        image: str,
+        *,
+        manifest: Manifest | None = None,
+        exposed_ports: tuple[int, ...] = (),
+        session_id: uuid.UUID | None = None,
+    ) -> Container:
+        # ----- BEGIN VERBATIM COPY of DockerSandboxClient._create_container -----
+        # SDK ref: src/agents/sandbox/sandboxes/docker.py:1434-1477 (v0.14.6).
+        if not self.image_exists(image):
+            repo, tag = parse_repository_tag(image)
+            self.docker_client.images.pull(repo, tag=tag or None, all_tags=False)
+
+        assert self.image_exists(image)
+        environment: dict[str, str] | None = None
+        if manifest:
+            environment = await manifest.environment.resolve()
+        # Sagaward delta from the SDK body: drop ``entrypoint`` override and
+        # supply ``tail -f /dev/null`` as ``command`` so the image's
+        # ENTRYPOINT (``docker-entrypoint.sh``) runs setup, then ``exec
+        # "$@"`` becomes ``exec tail -f /dev/null`` for the keep-alive.
+        # Without this, caido-cli + the in-container CA trust never get
+        # initialized.
+        create_kwargs: dict[str, Any] = {
+            "image": image,
+            "detach": True,
+            "command": ["tail", "-f", "/dev/null"],
+            "environment": environment,
+        }
+        if manifest is not None:
+            docker_mounts = _build_docker_volume_mounts(
+                manifest,
+                session_id=session_id,
+            )
+            if docker_mounts:
+                create_kwargs["mounts"] = docker_mounts
+            if _manifest_requires_fuse(manifest):
+                create_kwargs.update(
+                    devices=["/dev/fuse"],
+                    cap_add=["SYS_ADMIN"],
+                    security_opt=["apparmor:unconfined"],
+                )
+            elif _manifest_requires_sys_admin(manifest):
+                create_kwargs.update(
+                    cap_add=["SYS_ADMIN"],
+                    security_opt=["apparmor:unconfined"],
+                )
+        if exposed_ports:
+            create_kwargs["ports"] = {
+                _docker_port_key(port): ("127.0.0.1", None) for port in exposed_ports
+            }
+        # ----- END VERBATIM COPY -----
+
+        self._apply_deltas(create_kwargs)
+
+        # SGL-S0: inject governance environment when SAGAWARD_EGRESS_ENFORCE is
+        # set on the host.  The egress-enforcer entrypoint reads these to
+        # activate iptables enforcement and load the scope rules into the
+        # decision proxy.  When not set, the container starts in dev/pass-
+        # through mode (existing behaviour preserved).
+        enforce = os.environ.get("SAGAWARD_EGRESS_ENFORCE", "0")
+        if enforce == "1":
+            env: dict[str, str] = create_kwargs.get("environment") or {}
+            if not isinstance(env, dict):
+                env = dict(env)
+            env.setdefault("SAGAWARD_EGRESS_ENFORCE", "1")
+            scope_rules = os.environ.get("SAGAWARD_SCOPE_RULES", "")
+            env.setdefault("SAGAWARD_SCOPE_RULES", scope_rules)
+            create_kwargs["environment"] = env
+            # Run the container's primary process (the prod entrypoint) as root
+            # so it can install the iptables enforcement rules.  This overrides
+            # the Dockerfile USER for the entrypoint ONLY — ``docker exec`` (used
+            # by the SDK to run agent tools) still defaults to the Dockerfile
+            # USER (pentester), which has no sudo in the prod image.  This is the
+            # separation that keeps the enforcer outside the agent's authority.
+            create_kwargs["user"] = "root"
+            logger.info(
+                "SGL egress enforcement active: %d scope rule(s) injected",
+                len([r for r in scope_rules.replace(",", "\n").splitlines() if r.strip()]),
+            )
+
+        logger.debug(
+            "Creating sandbox container: image=%s caps=%s exposed_ports=%s",
+            image,
+            create_kwargs.get("cap_add"),
+            list(exposed_ports),
+        )
+        container = self.docker_client.containers.create(**create_kwargs)
+        logger.info(
+            "Sandbox container created: id=%s image=%s",
+            container.short_id if hasattr(container, "short_id") else "?",
+            image,
+        )
+        return container
+
+    def _apply_deltas(self, create_kwargs: dict[str, Any]) -> None:
+        """The injection half of the create body: caps, hosts, quarantine mount."""
+        # Sagaward injections — append, don't overwrite, so FUSE/SYS_ADMIN survives.
+        # Capabilities come from the declared profile only: DEFAULT adds nothing,
+        # RAW_SOCKETS adds NET_RAW. NET_ADMIN is never granted (the SGL enforcer
+        # runs in the entrypoint as root, not in the agent's exec context).
+        requested = capabilities_for(self._profile)
+        if requested:
+            cap_add = create_kwargs.setdefault("cap_add", [])
+            if not isinstance(cap_add, list):
+                cap_add = list(cap_add)
+                create_kwargs["cap_add"] = cap_add
+            for cap in requested:
+                if cap not in cap_add:
+                    cap_add.append(cap)
+
+        # host.docker.internal is a host-reach capability; only a profile that
+        # declares it gets it.
+        for host, target in extra_hosts_for(self._profile).items():
+            extra_hosts = create_kwargs.setdefault("extra_hosts", {})
+            extra_hosts[host] = target
+
+        # The quarantine volume: noexec/nosuid/nodev at the mount, per agent.
+        quarantine = quarantine_mount(self._scan_id, self._agent_id)
+        validate_mount_options(quarantine.options)  # refuse a container with an exec quarantine
+        mounts = create_kwargs.setdefault("mounts", [])
+        if not isinstance(mounts, list):
+            mounts = list(mounts)
+            create_kwargs["mounts"] = mounts
+        mounts.append(Mount(**quarantine.as_kwargs()))
+
+    async def delete(self, session: SandboxSession) -> SandboxSession:
+        container_id = getattr(getattr(session._inner, "state", None), "container_id", None)
+        if container_id:
+            with contextlib.suppress(docker_errors.NotFound, docker_errors.APIError):
+                self.docker_client.containers.get(container_id).kill()
+        return await super().delete(session)
+
+    def exec_read_file(self, container_id: str, path: str) -> str:
+        """Read a file from inside a running container.  Used by the
+        target-health poller (S3.1) to ingest egress-proxy failure events.
+        """
+        try:
+            container = self.docker_client.containers.get(container_id)
+            exit_code, output = container.exec_run(f"cat {path}", stdout=True, stderr=True)
+            if exit_code == 0:
+                return output.decode("utf-8", errors="replace")
+        except Exception:  # noqa: BLE001 - health ingest is best-effort
+            logger.debug("target-health read failed", exc_info=True)
+        return ""
+
+    def exec_command(self, container_id: str, command: str) -> None:
+        """Run a command inside a running container (fire-and-forget).
+        Used by the target-health poller to clear the ingest file.
+        """
+        try:
+            container = self.docker_client.containers.get(container_id)
+            container.exec_run(command, stdout=False, stderr=False)
+        except Exception:  # noqa: BLE001 - fire-and-forget truncate
+            logger.debug("target-health truncate failed", exc_info=True)

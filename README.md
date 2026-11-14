@@ -1,8 +1,8 @@
 <div align="center">
 
-# Oriontrix
+# Sagaward
 
-### Agents propose. The harness disposes.
+### The ward where Sága runs.
 
 <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-3b82f6?style=flat-square" alt="License"></a>
 <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/changelog-fork-2b9246?style=flat-square" alt="Changelog"></a>
@@ -11,11 +11,15 @@
 
 **Local-only. No telemetry. No cloud client. Everything runs on your keys.**
 
-> **Lineage.** Oriontrix is a research-oriented fork of the upstream
+> **Lineage.** Sagaward is a research-oriented fork of the upstream
 > [Strix](https://github.com/usestrix/strix) project (Apache-2.0, © OmniSecure Inc.),
-> diverged at upstream commit **67536408** (v1.0.4). The "Strix" name is used only for
-> provenance and attribution, per Apache-2.0 §6; Oriontrix is independent and **not
-> affiliated with or endorsed by** the upstream project.
+> diverged at upstream commit **67536408** (v1.0.4). The strīx (upstream's name) is the
+> mother; this fork is her offspring; in the myth she bore Agrios and Oreios, and Oreios
+> prefigures Orion-OS, the lineage the fork was born into. **The harness is Sagaward —
+> the ward that watches and writes. The agent inside is Sága — the seeress who sees
+> (sjá) and says (segja), the guardian of the record. Sága runs inside her own ward.**
+> The "Strix" name is used only for provenance and attribution, per Apache-2.0 §6;
+> Sagaward is independent and **not affiliated with or endorsed by** the upstream project.
 
 It re-shapes the upstream engine from a breadth-oriented scanner into a **stateful,
 auth-aware, impact-gated bounty engine**: the LLM *proposes* candidates and a deterministic
@@ -26,8 +30,9 @@ or race artifact — not a model's say-so.
 
 ## About This Fork
 
-The upstream engine is excellent at breadth. This fork adds the machinery to make findings
-**precise and evidence-gated**, and to *measure* that precision. The headline differences:
+**Agents propose. The harness disposes.** The upstream engine is excellent at breadth. This
+fork adds the machinery to make findings **precise and evidence-gated**, and to *measure*
+that precision. The headline differences:
 
 - **Impact gate.** Every `vulnerability_report` carries an `evidence_class ∈
   {diff, callback, reachability, race_result, none}`; `none` downgrades severity. Findings are
@@ -63,7 +68,7 @@ agent's capabilities.
 
 ## Overview
 
-Oriontrix agents act like real hackers — they run your code dynamically, find vulnerabilities, and
+Sága agents act like real hackers — they run your code dynamically, find vulnerabilities, and
 validate them through actual proof-of-concepts. Built for developers and security teams who need
 fast, accurate security testing without the overhead of manual pentesting or the false positives
 of static analysis tools.
@@ -98,26 +103,26 @@ This fork is run from source (the upstream hosted installer is not used).
 
 ```bash
 # 1. Clone the fork
-git clone https://github.com/pt-act/oriontrix.git
-cd oriontrix
+git clone https://github.com/pt-act/sagaward.git
+cd sagaward
 
 # 2. Install dependencies
 uv sync
 
 # 3. Build the sandbox image (Kali + pinned security tools)
-./scripts/docker.sh dev            # builds oriontrix-sandbox:dev
+./scripts/docker.sh dev            # builds sagaward-sandbox:dev
 
 # 4. Configure your AI provider
-export ORIONTRIX_LLM="openai/gpt-5.4"
+export SAGAWARD_LLM="openai/gpt-5.4"
 export LLM_API_KEY="your-api-key"
-export ORIONTRIX_IMAGE="oriontrix-sandbox:dev"   # point the runtime at your local build
+export SAGAWARD_IMAGE="sagaward-sandbox:dev"   # point the runtime at your local build
 
 # 5. Run your first assessment
-uv run oriontrix --target ./app-directory
+uv run sagaward --target ./app-directory
 ```
 
 > [!NOTE]
-> Results are saved to `oriontrix_runs/<run-name>`. The sandbox image build pulls a Kali base and
+> Results are saved to `sagaward_runs/<run-name>`. The sandbox image build pulls a Kali base and
 > several network-heavy tool layers (nuclei templates, Go tools) — allow time on the first build.
 
 ---
@@ -128,35 +133,35 @@ uv run oriontrix --target ./app-directory
 
 ```bash
 # Scan a local codebase
-uv run oriontrix --target ./app-directory
+uv run sagaward --target ./app-directory
 
 # Security review of a GitHub repository
-uv run oriontrix --target https://github.com/org/repo
+uv run sagaward --target https://github.com/org/repo
 
 # Black-box web application assessment
-uv run oriontrix --target https://your-app.com
+uv run sagaward --target https://your-app.com
 ```
 
 ### Advanced testing scenarios
 
 ```bash
 # Grey-box authenticated testing
-uv run oriontrix --target https://your-app.com --instruction "Authenticated testing using credentials: user:pass"
+uv run sagaward --target https://your-app.com --instruction "Authenticated testing using credentials: user:pass"
 
 # Multi-target testing (source code + deployed app)
-uv run oriontrix -t https://github.com/org/app -t https://your-app.com
+uv run sagaward -t https://github.com/org/app -t https://your-app.com
 
 # White-box source-aware scan (local repository)
-uv run oriontrix --target ./app-directory --scan-mode standard
+uv run sagaward --target ./app-directory --scan-mode standard
 
 # Focused testing with custom instructions
-uv run oriontrix --target api.your-app.com --instruction "Focus on business logic flaws and IDOR"
+uv run sagaward --target api.your-app.com --instruction "Focus on business logic flaws and IDOR"
 
 # Detailed instructions via file (rules of engagement, scope, exclusions)
-uv run oriontrix --target api.your-app.com --instruction-file ./instruction.md
+uv run sagaward --target api.your-app.com --instruction-file ./instruction.md
 
 # Force PR diff-scope against a specific base branch
-uv run oriontrix -n --target ./ --scan-mode quick --scope-mode diff --diff-base origin/main
+uv run sagaward -n --target ./ --scan-mode quick --scope-mode diff --diff-base origin/main
 ```
 
 ### Headless mode
@@ -166,7 +171,7 @@ and automated jobs. Prints real-time findings and the final report; exits non-ze
 vulnerabilities are found.
 
 ```bash
-uv run oriontrix -n --target https://your-app.com
+uv run sagaward -n --target https://your-app.com
 ```
 
 ### CI/CD (GitHub Actions)
@@ -175,7 +180,7 @@ Add a security test on pull requests. (Build the image in the job, or pull from 
 registry — the upstream hosted installer is not used in this fork.)
 
 ```yaml
-name: oriontrix-penetration-test
+name: sagaward-penetration-test
 
 on:
   pull_request:
@@ -194,34 +199,34 @@ jobs:
       - name: Build sandbox image
         run: ./scripts/docker.sh ci
 
-      - name: Run Oriontrix
+      - name: Run Sagaward
         env:
-          ORIONTRIX_LLM: ${{ secrets.ORIONTRIX_LLM }}
+          SAGAWARD_LLM: ${{ secrets.SAGAWARD_LLM }}
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
-          ORIONTRIX_IMAGE: oriontrix-sandbox:ci
-        run: uv run oriontrix -n -t ./ --scan-mode quick
+          SAGAWARD_IMAGE: sagaward-sandbox:ci
+        run: uv run sagaward -n -t ./ --scan-mode quick
 ```
 
 > [!TIP]
-> In CI pull-request runs, Oriontrix automatically scopes quick reviews to changed files. If
+> In CI pull-request runs, Sagaward automatically scopes quick reviews to changed files. If
 > diff-scope cannot resolve, ensure checkout uses full history (`fetch-depth: 0`) or pass
 > `--diff-base` explicitly.
 
 ### Configuration
 
 ```bash
-export ORIONTRIX_LLM="openai/gpt-5.4"
+export SAGAWARD_LLM="openai/gpt-5.4"
 export LLM_API_KEY="your-api-key"
 
 # Optional
-export ORIONTRIX_IMAGE="oriontrix-sandbox:dev"     # the sandbox image the runtime uses
+export SAGAWARD_IMAGE="sagaward-sandbox:dev"     # the sandbox image the runtime uses
 export LLM_API_BASE="your-api-base-url"     # local model, e.g. Ollama / LMStudio
 export PERPLEXITY_API_KEY="your-api-key"    # search capabilities
-export ORIONTRIX_REASONING_EFFORT="high"        # high (default) | medium (quick scan)
+export SAGAWARD_REASONING_EFFORT="high"        # high (default) | medium (quick scan)
 ```
 
 > [!NOTE]
-> Oriontrix saves your configuration to `~/.oriontrix/cli-config.json`, so you don't re-enter it each run.
+> Sagaward saves your configuration to `~/.sagaward/cli-config.json`, so you don't re-enter it each run.
 
 **Recommended models:**
 
@@ -236,7 +241,7 @@ See [`docs/llm-providers/overview`](docs/llm-providers/overview.mdx) for all sup
 
 ## The Inherited Toolkit
 
-Oriontrix agents come with a comprehensive security testing toolkit:
+Sága agents come with a comprehensive security testing toolkit:
 
 - **Full HTTP Proxy** — request/response manipulation and analysis
 - **Browser Automation** — multi-tab browser for XSS, CSRF, auth flows
@@ -264,12 +269,12 @@ Documentation lives in [`docs/`](docs/). Start with:
 ## Contributing
 
 Contributions to this fork are welcome — open a
-[pull request](https://github.com/pt-act/oriontrix/pulls) or
-[issue](https://github.com/pt-act/oriontrix/issues). See [`docs/contributing`](docs/contributing.mdx).
+[pull request](https://github.com/pt-act/sagaward/pulls) or
+[issue](https://github.com/pt-act/sagaward/issues). See [`docs/contributing`](docs/contributing.mdx).
 
 ## Acknowledgements
 
-Oriontrix builds on the incredible work of open-source projects like
+Sagaward builds on the incredible work of open-source projects like
 [LiteLLM](https://github.com/BerriAI/litellm), [Caido](https://github.com/caido/caido),
 [Nuclei](https://github.com/projectdiscovery/nuclei),
 [interactsh](https://github.com/projectdiscovery/interactsh),
@@ -281,3 +286,8 @@ to all of these projects' authors.
 > [!WARNING]
 > Only test apps you own or have permission to test. You are responsible for using this software
 > ethically and legally.
+
+---
+
+*Sága sees and says; Sagaward keeps the record. The strīx — "a harbinger of war and civil
+strife to men, that cries by night" — is the mother; this fork is her offspring.*

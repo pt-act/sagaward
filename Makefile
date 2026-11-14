@@ -40,14 +40,14 @@ lint:
 
 type-check:
 	@echo "🔍 Type checking with mypy..."
-	uv run mypy oriontrix/
+	uv run mypy sagaward/
 	@echo "🔍 Type checking with pyright..."
-	uv run pyright oriontrix/
+	uv run pyright sagaward/
 	@echo "✅ Type checking complete!"
 
 security:
 	@echo "🔒 Running security checks with bandit..."
-	uv run bandit -r oriontrix/ -c pyproject.toml
+	uv run bandit -r sagaward/ -c pyproject.toml
 	@echo "✅ Security checks complete!"
 
 check-all: format lint type-check security

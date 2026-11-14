@@ -9,14 +9,14 @@ from tempfile import TemporaryDirectory
 from hypothesis import given
 from hypothesis import strategies as st
 
-from oriontrix.core.inventory.models import Endpoint, Param, ReachabilityAnnotation
-from oriontrix.core.inventory.scoring import (
+from sagaward.core.inventory.models import Endpoint, Param, ReachabilityAnnotation
+from sagaward.core.inventory.scoring import (
     build_ranked_map,
     extract_signals,
     score_endpoint,
     score_signals,
 )
-from oriontrix.core.inventory.store import load_ranked_map, save_ranked_map
+from sagaward.core.inventory.store import load_ranked_map, save_ranked_map
 
 
 _ALL_SIGNALS = {

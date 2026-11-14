@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from oriontrix.report.state import ReportState, _apply_impact_gate
+from sagaward.report.state import ReportState, _apply_impact_gate
 
 
 class TestImpactGate:

@@ -44,21 +44,21 @@ _agents.function_tool = _function_tool
 sys.modules["agents"] = _agents
 sys.modules["agents.usage"] = _agents_usage
 
-from oriontrix.core.inventory.models import (  # noqa: E402
+from sagaward.core.inventory.models import (  # noqa: E402
     Endpoint,
     Param,
     ParamClassEvidence,
     RankedSurfaceMap,
     ReachabilityAnnotation,
 )
-from oriontrix.core.inventory.store import save_ranked_map  # noqa: E402
-from oriontrix.core.proposals.models import InterventionFlags  # noqa: E402
-from oriontrix.report.state import (  # noqa: E402
+from sagaward.core.inventory.store import save_ranked_map  # noqa: E402
+from sagaward.core.proposals.models import InterventionFlags  # noqa: E402
+from sagaward.report.state import (  # noqa: E402
     ReportState,
     get_global_report_state,
     set_global_report_state,
 )
-from oriontrix.tools.inventory.tools import propose_vulnerability_investigation  # noqa: E402
+from sagaward.tools.inventory.tools import propose_vulnerability_investigation  # noqa: E402
 
 
 class _FakeContext:

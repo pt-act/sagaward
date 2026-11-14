@@ -18,7 +18,7 @@ class TestInterfaceUtilsImportHygiene:
         # Docker daemon will fail at call time, not import time.
         sys.modules["docker"] = None  # type: ignore[assignment]
         try:
-            from oriontrix.interface.utils import (
+            from sagaward.interface.utils import (
                 infer_target_type,
                 rewrite_localhost_targets,
                 validate_repo_url,
@@ -38,16 +38,16 @@ class TestInterfaceUtilsImportHygiene:
             assert targets[0]["details"]["target_url"] == "http://host-gateway:8080"
         finally:
             sys.modules.pop("docker", None)
-            # Remove any partially-imported oriontrix modules so later tests get a clean state.
+            # Remove any partially-imported sagaward modules so later tests get a clean state.
             for name in list(sys.modules):
-                if name.startswith("oriontrix"):
+                if name.startswith("sagaward"):
                     del sys.modules[name]
 
     def test_check_docker_connection_lazily_imports_docker(self) -> None:
         """check_docker_connection must import docker only when called."""
         from docker.errors import DockerException
 
-        from oriontrix.interface import utils as interface_utils
+        from sagaward.interface import utils as interface_utils
 
         # docker is not imported at module load time.
         assert "docker" not in getattr(interface_utils, "__dict__", {})
@@ -60,15 +60,15 @@ class TestInterfaceUtilsImportHygiene:
             interface_utils.check_docker_connection()
 
     def test_net_package_imports_without_docker(self) -> None:
-        """The new oriontrix.core.net package must be pure and importable without docker."""
+        """The new sagaward.core.net package must be pure and importable without docker."""
         sys.modules["docker"] = None  # type: ignore[assignment]
         try:
-            from oriontrix.core import net
+            from sagaward.core import net
 
             assert hasattr(net, "normalize_url")
             assert hasattr(net, "is_internal_target")
         finally:
             sys.modules.pop("docker", None)
             for name in list(sys.modules):
-                if name.startswith("oriontrix"):
+                if name.startswith("sagaward"):
                     del sys.modules[name]

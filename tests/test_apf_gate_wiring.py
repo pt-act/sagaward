@@ -19,10 +19,10 @@ if TYPE_CHECKING:
 
     import pytest
 
-from oriontrix.core.provenance import ProvenanceLedger
-from oriontrix.core.provenance.gate import ReasonCode
-from oriontrix.runtime import exec_guard
-from oriontrix.runtime.exec_guard import authorize, guarded_invoke, rule_id
+from sagaward.core.provenance import ProvenanceLedger
+from sagaward.core.provenance.gate import ReasonCode
+from sagaward.runtime import exec_guard
+from sagaward.runtime.exec_guard import authorize, guarded_invoke, rule_id
 
 
 class _Result:
@@ -99,7 +99,7 @@ class TestEnforcementPoint:
         command = DENY_COMMAND.format(home=_home(tmp_path))
         ctx = _Ctx({"provenance": ProvenanceLedger()})
 
-        with caplog.at_level(logging.INFO, logger="oriontrix.runtime.exec_guard"):
+        with caplog.at_level(logging.INFO, logger="sagaward.runtime.exec_guard"):
             outcome = asyncio.run(authorize(ctx, command))
 
         assert outcome.allowed is False
@@ -127,7 +127,7 @@ class TestEnforcementPoint:
         command = """php -r 'system("id");'"""
         ctx = _Ctx({"provenance": ProvenanceLedger()})
 
-        with caplog.at_level(logging.INFO, logger="oriontrix.runtime.exec_guard"):
+        with caplog.at_level(logging.INFO, logger="sagaward.runtime.exec_guard"):
             outcome = asyncio.run(authorize(ctx, command))
 
         assert outcome.allowed is True
@@ -148,7 +148,7 @@ class TestEnforcementPoint:
         coordinator = _Coordinator()
         ctx = _Ctx({"provenance": ProvenanceLedger(), "coordinator": coordinator})
 
-        with caplog.at_level(logging.CRITICAL, logger="oriontrix.runtime.exec_guard"):
+        with caplog.at_level(logging.CRITICAL, logger="sagaward.runtime.exec_guard"):
             outcomes = [asyncio.run(authorize(ctx, "ls -la")) for _ in range(3)]
 
         assert all(outcome.allowed is False for outcome in outcomes)
@@ -196,7 +196,7 @@ class TestSkipAuditAndPins:
         for raw, skip_class in payloads.items():
             ctx = _Ctx({"provenance": ProvenanceLedger()})
             invoke = _Invoked("EXECUTED")
-            with caplog.at_level(logging.WARNING, logger="oriontrix.runtime.exec_guard"):
+            with caplog.at_level(logging.WARNING, logger="sagaward.runtime.exec_guard"):
                 result = asyncio.run(guarded_invoke(ctx, raw, invoke))
 
             assert result == "EXECUTED", "the skip proceeds — refusal was rejected"
@@ -206,7 +206,7 @@ class TestSkipAuditAndPins:
             caplog.clear()
 
     def test_the_miss_rule_derivation_is_total(self) -> None:
-        from oriontrix.core.provenance.gate import (  # noqa: PLC0415 - local to the cell
+        from sagaward.core.provenance.gate import (  # noqa: PLC0415 - local to the cell
             Action,
             ActionDecision,
             ActionKind,

@@ -1,6 +1,6 @@
-# Contributing to Oriontrix
+# Contributing to Sagaward
 
-Thank you for your interest in contributing to Oriontrix! This guide will help you get started with development and contributions.
+Thank you for your interest in contributing to Sagaward! This guide will help you get started with development and contributions.
 
 ## 🚀 Development Setup
 
@@ -15,8 +15,8 @@ Thank you for your interest in contributing to Oriontrix! This guide will help y
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/pt-act/oriontrix.git
-   cd oriontrix
+   git clone https://github.com/pt-act/sagaward.git
+   cd sagaward
    ```
 
 2. **Install development dependencies**
@@ -30,18 +30,18 @@ Thank you for your interest in contributing to Oriontrix! This guide will help y
 
 3. **Configure your LLM provider**
    ```bash
-   export ORIONTRIX_LLM="openai/gpt-5.4"
+   export SAGAWARD_LLM="openai/gpt-5.4"
    export LLM_API_KEY="your-api-key"
    ```
 
-4. **Run Oriontrix in development mode**
+4. **Run Sagaward in development mode**
    ```bash
-   uv run oriontrix --target https://example.com
+   uv run sagaward --target https://example.com
    ```
 
 ## 📚 Contributing Skills
 
-Skills are specialized knowledge packages that enhance agent capabilities. See [oriontrix/skills/README.md](oriontrix/skills/README.md) for detailed guidelines.
+Skills are specialized knowledge packages that enhance agent capabilities. See [sagaward/skills/README.md](sagaward/skills/README.md) for detailed guidelines.
 
 ### Quick Guide
 
@@ -83,7 +83,7 @@ Skills are specialized knowledge packages that enhance agent capabilities. See [
 When reporting bugs, please include:
 
 - Python version and OS
-- Oriontrix version
+- Sagaward version
 - LLMs being used
 - Full error traceback
 - Steps to reproduce
@@ -101,7 +101,7 @@ We welcome feature ideas! Please:
 
 ## 🤝 Community
 
-- **Issues**: [GitHub Issues](https://github.com/pt-act/oriontrix/issues)
+- **Issues**: [GitHub Issues](https://github.com/pt-act/sagaward/issues)
 
 ## ✨ Recognition
 

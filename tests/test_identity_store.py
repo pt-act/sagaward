@@ -10,13 +10,13 @@ from unittest import TestCase
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from oriontrix.core.identity import (
+from sagaward.core.identity import (
     Freshness,
     Identity,
     IdentityStore,
     redact_identity,
 )
-from oriontrix.core.identity.store import identity_store_path
+from sagaward.core.identity.store import identity_store_path
 
 
 _ALPHANUMERIC = st.characters(whitelist_categories=("L", "N"))

@@ -1,4 +1,4 @@
-"""Tests for oriontrix.runtime.egress_proxy — TPROXY, DNS, and scope helpers.
+"""Tests for sagaward.runtime.egress_proxy — TPROXY, DNS, and scope helpers.
 
 Covers wire-format DNS parsing, NXDOMAIN generation, IP classification,
 scope matching, and TPROXY/REDIRECT original-destination resolution.
@@ -12,8 +12,8 @@ import struct
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
-from oriontrix.core.govern.scope import ActionClass, ScopeRule
-from oriontrix.runtime.egress_proxy import (
+from sagaward.core.govern.scope import ActionClass, ScopeRule
+from sagaward.runtime.egress_proxy import (
     _classify_action,
     _get_original_dst,
     _is_internal_ip,
@@ -144,7 +144,7 @@ class TestClassifyAction(TestCase):
 class TestGetOriginalDst(TestCase):
     """_get_original_dst in TPROXY vs REDIRECT modes."""
 
-    @patch("oriontrix.runtime.egress_proxy._tproxy_enabled", new=True)
+    @patch("sagaward.runtime.egress_proxy._tproxy_enabled", new=True)
     def test_tproxy_mode_uses_getsockname(self) -> None:
         mock_sock = MagicMock()
         mock_sock.getsockname.return_value = ("93.184.216.34", 80)
@@ -154,7 +154,7 @@ class TestGetOriginalDst(TestCase):
         mock_sock.getsockname.assert_called_once()
         mock_sock.getsockopt.assert_not_called()
 
-    @patch("oriontrix.runtime.egress_proxy._tproxy_enabled", new=False)
+    @patch("sagaward.runtime.egress_proxy._tproxy_enabled", new=False)
     def test_redirect_mode_uses_ioctl(self) -> None:
         mock_sock = MagicMock()
         # SO_ORIGINAL_DST response: family=AF_INET, port=443, ip=1.2.3.4
@@ -177,7 +177,7 @@ class TestArgumentParsing(TestCase):
     def test_default_bind(self) -> None:
         parser = argparse.ArgumentParser()
         parser.add_argument("--port", type=int, default=48081)
-        parser.add_argument("--socket", default="/run/oriontrix/decision.sock")
+        parser.add_argument("--socket", default="/run/sagaward/decision.sock")
         parser.add_argument("--bind", default="127.0.0.1")
         args = parser.parse_args([])
         self.assertEqual(args.bind, "127.0.0.1")
@@ -186,7 +186,7 @@ class TestArgumentParsing(TestCase):
     def test_custom_bind(self) -> None:
         parser = argparse.ArgumentParser()
         parser.add_argument("--port", type=int, default=48081)
-        parser.add_argument("--socket", default="/run/oriontrix/decision.sock")
+        parser.add_argument("--socket", default="/run/sagaward/decision.sock")
         parser.add_argument("--bind", default="127.0.0.1")
         args = parser.parse_args(["--bind", "0.0.0.0", "--port", "12345"])
         self.assertEqual(args.bind, "0.0.0.0")

@@ -7,9 +7,9 @@ from pathlib import Path
 from typing import Any
 from unittest import IsolatedAsyncioTestCase
 
-from oriontrix.core.logic import BusinessLogicOrchestrator
-from oriontrix.core.logic.context import ExecutionContext
-from oriontrix.core.logic.models import (
+from sagaward.core.logic import BusinessLogicOrchestrator
+from sagaward.core.logic.context import ExecutionContext
+from sagaward.core.logic.models import (
     BusinessLogicModel,
     ConfirmedViolation,
     FlowModel,
@@ -17,8 +17,8 @@ from oriontrix.core.logic.models import (
     Step,
     UnconfirmedHypothesis,
 )
-from oriontrix.core.logic.store import BusinessLogicStore
-from oriontrix.core.paths import logic_model_path
+from sagaward.core.logic.store import BusinessLogicStore
+from sagaward.core.paths import logic_model_path
 
 
 class _MockContext(ExecutionContext):

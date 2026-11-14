@@ -29,16 +29,16 @@ from typing import Any
 
 import pytest
 
-from oriontrix.core.provenance import LedgerMiss, ProvenanceEnvelope, ProvenanceLedger
-from oriontrix.core.provenance.content import digest
-from oriontrix.core.provenance.write_hook import wrap_apply_patch_tool
-from oriontrix.runtime.provenance_bringup import bring_up_provenance
-from oriontrix.runtime.provenance_exec import (
+from sagaward.core.provenance import LedgerMiss, ProvenanceEnvelope, ProvenanceLedger
+from sagaward.core.provenance.content import digest
+from sagaward.core.provenance.write_hook import wrap_apply_patch_tool
+from sagaward.runtime.provenance_bringup import bring_up_provenance
+from sagaward.runtime.provenance_exec import (
     OBSERVATION_BINARIES,
     SHELL_NAMES,
     observation_exec,
 )
-from oriontrix.runtime.provenance_reconcile import (
+from sagaward.runtime.provenance_reconcile import (
     hash_paths,
     reconcile_scratch,
     verify_patch_writes,
@@ -256,7 +256,7 @@ class TestChannelContract:
     ) -> None:
         session = _ChannelSession(_probe_backend({}), _ModelShell([b""]))
 
-        with caplog.at_level(logging.DEBUG, logger="oriontrix.runtime.provenance_exec"):
+        with caplog.at_level(logging.DEBUG, logger="sagaward.runtime.provenance_exec"):
             asyncio.run(
                 observation_exec(
                     session,
@@ -273,7 +273,7 @@ class TestChannelContract:
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        from oriontrix.runtime import provenance_exec as mod  # noqa: PLC0415 - call-site patch
+        from sagaward.runtime import provenance_exec as mod  # noqa: PLC0415 - call-site patch
 
         monkeypatch.setattr(mod, "OBSERVATION_BINARIES", ("/home/pentester/.local/bin/python3",))
         session = _ChannelSession(_probe_backend({}), _ModelShell([b""]))
