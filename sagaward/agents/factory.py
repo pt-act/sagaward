@@ -19,7 +19,7 @@ from sagaward.agents.funnel_emit import wrap_harness_tool
 from sagaward.agents.prompt import render_system_prompt
 from sagaward.core.provenance.surfacing import wrap_surfacing_tools
 from sagaward.core.provenance.write_hook import configure_filesystem_tools
-from sagaward.runtime.exec_guard import guarded_invoke
+from sagaward.runtime.exec_guard import guarded_invoke, guarded_stdin_invoke
 from sagaward.runtime.provenance_reconcile import verify_patch_writes
 from sagaward.tools.agents_graph.tools import (
     agent_finish,
@@ -295,7 +295,13 @@ def _wrap_write_stdin(tool: FunctionTool) -> FunctionTool:
             parsed["chars"] = _decode_chars_escape(parsed["chars"])
             raw_input = json.dumps(parsed)
         try:
-            return await invoke_tool(ctx, raw_input)
+            # S-3: the stdin payload is a command; it passes the same gate as exec.
+            return await guarded_stdin_invoke(
+                ctx,
+                raw_input,
+                lambda: invoke_tool(ctx, raw_input),
+                tool_name=tool.name,
+            )
         except ValidationError as exc:
             return _format_validation_error(tool.name, exc)
 

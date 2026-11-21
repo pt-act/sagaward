@@ -103,6 +103,28 @@ def exec_workdir(raw_input: str) -> str | None:
     return workdir if isinstance(workdir, str) and workdir else None
 
 
+def stdin_command_text(raw_input: str) -> tuple[str | None, str | None]:
+    """``(chars, None)`` or ``(None, skip_class)`` for a ``write_stdin`` payload.
+
+    ``write_stdin`` feeds a string to a running shell's stdin; that string is a
+    command in exactly the sense ``exec_command``'s ``command`` is. The payload
+    shape differs (``chars``, not ``command``), so it gets its own reader but the
+    same skip classes and the same authorize path (S-3).
+    """
+    try:
+        parsed = json.loads(raw_input)
+    except json.JSONDecodeError:
+        return None, "non_json"
+    if not isinstance(parsed, dict):
+        return None, "not_object"
+    chars = parsed.get("chars")
+    if chars is None:
+        return None, "missing_chars"
+    if not isinstance(chars, str):
+        return None, "non_string_chars"
+    return chars, None
+
+
 def rule_id(action: Action, decision: ActionDecision) -> str:
     """The rule row this decision came from (the refusal names it)."""
     if decision.reason is ReasonCode.PROVENANCE_MISS:
@@ -332,6 +354,33 @@ async def guarded_invoke(
     return result
 
 
+async def guarded_stdin_invoke(
+    ctx: Any,
+    raw_input: str,
+    invoke: Callable[[], Awaitable[Any]],
+    *,
+    tool_name: str = "write_stdin",
+) -> Any:
+    """Authorize a stdin payload, then write it (S-3).
+
+    The write_stdin payloads are commands: they are fed to a running shell's
+    stdin. They pass through the same ``command_or_skip`` skip classes and the
+    same ``authorize`` decision as the exec payloads, so a tainted command cannot
+    reach the shell through the stdin door. A denied payload returns the refusal
+    before anything is written.
+    """
+    chars, skip = stdin_command_text(raw_input)
+    if chars is not None:
+        outcome = await authorize(ctx, chars, exec_workdir(raw_input))
+        if not outcome.allowed:
+            logger.info("%s refused by %s", tool_name, outcome.rule)
+            return outcome.refusal
+    elif skip is not None:
+        # Undecidable payload: the pass is recorded, not silent (round 25, B3).
+        _emit_skip_audit(skip, raw_input)
+    return await invoke()
+
+
 __all__ = [
     "GATE_FAILURE_LIMIT",
     "GateOutcome",
@@ -339,6 +388,8 @@ __all__ = [
     "exec_command_text",
     "exec_workdir",
     "guarded_invoke",
+    "guarded_stdin_invoke",
     "rule_id",
+    "stdin_command_text",
     "target_spellings",
 ]

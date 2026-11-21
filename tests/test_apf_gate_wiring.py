@@ -182,6 +182,61 @@ class TestEnforcementPoint:
         assert session.calls == [], "no observation traffic for a denied action"
 
 
+class TestStdinGate:
+    """S-3: the write_stdin payloads pass the same gate as the exec payloads."""
+
+    def test_stdin_reader_extracts_chars_and_skip_classes(self) -> None:
+        from sagaward.runtime.exec_guard import stdin_command_text
+
+        assert stdin_command_text('{"chars": "ls -la"}') == ("ls -la", None)
+        assert stdin_command_text("not json") == (None, "non_json")
+        assert stdin_command_text("[1]") == (None, "not_object")
+        assert stdin_command_text('{"session_id": 1}') == (None, "missing_chars")
+        assert stdin_command_text('{"chars": 42}') == (None, "non_string_chars")
+
+    def test_a_tainted_stdin_payload_never_writes(self, tmp_path: Path) -> None:
+        from sagaward.runtime.exec_guard import guarded_stdin_invoke
+
+        command = DENY_COMMAND.format(home=_home(tmp_path))
+        ctx = _Ctx({"provenance": ProvenanceLedger()})
+        invoke = _Invoked()
+
+        result = asyncio.run(
+            guarded_stdin_invoke(ctx, json.dumps({"chars": command}), invoke)
+        )
+
+        assert isinstance(result, str)
+        assert result.startswith("apf-action-gate: DENY")
+        assert invoke.calls == 0
+
+    def test_an_allowed_stdin_payload_writes(self, tmp_path: Path) -> None:
+        from sagaward.runtime.exec_guard import guarded_stdin_invoke
+
+        command = ALLOW_COMMAND.format(home=_home(tmp_path))
+        ctx = _Ctx({"provenance": ProvenanceLedger()})
+        invoke = _Invoked("WRITTEN")
+
+        result = asyncio.run(
+            guarded_stdin_invoke(ctx, json.dumps({"chars": command}), invoke)
+        )
+
+        assert result == "WRITTEN"
+        assert invoke.calls == 1
+        assert ctx.context["apf_gate"]["allowed"] == 1
+
+    def test_an_unreadable_stdin_payload_is_audited(self, caplog: Any) -> None:
+        from sagaward.runtime.exec_guard import guarded_stdin_invoke
+
+        ctx = _Ctx({"provenance": ProvenanceLedger()})
+        invoke = _Invoked("WRITTEN")
+        with caplog.at_level(logging.WARNING, logger="sagaward.runtime.exec_guard"):
+            result = asyncio.run(guarded_stdin_invoke(ctx, "not json", invoke))
+
+        assert result == "WRITTEN"
+        assert invoke.calls == 1
+        assert "apf_gate SKIP non_json" in caplog.text
+
+
 class TestSkipAuditAndPins:
     """Round-26: the skip is audited, the derivation table is pinned, and the
     escalation counter's reset semantics are fixed in a cell."""
