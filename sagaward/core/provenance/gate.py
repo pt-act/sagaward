@@ -61,6 +61,7 @@ class ReasonCode(StrEnum):
 
     ALLOWED = "allowed"
     TAINTED_EXECUTABLE = "tainted_executable"
+    UNLISTED_INTERPRETER = "unlisted_interpreter"
     QUARANTINE_REFERENCE = "quarantine_reference"
     TAINTED_CHMOD = "tainted_chmod"
     TAINTED_PACKAGE_SOURCE = "tainted_package_source"
@@ -113,6 +114,14 @@ class Action(BaseModel):
     members: tuple[Action, ...] = ()
     targets: tuple[ResolvedTarget, ...] = ()
     interpreter_input: tuple[ResolvedTarget, ...] = ()
+    # S-4: every non-flag argument that names an existing path, regardless of the
+    # head. The interpreter allow-table only probed operands for declared
+    # interpreters, so an unlisted interpreter's script operand was invisible.
+    named_paths: tuple[ResolvedTarget, ...] = ()
+    # The effective head and whether it is an explicitly allow-listed interpreter.
+    # A tainted named path is denied unless this is true (deny-by-default).
+    head: str = ""
+    interpreter_allowlisted: bool = False
     artifact_sources: tuple[ArtifactSource, ...] = ()
     index_tokens: tuple[str, ...] = ()
     cwd: Path | None = None
@@ -156,6 +165,7 @@ class PolicyRule(BaseModel):
 POLICY_RULES: tuple[PolicyRule, ...] = (
     PolicyRule(rule="R1", verdict="DENY", reason=ReasonCode.QUARANTINE_REFERENCE),
     PolicyRule(rule="R2", verdict="DENY", reason=ReasonCode.TAINTED_EXECUTABLE),
+    PolicyRule(rule="R2'", verdict="DENY", reason=ReasonCode.UNLISTED_INTERPRETER),
     PolicyRule(rule="R3", verdict="DENY", reason=ReasonCode.PROVENANCE_MISS),
     PolicyRule(rule="R3.8", verdict="DENY", reason=ReasonCode.UNTREATED_INTERPRETER_INPUT),
     PolicyRule(rule="R3.5", verdict="DENY", reason=ReasonCode.UNRESOLVED_QUARANTINE_REF),
@@ -248,6 +258,22 @@ def _exec_target_tainted(ledger: ProvenanceLedger, action: Action) -> bool:
     return any(_is_tainted(_ref_state(ledger, t)) for t in action.targets)
 
 
+def _named_path_tainted_unlisted(ledger: ProvenanceLedger, action: Action) -> bool:
+    """S-4: a tainted path named by a command whose head is not allow-listed.
+
+    The interpreter allow-table only probes operands for declared interpreters, so
+    an unlisted interpreter (``tclsh``, ``deno``, ``Rscript``) could execute a
+    tainted script the gate never saw. The deny-by-default rule closes that: any
+    command that names a tainted path is denied unless its head is an explicitly
+    allow-listed interpreter (whose targets the existing R2/R3 rules already
+    decide). A merely unrecorded path is not denied here — only taint is — so a
+    legitimate read of an unrecorded file keeps its existing posture.
+    """
+    if action.interpreter_allowlisted:
+        return False
+    return any(_is_tainted(_ref_state(ledger, t)) for t in action.named_paths)
+
+
 def _exec_target_miss(ledger: ProvenanceLedger, action: Action) -> bool:
     return any(
         t.resolution is Resolution.PATH and _is_miss(_ref_state(ledger, t)) for t in action.targets
@@ -298,6 +324,8 @@ def _decide_member(  # noqa: PLR0911, PLR0912 - the fixed R1-R9 rule table is th
     if kind is ActionKind.EXECUTE:
         if _exec_target_tainted(ledger, action):
             return _deny(ReasonCode.TAINTED_EXECUTABLE, kind)
+        if _named_path_tainted_unlisted(ledger, action):
+            return _deny(ReasonCode.UNLISTED_INTERPRETER, kind)
         if _exec_target_miss(ledger, action):
             return _deny(ReasonCode.PROVENANCE_MISS, kind)
         if _interpreter_input_untreated(ledger, action):

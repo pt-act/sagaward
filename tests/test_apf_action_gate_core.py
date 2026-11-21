@@ -74,6 +74,7 @@ def test_policy_rules_ordered_and_allow_only_tail() -> None:
     assert names == [
         "R1",
         "R2",
+        "R2'",
         "R3",
         "R3.8",
         "R3.5",
@@ -91,6 +92,52 @@ def test_policy_rules_ordered_and_allow_only_tail() -> None:
     ]
     allows = [r.rule for r in POLICY_RULES if r.verdict == "ALLOW"]
     assert allows == ["R8", "R9"]
+
+
+def test_r2p_a_tainted_named_path_is_denied_for_an_unlisted_head() -> None:
+    """S-4: an unlisted interpreter naming a tainted path is denied by default."""
+    named = target("/workspace/scratch/x")
+    decision = decide_action(
+        action(
+            ActionKind.EXECUTE,
+            named_paths=(named,),
+            head="tclsh",
+            interpreter_allowlisted=False,
+        ),
+        ledger_with(tainted=True),
+    )
+    assert (decision.verdict, decision.reason) == ("DENY", ReasonCode.UNLISTED_INTERPRETER)
+
+
+def test_r2p_an_allowlisted_head_keeps_the_r2_posture() -> None:
+    """S-4: an allow-listed interpreter's tainted target is decided by R2."""
+    named = target("/workspace/scratch/x")
+    decision = decide_action(
+        action(
+            ActionKind.EXECUTE,
+            targets=(named,),
+            named_paths=(named,),
+            head="sh",
+            interpreter_allowlisted=True,
+        ),
+        ledger_with(tainted=True),
+    )
+    assert (decision.verdict, decision.reason) == ("DENY", ReasonCode.TAINTED_EXECUTABLE)
+
+
+def test_r2p_an_unrecorded_named_path_is_not_denied_by_the_new_rule() -> None:
+    """S-4: only taint denies; an unrecorded path keeps its existing posture."""
+    named = target("/workspace/scratch/x")
+    decision = decide_action(
+        action(
+            ActionKind.EXECUTE,
+            named_paths=(named,),
+            head="tclsh",
+            interpreter_allowlisted=False,
+        ),
+        ProvenanceLedger(),
+    )
+    assert decision.verdict == "ALLOW"
 
 
 def test_official_index_hosts_constant() -> None:

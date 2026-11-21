@@ -981,6 +981,34 @@ def _flag_payload(argv: Sequence[str], flag: str) -> str:
     return flag
 
 
+def _named_path_probes(argv: Sequence[str], cwd: Path | None) -> list[_Probe]:
+    """Every non-flag argument that names an existing path, regardless of the head (S-4).
+
+    The interpreter allow-table only probes operands for declared interpreters, so
+    an unlisted interpreter's script operand was invisible. This reads every
+    non-flag argument as a path candidate; the gate denies a *tainted* one unless
+    the head is an allow-listed interpreter. A command-flag body is a command, not
+    a path, so it is skipped.
+    """
+    probes: list[_Probe] = []
+    pending_command = False
+    for arg in argv[1:]:
+        if pending_command:
+            pending_command = False
+            continue
+        if arg in _COMMAND_FLAGS:
+            pending_command = True
+            continue
+        if arg.startswith("-") or arg in {"-", "--"}:
+            continue
+        if "$" in arg or "`" in arg:
+            continue
+        probe = _probe(arg, cwd)
+        if probe.exists:
+            probes.append(probe)
+    return probes
+
+
 # ---------------------------------------------------------------------------
 # Index-selection evidence (C1 / 1c-2).
 # ---------------------------------------------------------------------------
@@ -1791,6 +1819,9 @@ class _Classifier:
             input_probes=input_probes,
             targets=targets,
             interpreter_input=interpreter_input,
+            named_paths=[probe.resolved for probe in _named_path_probes(argv, cwd)],
+            head=effective_head or head,
+            interpreter_allowlisted=_is_interpreter(effective_head or head),
             sources=sources,
             index_tokens=index_tokens,
             install=install,
@@ -2355,6 +2386,9 @@ def _build_action(
     input_probes: list[_Probe],
     targets: list[ResolvedTarget],
     interpreter_input: list[ResolvedTarget],
+    named_paths: list[ResolvedTarget],
+    head: str,
+    interpreter_allowlisted: bool,
     sources: list[ArtifactSource],
     index_tokens: tuple[str, ...],
     install: bool,
@@ -2392,6 +2426,9 @@ def _build_action(
         members=tuple(members),
         targets=_dedupe(targets),
         interpreter_input=_dedupe(interpreter_input),
+        named_paths=_dedupe(named_paths),
+        head=head,
+        interpreter_allowlisted=interpreter_allowlisted,
         artifact_sources=tuple(sources),
         index_tokens=index_tokens,
         cwd=context.cwd,
