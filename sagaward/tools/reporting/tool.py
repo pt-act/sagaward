@@ -503,13 +503,17 @@ async def create_vulnerability_report(
             - Padding ``fix_before`` with surrounding context lines
               that aren't part of the fix.
             - Duplicating the same change across multiple locations.
-        evidence_class: Evidence backing the finding. One of ``"diff"``
-            (cross-identity/response differential), ``"callback"``
+        evidence_class: A *claim* about the evidence backing the finding. One of
+            ``"diff"`` (cross-identity/response differential), ``"callback"``
             (correlated OOB callback), ``"reachability"`` (concrete
-            route→handler→sink path), or ``"none"`` (default). A value of
-            ``"none"`` down-grades the reported severity to
-            ``info``/unconfirmed; the finding stays visible and the
-            original CVSS severity is recorded on the report.
+            route→handler→sink path), or ``"none"`` (default). The claim is
+            **corroborated against the recorded harness verdicts**: the effective
+            class is the class of the most recent confirmed harness run recorded
+            for this finding (matched by ``proposal_id``, else by ``endpoint``).
+            A claim with no corroborating verdict is filed as ``"none"``, which
+            down-grades the reported severity to ``info``/unconfirmed; the finding
+            stays visible and the original CVSS severity is recorded on the report.
+            Naming evidence cannot forge it — only a harness that actually ran can.
         proposal_id: Optional id returned by
             ``propose_vulnerability_investigation``. Pass it to link this
             confirmed finding back to its proposal in the funnel (glass-box).
@@ -526,6 +530,20 @@ async def create_vulnerability_report(
         if isinstance(names, dict):
             raw_agent_name = names.get(agent_id)
             agent_name = raw_agent_name if isinstance(raw_agent_name, str) else None
+
+    # S-1: the evidence class is a function of the recorded harness verdict, not a
+    # free string. Resolve the claim against the funnel before anything is filed; an
+    # uncorroborated claim becomes "none" and the impact gate down-grades the finding.
+    from sagaward.report.state import get_global_report_state  # noqa: PLC0415
+
+    report_state = get_global_report_state()
+    if report_state is None:
+        effective_evidence_class: str = "none"
+        evidence_note: str | None = "no report state; the evidence class cannot be corroborated"
+    else:
+        effective_evidence_class, evidence_note = report_state.resolve_evidence_class(
+            evidence_class, endpoint=endpoint, proposal_id=proposal_id
+        )
 
     result = await _do_create(
         title=title,
@@ -544,8 +562,10 @@ async def create_vulnerability_report(
         code_locations=code_locations,
         agent_id=agent_id,
         agent_name=agent_name,
-        evidence_class=evidence_class,
+        evidence_class=effective_evidence_class,
         artifacts=artifacts,
         proposal_id=proposal_id,
     )
+    if evidence_note is not None and isinstance(result, dict):
+        result["evidence_note"] = evidence_note
     return json.dumps(result, ensure_ascii=False, default=str)

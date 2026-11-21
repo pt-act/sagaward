@@ -390,6 +390,42 @@ class ReportState:
         else:
             return record.proposal_id
 
+    def resolve_evidence_class(
+        self,
+        claimed: EvidenceClass,
+        *,
+        endpoint: str | None = None,
+        proposal_id: str | None = None,
+    ) -> tuple[EvidenceClass, str | None]:
+        """Bind a claimed evidence class to the recorded harness verdicts (S-1).
+
+        The report tool's ``evidence_class`` is a *claim*, not a fact. The effective
+        class is the evidence class of the most recent **confirmed** harness verdict
+        recorded against the matching proposal; a claim with no corroborating verdict
+        resolves to ``"none"`` (the impact gate then down-grades the finding to
+        ``info``). Naming evidence therefore cannot forge it: only a harness that
+        actually ran and recorded a confirmed verdict can raise the class.
+
+        Returns ``(effective_class, note)``. ``note`` is ``None`` when the claim was
+        corroborated, otherwise a short explanation for the tool's return payload.
+        """
+        record: ProposalRecord | None = None
+        if proposal_id is not None:
+            record = self.funnel_log.get(proposal_id)
+        if record is None:
+            record = self._match_recordable_proposal(endpoint)
+        if record is None:
+            return "none", "no recorded harness verdict matches this finding"
+        for verdict in reversed(record.verdicts):
+            if verdict.verdict == "confirmed" and verdict.evidence_class != "none":
+                if claimed != verdict.evidence_class:
+                    return verdict.evidence_class, (
+                        f"claimed evidence_class '{claimed}' is not backed by the recorded "
+                        f"verdict; using the recorded '{verdict.evidence_class}'"
+                    )
+                return verdict.evidence_class, None
+        return "none", "no confirmed harness verdict is recorded for this finding"
+
     def _match_recordable_proposal(self, endpoint: str | None) -> ProposalRecord | None:
         """Best-effort single match for the emit-hook: a proposal for this endpoint.
 
