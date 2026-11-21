@@ -22,7 +22,13 @@ if TYPE_CHECKING:
 from sagaward.core.provenance import ProvenanceLedger
 from sagaward.core.provenance.gate import ReasonCode
 from sagaward.runtime import exec_guard
-from sagaward.runtime.exec_guard import authorize, guarded_invoke, rule_id
+from sagaward.runtime.exec_guard import (
+    authorize,
+    guarded_invoke,
+    guarded_stdin_invoke,
+    rule_id,
+    stdin_command_text,
+)
 
 
 class _Result:
@@ -186,8 +192,6 @@ class TestStdinGate:
     """S-3: the write_stdin payloads pass the same gate as the exec payloads."""
 
     def test_stdin_reader_extracts_chars_and_skip_classes(self) -> None:
-        from sagaward.runtime.exec_guard import stdin_command_text
-
         assert stdin_command_text('{"chars": "ls -la"}') == ("ls -la", None)
         assert stdin_command_text("not json") == (None, "non_json")
         assert stdin_command_text("[1]") == (None, "not_object")
@@ -195,8 +199,6 @@ class TestStdinGate:
         assert stdin_command_text('{"chars": 42}') == (None, "non_string_chars")
 
     def test_a_tainted_stdin_payload_never_writes(self, tmp_path: Path) -> None:
-        from sagaward.runtime.exec_guard import guarded_stdin_invoke
-
         command = DENY_COMMAND.format(home=_home(tmp_path))
         ctx = _Ctx({"provenance": ProvenanceLedger()})
         invoke = _Invoked()
@@ -210,8 +212,6 @@ class TestStdinGate:
         assert invoke.calls == 0
 
     def test_an_allowed_stdin_payload_writes(self, tmp_path: Path) -> None:
-        from sagaward.runtime.exec_guard import guarded_stdin_invoke
-
         command = ALLOW_COMMAND.format(home=_home(tmp_path))
         ctx = _Ctx({"provenance": ProvenanceLedger()})
         invoke = _Invoked("WRITTEN")
@@ -225,8 +225,6 @@ class TestStdinGate:
         assert ctx.context["apf_gate"]["allowed"] == 1
 
     def test_an_unreadable_stdin_payload_is_audited(self, caplog: Any) -> None:
-        from sagaward.runtime.exec_guard import guarded_stdin_invoke
-
         ctx = _Ctx({"provenance": ProvenanceLedger()})
         invoke = _Invoked("WRITTEN")
         with caplog.at_level(logging.WARNING, logger="sagaward.runtime.exec_guard"):

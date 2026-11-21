@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - apf-isolation-impl
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -e ".[dev]"
+      # The review's scope (S-1..S-5): the provenance/gate modules and the report
+      # tool. The rest of the tree carries pre-existing lint debt that is tracked
+      # separately; gating it here would make the workflow red on unrelated code.
+      - run: ruff check sagaward/core/provenance/ sagaward/runtime/exec_guard.py sagaward/report/state.py sagaward/tools/reporting/tool.py sagaward/config/settings.py
+      - run: ruff format --check sagaward/core/provenance/ sagaward/runtime/exec_guard.py sagaward/report/state.py sagaward/tools/reporting/tool.py sagaward/config/settings.py
+      - run: mypy sagaward/core/provenance/ sagaward/runtime/exec_guard.py sagaward/report/state.py sagaward/tools/reporting/tool.py
+
+  pytest:
+    name: pytest (${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.12']
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install -e ".[dev]"
+      - name: APF battery
+        run: pytest tests/test_apf_*.py -q
+      - name: Full suite
+        run: pytest -q

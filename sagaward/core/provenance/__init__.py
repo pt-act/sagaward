@@ -20,7 +20,11 @@ from sagaward.core.provenance.ledger import (
     label_for_suffix,
 )
 from sagaward.core.provenance.model import Label, ProvenanceEnvelope, Source
-from sagaward.core.provenance.paths import DEFAULT_QUARANTINE_DIR, QUARANTINE_DIR, QUARANTINE_DIR_ENV
+from sagaward.core.provenance.paths import (
+    DEFAULT_QUARANTINE_DIR,
+    QUARANTINE_DIR,
+    QUARANTINE_DIR_ENV,
+)
 from sagaward.core.provenance.reconcile import (
     RECONCILE_COMMAND,
     RECONCILE_MAX_DEPTH,
@@ -79,12 +83,12 @@ __all__ = [
     "label_for_suffix",
     "model_authored_envelope",
     "parse_executable_listing",
+    "parse_inventory_pairs",
     "paths_in_patch",
     "paths_in_scratch_listing",
     "record_model_authored",
     "record_scratch_artifacts",
     "resolve_workspace_path",
-    "parse_inventory_pairs",
     "seed_image_inventory",
     "seed_inventory",
     "seed_paths",

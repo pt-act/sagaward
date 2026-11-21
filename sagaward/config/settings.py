@@ -36,9 +36,7 @@ class LlmSettings(BaseSettings):
         ),
     )
     reasoning_effort: ReasoningEffort = Field(default="high", alias="SAGAWARD_REASONING_EFFORT")
-    force_reasoning_effort: bool = Field(
-        default=False, alias="SAGAWARD_FORCE_REASONING_EFFORT"
-    )
+    force_reasoning_effort: bool = Field(default=False, alias="SAGAWARD_FORCE_REASONING_EFFORT")
     timeout: int = Field(default=300, alias="LLM_TIMEOUT")
 
 

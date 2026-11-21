@@ -6,9 +6,13 @@ import json
 import logging
 import re
 from pathlib import PurePosixPath
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
 from agents import RunContextWrapper, function_tool
+
+
+if TYPE_CHECKING:
+    from sagaward.report.state import EvidenceClass
 
 
 logger = logging.getLogger(__name__)
@@ -317,7 +321,7 @@ async def _do_create(  # noqa: PLR0912
 
 
 @function_tool(timeout=180, strict_mode=False)
-async def create_vulnerability_report(
+async def create_vulnerability_report(  # noqa: PLR0917 - the tool schema is the contract
     ctx: RunContextWrapper,
     title: str,
     description: str,
@@ -534,7 +538,7 @@ async def create_vulnerability_report(
     # S-1: the evidence class is a function of the recorded harness verdict, not a
     # free string. Resolve the claim against the funnel before anything is filed; an
     # uncorroborated claim becomes "none" and the impact gate down-grades the finding.
-    from sagaward.report.state import get_global_report_state  # noqa: PLC0415
+    from sagaward.report.state import get_global_report_state
 
     report_state = get_global_report_state()
     if report_state is None:
@@ -542,7 +546,7 @@ async def create_vulnerability_report(
         evidence_note: str | None = "no report state; the evidence class cannot be corroborated"
     else:
         effective_evidence_class, evidence_note = report_state.resolve_evidence_class(
-            evidence_class, endpoint=endpoint, proposal_id=proposal_id
+            cast("EvidenceClass", evidence_class), endpoint=endpoint, proposal_id=proposal_id
         )
 
     result = await _do_create(

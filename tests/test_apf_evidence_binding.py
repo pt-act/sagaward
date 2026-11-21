@@ -57,6 +57,7 @@ from sagaward.report.state import (  # noqa: E402
     get_global_report_state,
     set_global_report_state,
 )
+from sagaward.tools.reporting.tool import create_vulnerability_report  # noqa: E402
 
 
 # The report tool imports ``sagaward.report.dedupe`` lazily; stub it so the test does
@@ -177,8 +178,6 @@ class TestResolveEvidenceClass:
 
 class TestReportToolBinding:
     def test_forged_claim_is_filed_as_none(self, state: ReportState) -> None:
-        from sagaward.tools.reporting.tool import create_vulnerability_report
-
         result = json.loads(
             asyncio.run(
                 create_vulnerability_report(
@@ -196,8 +195,6 @@ class TestReportToolBinding:
         assert state.vulnerability_reports[-1]["evidence_class"] == "none"
 
     def test_recorded_verdict_backs_the_claim(self, state: ReportState) -> None:
-        from sagaward.tools.reporting.tool import create_vulnerability_report
-
         _record_confirmed(state, "https://example.test/api/users", "diff")
         result = json.loads(
             asyncio.run(

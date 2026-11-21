@@ -183,7 +183,7 @@ def _emit_funnel() -> None:
                 verdict="unconfirmed",
                 evidence_class="none",
             )
-    except Exception:  # noqa: BLE001 - audit must never change a verdict
+    except Exception:
         logger.debug("apf_gate audit emit failed", exc_info=True)
 
 
@@ -323,7 +323,7 @@ async def _escalate(context: dict[str, Any], failures: int) -> None:
         return
     try:
         await coordinator.kill_switch(reason)
-    except Exception:  # noqa: BLE001 - escalation must never raise into the tool
+    except Exception:
         logger.debug("apf_gate escalation failed", exc_info=True)
 
 

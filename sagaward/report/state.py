@@ -185,7 +185,7 @@ class ReportState:
             except (OSError, RuntimeError) as exc:
                 logger.warning("failed to hydrate funnel log: %s", exc)
 
-    def add_vulnerability_report(
+    def add_vulnerability_report(  # noqa: PLR0917 - the report schema is the contract
         self,
         title: str,
         severity: str,
@@ -648,4 +648,3 @@ def litellm_cost_callback(
         report_state.record_observed_llm_cost(cost)
     except Exception:
         logger.exception("Failed to record observed LiteLLM cost")
-
