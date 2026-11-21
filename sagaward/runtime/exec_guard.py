@@ -6,6 +6,22 @@ reaches the container; an ALLOW proceeds exactly as before (exec, then the
 provenance reconcilers). A gate failure refuses — the same fail-closed direction
 as the observation channel — and repeated failures escalate.
 
+**Which filesystem the classifier reads (S-5).** ``classify`` resolves every
+path with ``Path.resolve``/``Path.stat`` in the *host* process, not inside the
+container. The container's path spellings (``/workspace/...``, ``/etc/...``) are
+therefore read as the host sees the same spelling:
+
+* a path that exists only in the container is ``UNRESOLVED`` on the host — the
+  fail-closed shape, never a silent allow;
+* a path that exists on the host resolves to the *host's* inode, which may differ
+  from the container's file at the same spelling.
+
+This is the documented boundary, not an accident: the decision runs with no
+interpreter shared with the subject, so it cannot ask the container. The
+integration test ``tests/test_apf_classifier_filesystem.py`` runs ``classify``
+against a live container's paths to show the divergence (integration-class;
+skipped when no container runtime is available).
+
 The decision runs in the host process with no interpreter shared with the
 subject: the same posture the observation channel carries, applied one layer up.
 

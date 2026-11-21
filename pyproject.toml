@@ -63,6 +63,9 @@ dev = [
 
 [tool.pytest.ini_options]
 asyncio_default_fixture_loop_scope = "function"
+markers = [
+    "integration: requires a live container runtime (skipped when unavailable)",
+]
 
 [build-system]
 requires = ["hatchling"]
