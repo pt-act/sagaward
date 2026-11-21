@@ -3,7 +3,11 @@
 # module/build caches never reach the runtime image. The resulting binaries are
 # statically linked and copied into the final stage.
 # ---------------------------------------------------------------------------
-FROM kalilinux/kali-rolling:latest AS gobuilder
+# S-6/S-7: the base is a build-time ARG so a locally built/pinned Kali base can
+# replace the rolling tag without editing the file. The default stays the rolling
+# tag (the project's base); pin it in CI with --build-arg KALI_BASE=...@sha256:...
+ARG KALI_BASE=kalilinux/kali-rolling:latest
+FROM ${KALI_BASE} AS gobuilder
 
 RUN apt-get update && \
     apt-get install -y kali-archive-keyring && \
@@ -11,18 +15,20 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends golang-go git ca-certificates
 
 ENV GOBIN=/out/bin
+# S-6/S-7: every Go tool is pinned to a released module version; `@latest` made
+# the builder stage non-reproducible.
 RUN mkdir -p /out/bin && \
-    go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest && \
-    go install -v github.com/projectdiscovery/katana/cmd/katana@latest && \
-    go install -v github.com/projectdiscovery/cvemap/cmd/vulnx@latest && \
-    go install -v github.com/jaeles-project/gospider@latest && \
-    go install -v github.com/projectdiscovery/interactsh/cmd/interactsh-client@latest && \
-    go install -v golang.org/x/vuln/cmd/govulncheck@latest
+    go install -v github.com/projectdiscovery/httpx/cmd/httpx@v1.12.0 && \
+    go install -v github.com/projectdiscovery/katana/cmd/katana@v1.8.0 && \
+    go install -v github.com/projectdiscovery/cvemap/cmd/vulnx@v1.0.0 && \
+    go install -v github.com/jaeles-project/gospider@v1.1.6 && \
+    go install -v github.com/projectdiscovery/interactsh/cmd/interactsh-client@v1.4.1 && \
+    go install -v golang.org/x/vuln/cmd/govulncheck@v1.10.0
 
 # ---------------------------------------------------------------------------
 # Runtime stage
 # ---------------------------------------------------------------------------
-FROM kalilinux/kali-rolling:latest
+FROM ${KALI_BASE}
 
 LABEL description="AI Agent Penetration Testing Environment with Comprehensive Automated Tools"
 
@@ -41,6 +47,9 @@ RUN useradd -m -s /bin/bash pentester && \
 RUN mkdir -p /home/pentester/tools /app/certs && \
     chown -R pentester:pentester /app/certs /home/pentester/tools
 
+# S-6/S-7: Kali rolling is a moving snapshot, so apt versions cannot be pinned
+# without a snapshot mirror; the base image digest (KALI_BASE) is the pin. The
+# curl/npm/pipx/pip downloads below are pinned by version and checksum.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     wget curl git vim nano unzip tar \
@@ -87,7 +96,9 @@ USER root
 RUN cp /app/certs/ca.crt /usr/local/share/ca-certificates/ca.crt && \
     update-ca-certificates
 
-RUN curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh
+# S-6/S-7: pin the uv version; the installer verifies the release's own checksum.
+ARG UV_VERSION=0.13.9
+RUN curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin UV_VERSION="${UV_VERSION}" sh
 
 USER pentester
 WORKDIR /tmp
@@ -97,19 +108,19 @@ COPY --from=gobuilder --chown=pentester:pentester /out/bin/ /home/pentester/go/b
 
 RUN nuclei -update-templates
 
-RUN pipx install arjun && \
-    pipx install dirsearch && \
+RUN pipx install arjun==2.2.7 && \
+    pipx install dirsearch==0.5.0 && \
     pipx inject dirsearch 'setuptools<81' && \
-    pipx install wafw00f
+    pipx install wafw00f==2.4.2
 
 ENV NPM_CONFIG_PREFIX=/home/pentester/.npm-global
 RUN mkdir -p /home/pentester/.npm-global
 
-RUN npm install -g retire@latest && \
-    npm install -g eslint@latest && \
-    npm install -g js-beautify@latest && \
-    npm install -g @ast-grep/cli@latest && \
-    npm install -g tree-sitter-cli@latest && \
+RUN npm install -g retire@6.1.1 && \
+    npm install -g eslint@10.15.0 && \
+    npm install -g js-beautify@2.0.3 && \
+    npm install -g @ast-grep/cli@0.51.3 && \
+    npm install -g tree-sitter-cli@0.27.2 && \
     npm install -g agent-browser@0.26.0 && \
     npm cache clean --force && \
     # ast-grep ships two identical binaries (`ast-grep` and `sg`); dedupe (~52MB)
@@ -145,8 +156,19 @@ RUN set -eux; \
         else \
             repo_url="https://github.com/tree-sitter/${repo}.git"; \
         fi; \
+        case "$repo" in \
+            tree-sitter-java) repo_ref="e10607b45ff745f5f876bfa3e94fbcc6b44bdc11" ;; \
+            tree-sitter-javascript) repo_ref="58404d8cf191d69f2674a8fd507bd5776f46cb11" ;; \
+            tree-sitter-python) repo_ref="26855eabccb19c6abf499fbc5b8dc7cc9ab8bc64" ;; \
+            tree-sitter-go) repo_ref="2346a3ab1bb3857b48b29d779a1ef9799a248cd7" ;; \
+            tree-sitter-bash) repo_ref="a06c2e4415e9bc0346c6b86d401879ffb44058f7" ;; \
+            tree-sitter-json) repo_ref="254c42a6476413b776221e03982ac8ae159eeb72" ;; \
+            tree-sitter-yaml) repo_ref="a1c4812a73ec5e089de8e441fdea3a921e8d5079" ;; \
+            tree-sitter-typescript) repo_ref="75b3874edb2dc714fb1fd77a32013d0f8699989f" ;; \
+        esac; \
         if [ ! -d "${TS_PARSER_DIR}/${repo}" ]; then \
-            git clone --depth 1 "${repo_url}" "${TS_PARSER_DIR}/${repo}"; \
+            git clone "${repo_url}" "${TS_PARSER_DIR}/${repo}"; \
+            git -C "${TS_PARSER_DIR}/${repo}" checkout "${repo_ref}"; \
         fi; \
     done; \
     if [ -d "${TS_PARSER_DIR}/tree-sitter-typescript/typescript" ]; then \
@@ -164,11 +186,15 @@ RUN set -eux; \
     mv "${TMP_CFG}" "${TS_CONFIG}"
 
 WORKDIR /home/pentester/tools
+# S-6/S-7: pin each clone to a commit so the tools do not drift under the build.
 RUN git clone https://github.com/aravind0x7/JS-Snooper.git && \
+    git -C JS-Snooper checkout 932704cbce1a04ebe89a558f395a6e474e01b15b && \
     chmod +x JS-Snooper/js_snooper.sh && \
     git clone https://github.com/xchopath/jsniper.sh.git && \
+    git -C jsniper.sh checkout 65d0b508dc88e6de3dfe6ac60e6d89eca22be686 && \
     chmod +x jsniper.sh/jsniper.sh && \
     git clone https://github.com/ticarpi/jwt_tool.git && \
+    git -C jwt_tool checkout 3bc7407cf2222d6a821dcc19c776e5a1b1cb9a9b && \
     chmod +x jwt_tool/jwt_tool.py
 
 USER root
@@ -181,15 +207,20 @@ USER root
 ARG TRUFFLEHOG_VERSION=3.99.2
 RUN curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /home/pentester/.local/bin "v${TRUFFLEHOG_VERSION}" && \
     chown -R pentester:pentester /home/pentester/.local
+# S-6/S-7: the release tag was resolved from `releases/latest` at build time, so
+# the binary changed under the build. Pin the version and verify the tarball.
+ARG GITLEAKS_VERSION=8.30.1
+ARG GITLEAKS_SHA256_X64=551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+ARG GITLEAKS_SHA256_ARM64=e4a487ee7ccd7d3a7f7ec08657610aa3606637dab924210b3aee62570fb4b080
 RUN set -eux; \
     ARCH="$(uname -m)"; \
     case "$ARCH" in \
-        x86_64) GITLEAKS_ARCH="x64" ;; \
-        aarch64|arm64) GITLEAKS_ARCH="arm64" ;; \
+        x86_64) GITLEAKS_ARCH="x64"; GITLEAKS_SHA256="${GITLEAKS_SHA256_X64}" ;; \
+        aarch64|arm64) GITLEAKS_ARCH="arm64"; GITLEAKS_SHA256="${GITLEAKS_SHA256_ARM64}" ;; \
         *) echo "Unsupported architecture: $ARCH" >&2; exit 1 ;; \
     esac; \
-    TAG="$(curl -fsSLI -o /dev/null -w '%{url_effective}' https://github.com/gitleaks/gitleaks/releases/latest | sed 's#.*/##')"; \
-    curl -fsSL "https://github.com/gitleaks/gitleaks/releases/download/${TAG}/gitleaks_${TAG#v}_linux_${GITLEAKS_ARCH}.tar.gz" -o /tmp/gitleaks.tgz; \
+    curl -fsSL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_${GITLEAKS_ARCH}.tar.gz" -o /tmp/gitleaks.tgz; \
+    echo "${GITLEAKS_SHA256}  /tmp/gitleaks.tgz" | sha256sum -c -; \
     tar -xzf /tmp/gitleaks.tgz -C /tmp; \
     install -m 0755 /tmp/gitleaks /usr/local/bin/gitleaks; \
     rm -f /tmp/gitleaks /tmp/gitleaks.tgz
@@ -218,11 +249,22 @@ RUN apt-get install -y wapiti
 # would decode a malicious `Content-Encoding: br` response with the vulnerable
 # code. Install the fixed Debian packages until Kali picks them up.
 ARG BROTLI_DEB_VERSION=1.2.0-4.1
+ARG BROTLI_SHA256_LIBBROTLI1_AMD64=2d58db32250aa535e27c62e98451debd43b539aa026066806432e842d5b56c00
+ARG BROTLI_SHA256_PYTHON3_BROTLI_AMD64=3b62003bf956337d2ae672b40174cd303e740ea0e013d8405e503a4b5abaf061
+ARG BROTLI_SHA256_LIBBROTLI1_ARM64=ff90055f0c42dc39fdf8f12d7f68c7da32da2ec90d0a49eb39e80b764988ee02
+ARG BROTLI_SHA256_PYTHON3_BROTLI_ARM64=0923c03d9293e45cd8f744f1de5103b97603f0ae0c54b275d8f03ebf87b29750
 RUN set -eux; \
     ARCH="$(dpkg --print-architecture)"; \
+    case "$ARCH" in \
+        amd64) LIBBROTLI1_SHA256="${BROTLI_SHA256_LIBBROTLI1_AMD64}"; PYTHON3_BROTLI_SHA256="${BROTLI_SHA256_PYTHON3_BROTLI_AMD64}" ;; \
+        arm64) LIBBROTLI1_SHA256="${BROTLI_SHA256_LIBBROTLI1_ARM64}"; PYTHON3_BROTLI_SHA256="${BROTLI_SHA256_PYTHON3_BROTLI_ARM64}" ;; \
+        *) echo "Unsupported architecture: $ARCH" >&2; exit 1 ;; \
+    esac; \
     for pkg in libbrotli1 python3-brotli; do \
         curl -fsSL "https://deb.debian.org/debian/pool/main/b/brotli/${pkg}_${BROTLI_DEB_VERSION}_${ARCH}.deb" -o "/tmp/${pkg}.deb"; \
     done; \
+    echo "${LIBBROTLI1_SHA256}  /tmp/libbrotli1.deb" | sha256sum -c -; \
+    echo "${PYTHON3_BROTLI_SHA256}  /tmp/python3-brotli.deb" | sha256sum -c -; \
     dpkg -i /tmp/libbrotli1.deb /tmp/python3-brotli.deb; \
     rm -f /tmp/libbrotli1.deb /tmp/python3-brotli.deb; \
     test "$(dpkg-query -W -f='${Version}' libbrotli1)" = "${BROTLI_DEB_VERSION}"; \
@@ -265,9 +307,9 @@ RUN chmod -R a+rX /opt/opengrep-rules/sagaward
 
 USER pentester
 
-RUN pipx install bandit
+RUN pipx install bandit==1.9.4
 
-RUN npm install -g jshint
+RUN npm install -g jshint@2.13.6
 
 USER root
 
@@ -286,15 +328,18 @@ ENV VIRTUAL_ENV="/app/.venv"
 WORKDIR /app
 
 ARG CAIDO_VERSION=0.56.0
+ARG CAIDO_SHA256_X86_64=1bc13f1ad558cd333924890d9d09b73f1cdf6726b7855265cd4c4ddece0211d3
+ARG CAIDO_SHA256_AARCH64=5fe8c37ac0435ce5924014cf035902686051be86831824744e435636a62d3689
 RUN ARCH=$(uname -m) && \
     if [ "$ARCH" = "x86_64" ]; then \
-        CAIDO_ARCH="x86_64"; \
+        CAIDO_ARCH="x86_64"; CAIDO_SHA256="${CAIDO_SHA256_X86_64}"; \
     elif [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then \
-        CAIDO_ARCH="aarch64"; \
+        CAIDO_ARCH="aarch64"; CAIDO_SHA256="${CAIDO_SHA256_AARCH64}"; \
     else \
         echo "Unsupported architecture: $ARCH" && exit 1; \
     fi && \
     wget -O caido-cli.tar.gz "https://caido.download/releases/v${CAIDO_VERSION}/caido-cli-v${CAIDO_VERSION}-linux-${CAIDO_ARCH}.tar.gz" && \
+    echo "${CAIDO_SHA256}  caido-cli.tar.gz" | sha256sum -c - && \
     tar -xzf caido-cli.tar.gz && \
     chmod +x caido-cli && \
     rm caido-cli.tar.gz && \
@@ -307,9 +352,9 @@ RUN mkdir -p /workspace && chown -R pentester:pentester /workspace /app
 
 USER pentester
 RUN python3 -m venv /app/.venv && \
-    /app/.venv/bin/pip install --no-cache-dir caido-sdk-client && \
+    /app/.venv/bin/pip install --no-cache-dir caido-sdk-client==0.3.2 && \
     /app/.venv/bin/pip install --no-cache-dir \
-        requests httpx beautifulsoup4 lxml pyjwt cryptography && \
+        requests==2.34.2 httpx==0.28.1 beautifulsoup4==4.15.0 lxml==6.1.3 pyjwt==2.15.1 cryptography==50.0.2 && \
     /app/.venv/bin/pip install --no-cache-dir -r /home/pentester/tools/jwt_tool/requirements.txt && \
     printf '%s\n' \
         '#!/bin/bash' \

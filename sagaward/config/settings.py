@@ -46,7 +46,7 @@ class RuntimeSettings(BaseSettings):
     model_config = _BASE_CONFIG
 
     image: str = Field(
-        default="ghcr.io/pt-act/sagaward-sandbox:1.4.0",
+        default="sagaward-sandbox:latest",
         alias="SAGAWARD_IMAGE",
     )
     backend: str = Field(default="docker", alias="SAGAWARD_RUNTIME_BACKEND")

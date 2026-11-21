@@ -65,4 +65,5 @@ def test_settings_declare_the_public_prefix() -> None:
     assert 'alias="SAGAWARD_LLM"' in source
     assert 'alias="SAGAWARD_IMAGE"' in source
     assert 'alias="SAGAWARD_TELEMETRY"' in source
-    assert "ghcr.io/pt-act/sagaward-sandbox" in source
+    # S-6/S-7: the default is the locally built image, not the hosted one.
+    assert 'default="sagaward-sandbox:latest"' in source
