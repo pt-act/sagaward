@@ -171,15 +171,27 @@ def _http_probe(port: int, path: str, method: str = "GET",
 
 # ─── SURFACE MAP (passed to glm-5.2 as proposer context) ──────────────────────
 
-def _build_surface_map(pair: BV2PPair) -> str:
-    """Minimal surface map for the proposer. PM constructs this — not the model."""
+def _build_surface_map(pair: BV2PPair, observed: dict | None = None) -> str:
+    """Minimal surface map for the proposer. PM constructs this — not the model.
+
+    ``observed`` is the live container's probe result. It is what makes the two
+    sides of a pair distinguishable: the vuln and patched containers answer the
+    same probe differently, so the baseline sees a different surface on each side
+    instead of the identical prompt twice (the S-2 defect).
+    """
+    observed_line = ""
+    if observed is not None:
+        observed_line = (
+            f"Observed behaviour: HTTP {observed.get('status', 0)}; "
+            f"access {'granted' if observed.get('gained') else 'denied'}\n"
+        )
     return f"""Target application surface map:
 Endpoint: {pair.vuln_endpoint}
 CVE class: {pair.cve}
 Primitive type: {pair.primitive}
 Description: {pair.title}
 Evidence harness available: {pair.disposer_evidence}
-
+{observed_line}
 You are a security researcher proposing vulnerability hypotheses.
 """
 
@@ -224,93 +236,123 @@ Respond with JSON only:
 
 # ─── DETERMINISTIC HARNESS (PM runs, not the model) ───────────────────────────
 
+# Per-fixture probe specs — derived from inspecting each app.py / core.py directly.
+# Module-level so the FP-arm probe and the differential harness share one grammar.
+PROBE_SPECS: dict[str, dict] = {
+    # IDOR: alice tries to update bob's memory (mem-2 owned by bob, caller=alice)
+    "openwebui-idor-memories": {
+        "path": "/api/v1/memories/mem-2/update",
+        "method": "POST",
+        "headers": {"x-user-id": "alice"},
+        "body": {"content": "injected-by-alice"},
+        "setup": "/reset",
+    },
+    # BFLA: alice (org-A) tries to read inv-2 (org-B invoice — cross-org)
+    "bfla-invoices": {
+        "path": "/api/v1/invoices/inv-2",
+        "method": "GET",
+        "headers": {"x-user-id": "alice"},
+        "body": None,
+        "setup": "/reset",
+    },
+    # IDOR: alice tries to download file-c3d4 (owned by bob)
+    "idor-files-download": {
+        "path": "/api/v1/files/file-c3d4/download",
+        "method": "GET",
+        "headers": {"x-user-id": "alice"},
+        "body": None,
+        "setup": "/reset",
+    },
+    # Auth bypass: non-admin alice accesses /api/admin/config
+    "auth-bypass-admin-panel": {
+        "path": "/api/admin/config",
+        "method": "GET",
+        "headers": {"x-user-id": "alice"},
+        "body": None,
+        "setup": "/reset",
+    },
+    # Auth bypass: use alice's token (tok-abc) to reset BOB's password (cross-account)
+    "auth-bypass-password-reset": {
+        "path": "/api/v1/auth/reset-password",
+        "method": "POST",
+        "headers": {},
+        "body": {"token": "tok-abc", "username": "bob", "new_password": "hacked"},
+        "setup": "/reset",
+    },
+    # Mass assignment: alice injects is_admin=True via nested fields dict
+    "mass-assign-profile": {
+        "path": "/api/v1/users/alice/profile",
+        "method": "PATCH",
+        "headers": {},
+        "body": {"fields": {"name": "Alice", "bio": "test", "is_admin": True}},
+        "setup": "/reset",
+    },
+    # SQLi: UNION injection payload — vuln returns privileged rows, patched returns empty
+    "sqli-product-search": {
+        "path": "/api/v1/products/search?q=x%27+UNION+SELECT+1--",
+        "method": "GET",
+        "headers": {},
+        "body": None,
+        "setup": None,
+    },
+    # BFLA arena: bob (no gpt-4o access) triggers arena with bypass_filter=True
+    "openwebui-bfla-arena-model": {
+        "path": "/api/v1/arena/complete",
+        "method": "POST",
+        "headers": {"x-user-id": "bob"},
+        "body": {"model": "gpt-4o", "prompt": "test", "bypass_filter": True},
+        "setup": "/reset",
+    },
+    # BFLA KB upload: bob uploads file with knowledge_id=kb-restricted (admin-only)
+    "openwebui-bfla-kb-upload": {
+        "path": "/api/v1/files/",
+        "method": "POST",
+        "headers": {"x-user-id": "bob"},
+        "body": {"file_id": "f-evil", "filename": "evil.pdf", "knowledge_id": "kb-restricted"},
+        "setup": "/reset",
+    },
+    # Path traversal: double-encoded traversal bypasses decode-cap guard
+    "openwebui-path-traversal-proxy": {
+        "path": "/proxy/static/%252e%252e%252fetc%252fpasswd",
+        "method": "GET",
+        "headers": {},
+        "body": None,
+        "setup": None,
+    },
+}
+
+
+def _probe_endpoint(pair: BV2PPair, port: int) -> dict:
+    """Probe one container with the pair's spec; return its observed behaviour.
+
+    This is the single-container read the FP-arm needs: the differential harness
+    compares two containers, so a patched-vs-patched comparison has no differential
+    and can never fire. The FP-arm question is instead "does the patched container
+    still grant the access the vulnerability requires?" — a direct probe that can
+    fail when the patch is incomplete.
+    """
+    spec = PROBE_SPECS.get(pair.pair_id)
+    if not spec:
+        return {"status": 0, "gained": False, "body": {}, "error": "no probe spec"}
+    if spec.get("setup"):
+        _http_probe(port, spec["setup"], "POST")
+    status, body = _http_probe(
+        port, spec["path"], spec["method"], spec["headers"], spec["body"]
+    )
+    if pair.pair_id == "mass-assign-profile":
+        gained = body.get("is_admin") is True
+    elif pair.pair_id == "sqli-product-search":
+        results = body.get("results", [])
+        gained = len(results) > 0 and any(
+            "password" in str(r).lower() or "admin" in str(r).lower() for r in results
+        )
+    else:
+        gained = status in (200, 201)
+    return {"status": status, "gained": gained, "body": body}
+
+
 def _run_diff_harness(pair: BV2PPair, port_vuln: int, port_patched: int) -> dict:
     """P2 differential harness — per-fixture accurate probes. PM-designed, deterministic."""
-
-    # Per-fixture probe specs — derived from inspecting each app.py / core.py directly
-    PROBE_SPECS = {
-        # IDOR: alice tries to update bob's memory (mem-2 owned by bob, caller=alice)
-        "openwebui-idor-memories": {
-            "path": "/api/v1/memories/mem-2/update",
-            "method": "POST",
-            "headers": {"x-user-id": "alice"},
-            "body": {"content": "injected-by-alice"},
-            "setup": "/reset",
-        },
-        # BFLA: alice (org-A) tries to read inv-2 (org-B invoice — cross-org)
-        "bfla-invoices": {
-            "path": "/api/v1/invoices/inv-2",
-            "method": "GET",
-            "headers": {"x-user-id": "alice"},
-            "body": None,
-            "setup": "/reset",
-        },
-        # IDOR: alice tries to download file-c3d4 (owned by bob)
-        "idor-files-download": {
-            "path": "/api/v1/files/file-c3d4/download",
-            "method": "GET",
-            "headers": {"x-user-id": "alice"},
-            "body": None,
-            "setup": "/reset",
-        },
-        # Auth bypass: non-admin alice accesses /api/admin/config
-        "auth-bypass-admin-panel": {
-            "path": "/api/admin/config",
-            "method": "GET",
-            "headers": {"x-user-id": "alice"},
-            "body": None,
-            "setup": "/reset",
-        },
-        # Auth bypass: use alice's token (tok-abc) to reset BOB's password (cross-account)
-        "auth-bypass-password-reset": {
-            "path": "/api/v1/auth/reset-password",
-            "method": "POST",
-            "headers": {},
-            "body": {"token": "tok-abc", "username": "bob", "new_password": "hacked"},
-            "setup": "/reset",
-        },
-        # Mass assignment: alice injects is_admin=True via nested fields dict
-        "mass-assign-profile": {
-            "path": "/api/v1/users/alice/profile",
-            "method": "PATCH",
-            "headers": {},
-            "body": {"fields": {"name": "Alice", "bio": "test", "is_admin": True}},
-            "setup": "/reset",
-        },
-        # SQLi: UNION injection payload — vuln returns privileged rows, patched returns empty
-        "sqli-product-search": {
-            "path": "/api/v1/products/search?q=x%27+UNION+SELECT+1--",
-            "method": "GET",
-            "headers": {},
-            "body": None,
-            "setup": None,
-        },
-        # BFLA arena: bob (no gpt-4o access) triggers arena with bypass_filter=True
-        "openwebui-bfla-arena-model": {
-            "path": "/api/v1/arena/complete",
-            "method": "POST",
-            "headers": {"x-user-id": "bob"},
-            "body": {"model": "gpt-4o", "prompt": "test", "bypass_filter": True},
-            "setup": "/reset",
-        },
-        # BFLA KB upload: bob uploads file with knowledge_id=kb-restricted (admin-only)
-        "openwebui-bfla-kb-upload": {
-            "path": "/api/v1/files/",
-            "method": "POST",
-            "headers": {"x-user-id": "bob"},
-            "body": {"file_id": "f-evil", "filename": "evil.pdf", "knowledge_id": "kb-restricted"},
-            "setup": "/reset",
-        },
-        # Path traversal: double-encoded traversal bypasses decode-cap guard
-        "openwebui-path-traversal-proxy": {
-            "path": "/proxy/static/%252e%252e%252fetc%252fpasswd",
-            "method": "GET",
-            "headers": {},
-            "body": None,
-            "setup": None,
-        },
-    }
-
     spec = PROBE_SPECS.get(pair.pair_id)
     if not spec:
         return {
@@ -473,11 +515,16 @@ def run_pair(pair: BV2PPair) -> PairResult:
         cid_vuln, port_vuln = _start_fixture(pair, vuln_mode=True)
         cid_patch, port_patch = _start_fixture(pair, vuln_mode=False)
 
-        surface_map = _build_surface_map(pair)
+        # Probe both containers once: the observed behaviour is the only signal
+        # that distinguishes the vuln side from the patched side (S-2).
+        observed_vuln = _probe_endpoint(pair, port_vuln)
+        observed_patch = _probe_endpoint(pair, port_patch)
+        surface_map_vuln = _build_surface_map(pair, observed_vuln)
+        surface_map_patch = _build_surface_map(pair, observed_patch)
 
         # ── PD MODE: glm-5.2 proposes ─────────────────────────────────────────
         print(f"  [{pair.pair_id}] glm-5.2 proposing (PD mode)...")
-        pd_prompt = PROPOSE_PROMPT_TEMPLATE.format(surface_map=surface_map)
+        pd_prompt = PROPOSE_PROMPT_TEMPLATE.format(surface_map=surface_map_vuln)
         pd_raw = _llm_call(pd_prompt, system=PROPOSE_SYSTEM)
         result.pd_proposal_raw = pd_raw
 
@@ -499,16 +546,13 @@ def run_pair(pair: BV2PPair) -> PairResult:
         # PD verdict: proposed AND harness confirmed
         pd_vuln_correct = result.pd_proposed and harness["flip_confirmed"]
         # PD PATCHED side: sagaward's FP-arm = does the HARNESS fire on the patched container?
-        # The proposer may say "vulnerable" on both surfaces — that's irrelevant.
-        # What matters is whether proposed=True AND harness confirmed on the PATCHED side.
-        # We already ran the harness against both containers; harness on patched is always
-        # deterministic (no flip) — but we need to verify the *full pipeline* doesn't fire.
-        # sagaward_pd_correct_patch = True iff harness did NOT confirm on patched side.
-        # Since harness is run against BOTH containers in _run_harness, we need a patched probe.
-        print(f"  [{pair.pair_id}] running harness on PATCHED container (FP-arm check)...")
-        harness_patch = _run_harness(pair, port_patch, port_patch)  # both ports = patched only
-        pd_patch_confirmed = harness_patch["flip_confirmed"]  # should always be False
-        pd_patch_correct = not pd_patch_confirmed  # correct = harness does NOT fire on patched
+        # A patched-vs-patched differential has no differential and can never fire, so
+        # the old check could not fail (S-2). The FP-arm question is instead whether the
+        # patched container still grants the access the vulnerability requires — a direct
+        # single-container probe that can fail when the patch is incomplete.
+        print(f"  [{pair.pair_id}] probing PATCHED container (FP-arm check)...")
+        pd_patch_confirmed = observed_patch["gained"]
+        pd_patch_correct = not pd_patch_confirmed  # correct = the patch withholds access
 
         result.sagaward_pd_correct_vuln = pd_vuln_correct
         result.sagaward_pd_correct_patch = pd_patch_correct
@@ -519,7 +563,7 @@ def run_pair(pair: BV2PPair) -> PairResult:
         os.environ[ABLATION_ENV_VAR] = _ENABLE_SENTINEL
         try:
             require_single_stage_ablation()  # verify gate is open
-            m4_prompt = M4_SELF_CONFIRM_PROMPT_TEMPLATE.format(surface_map=surface_map)
+            m4_prompt = M4_SELF_CONFIRM_PROMPT_TEMPLATE.format(surface_map=surface_map_vuln)
             m4_raw = _llm_call(m4_prompt, system=PROPOSE_SYSTEM)
             result.m4_proposal_raw = m4_raw
 
@@ -531,10 +575,11 @@ def run_pair(pair: BV2PPair) -> PairResult:
                 result.error += f" | M4 parse error: {e}"
                 return result
 
-            # M4 patched side: IDENTICAL surface description (no "patched" label hint)
-            # The only difference is the live app behind the port; M4 sees the same endpoint description
+            # M4 patched side: the patched container's own observed surface. The two
+            # sides now differ (the patch withholds access), so the baseline can fail
+            # on the patched side instead of answering the identical prompt twice (S-2).
             m4_patch_prompt = M4_SELF_CONFIRM_PROMPT_TEMPLATE.format(
-                surface_map=surface_map
+                surface_map=surface_map_patch
             )
             m4_patch_raw = _llm_call(m4_patch_prompt, system=PROPOSE_SYSTEM)
             result.m4_patch_proposal_raw = m4_patch_raw

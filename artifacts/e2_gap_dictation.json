@@ -122,5 +122,13 @@
     "H2a_FP_win": true,
     "H2b_FN_honest": "proposer recall gap-dependent (corpus too small for tight \u03c1)",
     "underpowered": false
+  },
+  "withdrawn": {
+    "status": "WITHDRAWN",
+    "date": "2026-11-21",
+    "finding": "S-2",
+    "reason": "The E2 harness compared the patched container with itself (_run_harness(pair, port_patch, port_patch)): a patched-vs-patched differential has no differential, so the FP-arm could never fail. The baseline (M4) also received the identical prompt for both sides, so its FP-arm measured the same input twice. The result is withdrawn until the rebuilt experiment is re-run.",
+    "rebuild": "artifacts/run_live_experiments.py",
+    "note": "The data below is retained for audit; it is not a valid result."
   }
 }
