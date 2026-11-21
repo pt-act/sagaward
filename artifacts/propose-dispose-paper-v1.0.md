@@ -26,8 +26,8 @@ small-gap patched deployments (proxy correct: 0/13; exact one-sided binomial **p
 arm is gate-neutral — strix inherits exactly the proposer's recall ceiling, with no shrinkage
 (H2b: b=0, c=1, p=1.0 — tied). Secondary findings: (1) proposal aggressiveness does not degrade
 confirmation precision at any threshold (H1, Prec_gate=1.000 throughout); (2) targeted
-proposer-side interventions lift category-specific recall without any precision cost (H3,
-Prec_gate=1.000 in all ablation conditions); (3) confirmation verdicts are invariant under five
+proposer-side interventions leave recall unchanged on this live n=13 ablation while preserving gate precision (H3,
+Prec_gate=1.000 in all conditions); (3) confirmation verdicts are invariant under five
 semantic-preserving perturbations while a single-stage proxy flips on 2/20 trials (H4).
 
 The honest contribution is asymmetric: **Propose–Dispose relocates gap-dictation from the
@@ -84,7 +84,7 @@ hallucinate an HTTP 200 response on code that returns 403.
 4. **Honest accounting of the FN limit** (§4.2). H2b: b=0, c=1 (one path-traversal FN — harness probe edge case); the FN arm is the
    proposer's recall ceiling, not escaped and not overclaimed.
 5. **Three targeted interventions** (§4.3). Control-Path, Knowledge-Path, and C1–C8 Checklist
-   lift category-specific recall with zero precision cost.
+   are evaluated as proposer-side context conditions; on the live n=13 run, none changed recall, while gate precision remained 1.000.
 
 ---
 
@@ -391,11 +391,10 @@ All LLM calls are live haiku API calls; all harness runs are against live Docker
    condition can inflate gate precision. The harness owns Prec_gate — it is structurally
    independent of what text haiku receives.
 
-3. **H3 directional claim requires a larger corpus or a weaker model.** haiku-4-5 is capable
-   enough to identify all 13 vulnerability classes from minimal description alone. The effect
-   predicted by H3 (recall drop when context is removed) is a real effect at the population
-   level, but requires either (a) harder pairs with less obvious primitives, or (b) n > 13 to
-   detect the signal. The corpus expansion backlog (PD-VAL-3) addresses this.
+3. **H3 directional claim is not observed in the live run.** haiku-4-5 identifies all 13
+   vulnerability classes from the available description alone, so removing the three context
+   streams does not reduce recall at n=13. Whether the interventions help on harder or more
+   category-balanced pairs remains open; the corpus expansion backlog (PD-VAL-3) addresses this.
 
 **Conclusion:** H3b (Prec_gate invariant to ablation) confirmed. H3 (recall reduction under
 ablation) is underpowered at n=13 with haiku-4-5 — the null result is honest and informative.
@@ -466,17 +465,17 @@ That is a harness-completeness question, not a gap-dictation question.
 
 ### 5.3 Interventions Are Recall Tools Only
 
-The E3 result where Prec_gate=1.000 holds in all four conditions — including −Control (R_prop
-drops to 0.100) — establishes the gate-neutrality corollary empirically. Interventions are
-strictly recall-side: they change what the proposer proposes but have no mechanism to change
-harness confirmation behavior. An intervention that somehow induced the harness to confirm
-without evidence would represent a gate-logic change, not an intervention effect.
+The canonical live E3 run reports Prec_gate=1.000 and overall R_prop=1.000 in all four
+conditions. This supports the gate-neutrality corollary on the observed run: changing proposer
+context did not alter confirmation precision or proposal recall at n=13. Interventions remain
+strictly recall-side in the architecture: they can change what the proposer proposes, but have
+no mechanism to make the harness confirm without evidence.
 
-This also clarifies the role of the −Control ablation's catastrophic R_prop=0.100 drop: it is
-not a precision problem. Funnel_eff stays 1.000 (every harness run on a correctly-proposed
-candidate confirms; no false positives). The harm is entirely on the recall side. Security
-operators who disable Control-Path will miss 9/10 reachability-gated vulnerabilities — not
-report 9/10 false positives.
+The earlier pre-live ablation simulation predicted category-level recall losses when context
+was removed. Those theoretical priors are not measurements and are not used here. The live
+experiment did not reproduce those losses, so the Control-Path and Knowledge-Path stories remain
+open rather than confirmed. A harder, category-balanced corpus is needed to test whether these
+interventions improve recall outside the current model-and-corpus regime.
 
 ### 5.4 The Asymmetry Is the Contribution
 
@@ -640,16 +639,11 @@ enforcement for production security.
 
 ## 9. References
 
-1. Huang et al. (2026). "Semantic Trap: The Precision–Recall Trap in Fine-Tuned LLM Vulnerability
-   Detectors." arXiv:2601.22655.
-2. Tang et al. (2026). "VulTriage: Triple-Path Context Augmentation for Pairwise Vulnerability
-   Detection." arXiv:2605.09461.
-3. Hu et al. (2025). "GPTLens: Auditing and Debugging LLM Multi-Agent Systems." In IEEE S&P /
-   Security and Privacy workshop track.
-4. Widyasari et al. (2026). "VulTrial: A Courtroom Debate Multi-Agent Framework for Vulnerability
-   Discovery." ICSE 2026.
-5. Tsai et al. (2025). "ConColl: Cascaded Confidence-Gated Multi-Agent Collaboration for Semantic
-   Code Understanding." EMNLP 2025.
+1. Huang, F., Sun, Y., Zhang, F., Yang, Z., Liu, H., & Liu, Y. (2026). "Do Fine-Tuned LLMs Understand Vulnerabilities? An Investigation into the Semantic Trap." arXiv:2601.22655.
+2. Tang, W., Zhang, X., Liu, J., Xiao, J., Xiao, X., Yang, J., Ma, Y., Liu, Z., Li, Z., Wang, Z., Luo, W., Li, Q., Wang, L., & Xiangli, P. (2026). "VulTriage: Triple-Path Context Augmentation for LLM-Based Vulnerability Detection." arXiv:2605.09461.
+3. Hu, S., Huang, T., İlhan, F., Tekin, S. F., & Liu, L. (2023). "Large language model-powered smart contract vulnerability detection: New perspectives." 2023 5th IEEE International Conference on Trust, Privacy and Security in Intelligent Systems and Applications (TPS-ISA), pp. 297–306.
+4. Widyasari, R., Weyssow, M., Irsan, I. C., Ang, H. W., Liauw, F., Ouh, E. L., Shar, L. K., Kang, H. J., & Lo, D. (2026). "Let the trial begin: A mock-court approach to vulnerability detection using LLM-based agents." ICSE 2026.
+5. Tsai, C.-N., Wang, X., Lee, C.-H., & Lin, C.-S. (2025). "A sequential multi-stage approach for code vulnerability detection via confidence- and collaboration-based decision making." EMNLP 2025, pp. 21162–21168.
 
 ---
 
@@ -704,41 +698,18 @@ reachability (2). Gap range: 0.06–0.13, all small-gap by design.
 
 ## Appendix C — E3 Category-Level Breakdown
 
-Ablation impact per C1–C8 failure category across the four intervention conditions. Values are
-R_prop per category (fraction of category-relevant B-V2P corpus proposals that reached the
-harness).
+The canonical live E3 artifact reports category-level proposal recall for the four live conditions. It contains 52 pair-level rows (13 B-V2P pairs x 4 conditions), with live model provenance and raw LLM outputs.
 
-| Condition | C3 (reachability) | C5 (stateful) | C6 (concurrency) | C7 (trust boundary) | Overall R_prop |
-|-----------|-------------------|---------------|------------------|---------------------|----------------|
-| Full | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 |
-| −Control | **0.100** | 1.000 | 1.000 | 1.000 | 0.100 |
-| −Knowledge | 1.000 | **0.900** | 1.000 | 1.000 | 0.900 |
-| −Checklist | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 |
+| Condition | C3 (reachability) | C5 (stateful) | C7 (trust boundary) | Overall R_prop |
+|-----------|-------------------|---------------|---------------------|----------------|
+| Full | 1.000 | 1.000 | 1.000 | 1.000 |
+| -Control | 1.000 | 1.000 | 1.000 | 1.000 |
+| -Knowledge | 1.000 | 1.000 | 1.000 | 1.000 |
+| -Checklist | 1.000 | 1.000 | 1.000 | 1.000 |
 
-Key observations:
+No category-level recall reduction is observed in the canonical live run. The aggregate and category fields are reported for the same 13-pair live conditions; the artifact does not support the earlier simulation-derived claims that Control-Path removal caused a 0.100 result or that Knowledge-Path removal caused a 0.900 result. Those theoretical priors were generated before live LLM calls were available and are not measurements. The pre-live simulation artifacts are quarantined as non-evidentiary and are not used by this paper.
 
-1. **Control-Path** is the critical intervention: without it, C3/reachability recall drops to
-   0.100 (−0.900). This reflects that reachability-gated vulnerabilities (SSRF, open-redirect
-   chains — 2 pairs in corpus) require explicit control-flow context to propose. Without that
-   context, the proposer treats unreachable-looking endpoints as benign.
-
-2. **Knowledge-Path** targets C5/stateful recall: drops to 0.900 (−0.100) when removed. One of
-   the stateful-dependency pairs (mass-assign-profile, gap=0.12) drops out without the CWE-prior
-   injection. The effect is small but directionally consistent.
-
-3. **Checklist** shows no impact at this corpus composition (−Checklist = Full). The C6
-   concurrency and C7 trust-boundary categories are not represented strongly enough at n=13 to
-   show a measurable effect. This is an honest null result; the checklist intervention is not
-   confirmed harmful — it is undetectably beneficial at this corpus size.
-
-4. **Prec_gate stays 1.000 in all conditions.** Including −Control, where R_prop collapses to
-   0.100 — the 10% of proposals that do reach the harness are confirmed with zero false positives.
-   Gate-neutrality is empirically confirmed under ablation.
-
-*Note:* Category assignments are based on the primary failure mode of each B-V2P pair. Multi-
-class pairs (e.g., SSRF with both reachability and callback harnesses) are counted once under
-their primary category. Live-LLM confirmatory runs would provide the definitive category R_prop
-magnitudes.
+Provenance: artifacts/e3_live.json, generated by artifacts/run_live_e1e3e4.py (producer anthropic/claude-haiku-4-5 via OpenRouter, 2026-07-25).
 
 ---
 

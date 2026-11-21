@@ -7,7 +7,7 @@
 
 **Authorship disclosure:** the paper's drafting was AI-assisted under human direction and verification; the experiments, the corpus, and the analysis are human-designed and human-verified.
 
-*Tool-naming note: the experiments ran on the platform under its former name, Strix; the platform was renamed **Sagaward** after the study's completion. The results are unaffected by the rename — the architecture, the corpus, and the harness are identical; only the tool's identity changed.*
+*Tool-naming note: the experiments ran on the platform under its former name, Strix. The platform is now **Sagaward** (the harness) and **Sága** (the agent); the rename split the harness from the agent without changing the architecture, the corpus, or the harness logic. The results are unaffected by the rename — only the tool's identity changed.*
 
 ---
 
@@ -24,11 +24,13 @@ determined by the harness hardware logic, not by how aggressively the proposer r
 
 We validate on a **Behavioral Vulnerability-to-Patch (B-V2P)** corpus of 13 containerized live
 web-application pairs at vulnerable and patched commits, deliberately biased toward small semantic
-gap (Jaccard ≈ 0.06–0.13) to stress-test gap-dictation. Our **primary finding** (H2a,
-gap-stratified paired McNemar): on the false-positive arm, Propose–Dispose is correct on all 13
-small-gap patched deployments (proxy correct: 0/13; χ²=11.077, **p≈0.0009**; producer: anthropic/claude-haiku-4-5 via OpenRouter, M4 self-confirm). The false-negative
-arm is gate-neutral — Sagaward inherits exactly the proposer's recall ceiling, with no shrinkage
-(H2b: b=0, c=1, p=1.0 — tied). Secondary findings: (1) proposal aggressiveness does not degrade
+gap (Jaccard ≈ 0.06–0.13) to stress-test gap-dictation. The **primary finding** (H2a,
+gap-stratified paired McNemar) is **WITHDRAWN**: the retained E2 run covered 10 of the 13 pairs,
+its harness compared the patched container with itself (so the FP-arm could not fail), and the
+baseline received the identical prompt for both sides. The rebuilt experiment (§4.3) is the
+precondition for any H2a claim. The false-negative arm is gate-neutral — Sagaward inherits
+exactly the proposer's recall ceiling, with no shrinkage (H2b: b=0, c=1, p=1.0 — tied).
+Secondary findings: (1) proposal aggressiveness does not degrade
 confirmation precision at any threshold (H1, Prec_gate=1.000 throughout); (2) targeted
 proposer-side interventions lift category-specific recall without any precision cost (H3,
 Prec_gate=1.000 in all ablation conditions); (3) confirmation verdicts are invariant under five
@@ -81,11 +83,13 @@ hallucinate an HTTP 200 response on code that returns 403.
 1. **The factorization argument and gate-neutrality corollary** (§2). Propose–Dispose decouples
    precision and recall structurally: raising R_prop cannot lower Prec_gate. Gap-dictation is
    relocated from the FP arm to the FN arm — the proposer's recall gap.
-2. **The B-V2P benchmark** (§3). Ten containerized web-app pairs, small-gap biased, with harness
-   types spanning differential (P2), callback/reachability (P3/P0), and SQLi.
-3. **Primary empirical result (H2a, p=0.0044)** (§4.2). FP-arm McNemar on 13 pairs confirms gap-
-   dictation escape with statistical significance.
-4. **Honest accounting of the FN limit** (§4.2). H2b: b=0, c=1 (one path-traversal FN — harness probe edge case); the FN arm is the
+2. **The B-V2P benchmark** (§3). Thirteen containerized web-app pairs, small-gap biased, with
+   harness types spanning differential (P2), callback/reachability (P3/P0), and SQLi.
+3. **The E2 result is WITHDRAWN** (§4.3). The original FP-arm McNemar (n=13, b=13, c=0) is not a
+   valid result: the harness compared the patched container with itself and the baseline received
+   the identical prompt for both sides. The rebuilt experiment is the precondition for the H2a
+   claim; the retained artefact (n=10, b=10, c=0, p≈0.0174) is marked withdrawn.
+4. **Honest accounting of the FN limit** (§4.3). H2b: b=0, c=1 (one path-traversal FN — harness probe edge case); the FN arm is the
    proposer's recall ceiling, not escaped and not overclaimed.
 5. **Three targeted interventions** (§4.3). Control-Path, Knowledge-Path, and C1–C8 Checklist
    lift category-specific recall with zero precision cost.
@@ -144,7 +148,9 @@ equals proposal recall). H2b tests this formally.
 
 All harnesses are deterministic: verdict is a function of observed HTTP semantics (status codes,
 response diffs, network events), not of model inference. No evidence class without a behavioral
-artifact.
+artifact. The evidence class is not a free parameter: the report tool binds it to the most recent
+confirmed harness verdict recorded for the finding (S-1), so an agent cannot name evidence it did
+not produce. An uncorroborated claim is filed as `none` and the impact gate down-grades it.
 
 ### 2.4 Funnel Completeness and Structural Auto-Registration
 
@@ -234,8 +240,8 @@ perturbation. Limitations of this choice are addressed in §6.
 
 For the gap-stratified paired McNemar test (H2a), we require: at least 10 discordant pairs
 (Sagaward\_correct=1, proxy\_correct=0 or vice versa) for a McNemar test to achieve adequate power
-(α=0.05, one-sided). With the full n=13 small-gap corpus and directional expectation b>c, the
-power check returned `sufficient=True` (all 13 pairs discordant on the FP arm, b=13, c=0).
+(α=0.05, one-sided). The retained E2 run covered 10 of the 13 small-gap pairs and returned
+`sufficient=True` (b=10, c=0); the result is withdrawn (§4.3) because the run could not fail.
 
 ### 3.4 Evaluation Protocol
 
@@ -315,7 +321,18 @@ maximal recall — the tradeoff is measured on the precision axis.
 *Caveat:* The endpoint universe is synthetic (10 endpoints, 2 labeled). Full empirical validation
 requires a live LLM proposal sweep over a larger real-target surface.
 
-### 4.3 E2 — Gap-Dictation (H2a/H2b) ⭐ PRIMARY RESULT
+### 4.3 E2 — Gap-Dictation (H2a/H2b) — **WITHDRAWN**
+
+> **WITHDRAWN (S-2, 2026-11-21).** The E2 result is not a valid measurement of the FP-arm. Two
+> defects made the comparison unable to fail: (1) the Sagaward arm compared the patched container
+> with itself (`_run_harness(pair, port_patch, port_patch)`), so the differential had no
+> differential and the FP-arm was always "correct"; (2) the baseline received the identical prompt
+> for both sides, so its FP-arm measured the same input twice. The rebuilt experiment
+> (`artifacts/run_live_experiments.py`) probes the patched container directly for the FP-arm and
+> builds the baseline's patched-side prompt from the patched container's own observed behaviour.
+> The retained artefact (`artifacts/e2_gap_dictation.json`, n=10, b=10, c=0, p≈0.0174) is kept for
+> audit and must not be cited until the rebuilt experiment is re-run. The arXiv submission is
+> gated behind this rebuild.
 
 #### 4.3.1 Study Design
 
@@ -324,50 +341,24 @@ correctness:
 - **FP-arm:** patched deployment — Sagaward correct iff no harness confirmation fires.
 - **FN-arm:** vuln deployment — Sagaward correct iff harness confirmation fires.
 
-Power check: n=13, sufficient=True (required discordant pairs for α=0.05 one-sided McNemar ≈ 9
+Power check: n=10, sufficient=True (required discordant pairs for α=0.05 one-sided McNemar ≈ 9
 at β=0.80).
 
-#### 4.3.2 FP-Arm Results (H2a)
+#### 4.3.2 FP-Arm Results (H2a) — WITHDRAWN
 
-All 13 patched deployments:
-
-- **Sagaward: 13/13 correct** (no false positives; harness does not fire on patched code).
-- **Proxy: 0/13 correct** (all 13 flagged as vulnerable; gap-dictation drives confidence above
-  0.5 on small-gap patched code).
-
-McNemar contingency:
-- $b$ = Sagaward correct, proxy wrong = **13**
-- $c$ = Sagaward wrong, proxy correct = **0**
-- $\chi^2 = \frac{(b-c)^2}{b+c} = \frac{169}{13} = 13.0$
-
-Using the continuity-corrected form: $\chi^2 = \frac{(|b-c|-1)^2}{b+c} = \frac{144}{13} \approx 11.077$
-
-$$\boxed{p \approx 0.0009 \quad \text{(one-sided exact binomial McNemar, } b=13, c=0 \text{)}}$$
-
-*Note: The continuity-corrected χ²=11.077 yields p≈0.0004 one-sided; the exact one-sided binomial p(X≥13 | Bin(13, 0.5))=0.000122 — the reported p≈0.0009 is the value returned by `run_live_experiments.py`. Both formulations confirm H2a at α=0.05 by a wide margin.*
-
-**H2a confirmed at p<0.05.** Sagaward escapes the FP arm on all 13 small-gap pairs. The proxy
-loses all 13 due to gap-dictation: low Jaccard distance between vuln and patched code inflates
-proxy confidence on patched deployments, triggering false alarms.
-
-**Mechanistic explanation:** The deterministic harness reads HTTP status codes, not source-code
-distance. The ownership check that prevents cross-user memory overwrite returns HTTP 403 on
-patched code; the harness observes this and withholds the `diff` evidence class. The model
-cannot override this: there is nothing to read and no evidence to fabricate.
+The retained run reported 10/10 patched deployments correct for Sagaward and 0/10 for the proxy
+(b=10, c=0, χ²=8.1, p≈0.0174). **This is not a result**: the harness compared the patched
+container with itself, so the FP-arm could not fail. The rebuilt experiment is the precondition
+for the H2a claim.
 
 #### 4.3.3 FN-Arm Results (H2b)
 
-All 13 vulnerable deployments:
+The retained run reported Sagaward 10/10 correct on the vuln side, proxy 10/10, b=0, c=0,
+p≈1.000. (The live run reported one FN on `path_traversal_proxy`; the retained artefact does not
+reproduce it.) The FN-arm reading is unaffected by the FP-arm defect: the gate adds no FN
+shrinkage, and the FN arm is the proposer's recall ceiling. The rebuilt experiment re-measures it.
 
-- **Sagaward: 12/13 correct** (harness confirmed on 12 vuln sides; 1 FN — `path_traversal_proxy` vuln container returned a URL-double-decoding edge case where FastAPI's router normalised the path before the app saw it, so the harness probe did not trigger).
-- **Proxy: 13/13 correct** (self-confirm fires on all 13 vuln sides).
-- $b = 0$, $c = 1$, $\chi^2 \approx 0.000$, $p \approx 1.000$.
-
-**H2b confirmed (honest result, with one documented FN edge case).** The single Sagaward FN is a harness-probe limitation on the `path_traversal_proxy` fixture — not a gate-logic failure. The FN arm is the proposer's recall ceiling plus harness completeness; the gate adds no further shrinkage. This is expected and reported honestly.
-
-The tied result carries an important interpretation: the gate *adds no FN shrinkage* — R_e2e
-equals R_prop exactly (gate-neutrality confirmed). The honest limit is stated plainly:
-**Sagaward escapes the FP arm; the FN arm is the proposer's recall ceiling.**
+**Sagaward escapes the FP arm by construction; the FN arm is the proposer's recall ceiling.**
 
 ### 4.4 E3 — Intervention Ablation (H3/H3b)
 
@@ -430,23 +421,20 @@ sensitivity to surface framing. **H4 confirmed.**
 
 ## 5. Analysis
 
-### 5.1 The Headline Number: b=13, c=0, χ²=11.077, p=0.0009
+### 5.1 The Headline Number Is Withdrawn
 
-The primary result of this study is not that Propose–Dispose is correct on the FP arm — that
-is structurally expected. The result is that a statistically significant sample (the first
-adequate-power corpus of small-gap B-V2P pairs, n=13) demonstrates exactly the predicted
-behavior: single-stage gap-dictation afflicts the proxy on 13/13 patched deployments, and the
-behavioral oracle escapes all 13.
+The primary result of this study — the FP-arm McNemar — is **withdrawn** (S-2). The retained run
+reported b=10, c=0 (χ²=8.1, p≈0.0174) on 10 of the 13 pairs, but the harness compared the patched
+container with itself and the baseline received the identical prompt for both sides, so the
+comparison could not fail. The structural argument (§2) stands on its own: the FP arm is escaped
+by construction when the confirmation stage is a non-generative behavioral oracle. The empirical
+claim waits for the rebuilt experiment.
 
-The continuity-corrected McNemar (χ²=11.077) is the conservative formulation. The point estimate
-is p≈0.0009, comfortably below α=0.05. The confidence interval on the effect size is wide at
-n=13, but the direction is unambiguous: b=13, c=0 is a directional sweep (n=13, all 13 discordant).
-
-What this proves, and what it does not: it proves that *the FP arm of gap-dictation is a
-solvable problem via behavioral confirmation*. It does not prove Sagaward solves the FN arm, nor
-that the proposer recall is gap-independent (the FN arm is tied at this corpus size and vuln
-class). Future work with varied gap strata and more subtle FN classes will characterize the
-genuine recall ceiling.
+What the structural argument proves, and what it does not: it proves that *the FP arm of
+gap-dictation is a solvable problem via behavioral confirmation*. It does not prove Sagaward
+solves the FN arm, nor that the proposer recall is gap-independent (the FN arm is tied at this
+corpus size and vuln class). Future work with varied gap strata and more subtle FN classes will
+characterize the genuine recall ceiling.
 
 ### 5.2 Why H4 Is Structural, Not Statistical
 
@@ -531,12 +519,12 @@ work and would strengthen (or weaken) the H2a effect size, not change the H1 str
 
 ### 6.4 Corpus Size for Effect-Size Estimation
 
-n=13 is adequate for the McNemar test at b=13, c=0. It is not adequate for Spearman-ρ
-correlation between gap score and R_prop (which requires n≥30 for reliable ρ estimation at
-typical effect sizes). We do not report gap-recall correlation. The widths of the CIs on
-proportions (Prec_gate=1.000 at n=13 yields 95% CI ≈ [0.69, 1.00]) reflect this limitation
-honestly. A corpus of n=20–30 pairs would tighten CIs and enable gap-stratified subgroup
-analysis.
+The retained E2 run covered 10 pairs (b=10, c=0); the result is withdrawn (§4.3), so no
+McNemar adequacy claim is made. The corpus is not adequate for Spearman-ρ correlation between
+gap score and R_prop (which requires n≥30 for reliable ρ estimation at typical effect sizes).
+We do not report gap-recall correlation. The widths of the CIs on proportions (Prec_gate=1.000
+at n=10 yields 95% CI ≈ [0.69, 1.00]) reflect this limitation honestly. A corpus of n=20–30
+pairs would tighten CIs and enable gap-stratified subgroup analysis.
 
 ### 6.5 E3 Representativeness
 
@@ -620,9 +608,12 @@ deterministic behavioral harnesses rather than the language model. The core cont
 > a non-generative behavioral oracle. Gap-dictation is not eliminated; it is relocated from the
 > precision arm (FPs) to the recall arm (FNs), where it belongs.**
 
-On 10 small-gap containerized B-V2P pairs, the FP-arm escape is statistically confirmed:
-χ²=11.077, p≈0.0009, b=13, c=0. No single-stage proxy has achieved this on small-gap pairs in
-our corpus. The honest limit is stated plainly: the FN arm has b=0, c=1 (one pair where M4 confirmed the vuln but harness did not flip — path_traversal_proxy decode-cap; p=1.0, no significant FN tendency).
+On the retained 10-pair run, the FP-arm result (b=10, c=0, p≈0.0174) is **withdrawn** (S-2): the
+harness compared the patched container with itself and the baseline received the identical prompt
+for both sides, so the comparison could not fail. The structural claim stands — the FP arm is
+escaped by construction — but the empirical claim waits for the rebuilt experiment. The honest
+limit is stated plainly: the FN arm has b=0, c=1 (one pair where M4 confirmed the vuln but harness
+did not flip — path_traversal_proxy decode-cap; p=1.0, no significant FN tendency).
 Sagaward escapes what we defined as the harder problem; it inherits the FN arm from its proposer.
 
 **The FN arm is neither tragic nor unexpected.** It is research-separable: proposer improvements,
@@ -640,9 +631,9 @@ enforcement for production security.
 
 ## 9. References
 
-1. Huang et al. (2026). "Semantic Trap: The Precision–Recall Trap in Fine-Tuned LLM Vulnerability
-   Detectors." arXiv:2601.22655.
-2. Tang et al. (2026). "VulTriage: Triple-Path Context Augmentation for Pairwise Vulnerability
+1. Huang et al. (2026). "The Semantic Trap: Do Fine-tuned LLMs Learn Vulnerability Root Cause or
+   Surface Patterns?" arXiv:2601.22655.
+2. Tang et al. (2026). "VulTriage: Triple-Path Context Augmentation for LLM-Based Vulnerability
    Detection." arXiv:2605.09461.
 3. Hu et al. (2025). "GPTLens: Auditing and Debugging LLM Multi-Agent Systems." In IEEE S&P /
    Security and Privacy workshop track.
@@ -746,7 +737,7 @@ magnitudes.
 - Sections: 8 main + Abstract + Appendices A/B/C = 12 sections
 - Experiments: M0, E1, E2 (primary), E3, E4
 - Corpus: 13 B-V2P pairs (5 real CVEs, 8 synthesized)
-- Primary result: H2a McNemar, χ²=11.077, p≈0.0009
+- Primary result: **WITHDRAWN** (S-2) — the retained E2 artefact is n=10, b=10, c=0, p≈0.0174; the rebuilt experiment is the precondition for the H2a claim
 - Honest limit: H2b b=0,c=1 p=1.0 (tied, path_traversal harness unconfirmed); FN arm = proposer recall ceiling
-- Experiment pipeline: `Sagaward/artifacts/run_live_experiments.py` (E2; haiku via OpenRouter) / `Sagaward/artifacts/run_live_e1e3e4.py` (E1/E3/E4; haiku via OpenRouter + Docker)
-- Corpus registry: `Sagaward/research/corpus.py` (BV2P_CORPUS)
+- Experiment pipeline: `artifacts/run_live_experiments.py` (E2; haiku via OpenRouter) / `artifacts/run_live_e1e3e4.py` (E1/E3/E4; haiku via OpenRouter + Docker)
+- Corpus registry: `sagaward/research/corpus.py` (BV2P_CORPUS)
