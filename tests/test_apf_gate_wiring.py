@@ -256,6 +256,34 @@ class TestContainerView:
         assert outcome.allowed is False
         assert outcome.rule == "R2", "the container-resolved tainted operand is denied"
 
+    def test_a_container_only_tainted_path_named_by_an_unlisted_head_denies_r2p(self) -> None:
+        """S-4 + S-5: the container-resolved path's provenance fires R2'."""
+        from sagaward.core.provenance.content import engagement_envelope  # noqa: PLC0415
+
+        ledger = ProvenanceLedger()
+        ledger.record("/apf-container-only", engagement_envelope())
+        session = _ContainerSession(
+            {
+                "/apf-container-only": {
+                    "raw": "/apf-container-only",
+                    "path": "/apf-container-only",
+                    "exists": True,
+                    "executable": False,
+                    "is_dir": False,
+                    "is_file": True,
+                    "dev": 41,
+                    "ino": 7,
+                }
+            }
+        )
+        ctx = _Ctx({"provenance": ledger, "sandbox_session": session})
+
+        outcome = asyncio.run(authorize(ctx, "tclsh /apf-container-only"))
+
+        assert outcome.allowed is False
+        assert outcome.rule == "R2'", "the unlisted head's tainted named path is R2'"
+        assert outcome.reason is ReasonCode.UNLISTED_INTERPRETER
+
     def test_the_audit_names_the_container_resolver(self, caplog: Any) -> None:
         session = _ContainerSession({})
         ctx = _Ctx({"provenance": ProvenanceLedger(), "sandbox_session": session})

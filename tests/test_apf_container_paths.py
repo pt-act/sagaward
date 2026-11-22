@@ -20,7 +20,9 @@ from sagaward.core.provenance.classify import (
     UnresolvedPathResolver,
     classify,
 )
-from sagaward.core.provenance.gate import Resolution
+from sagaward.core.provenance.content import engagement_envelope
+from sagaward.core.provenance.gate import ReasonCode, Resolution, decide_action
+from sagaward.core.provenance.ledger import ProvenanceLedger
 from sagaward.runtime.container_paths import (
     container_path_resolver,
     resolve_paths_in_container,
@@ -202,3 +204,60 @@ class TestContainerResolution:
         probes = asyncio.run(resolve_paths_in_container(session, ()))
         assert probes == {}
         assert session.calls == []
+
+
+class TestNamedPathExtraction:
+    """S-4: the classifier sees the paths a command names, including fused flags."""
+
+    def test_a_fused_flag_value_is_a_named_path(self) -> None:
+        """``--file=/path`` carries a path; the tainted-path check fires on it."""
+        path = "/workspace/scratch/implant.sh"
+        session = _ProbeSession({path: _container_row(path)})
+        collector = CollectingPathResolver()
+        classify(f"Rscript --file={path}", None, resolver=collector)
+        assert any(request.raw == path for request in collector.requests)
+
+        probes = asyncio.run(resolve_paths_in_container(session, collector.requests))
+
+        assert probes is not None
+        action = classify(
+            f"Rscript --file={path}", None, resolver=container_path_resolver(probes)
+        )
+        assert [target.raw for target in action.named_paths] == [path]
+        ledger = ProvenanceLedger()
+        ledger.record(path, engagement_envelope())
+        decision = decide_action(action, ledger)
+        assert (decision.verdict, decision.reason) == (
+            "DENY",
+            ReasonCode.UNLISTED_INTERPRETER,
+        )
+
+    def test_a_bare_flag_and_a_short_cluster_are_not_paths(self) -> None:
+        """Only the long fused form carries a value; a bare flag and ``-abc`` do not."""
+        collector = CollectingPathResolver()
+        classify("tool --verbose -abc --empty=", None, resolver=collector)
+        raws = {request.raw for request in collector.requests}
+        assert "--verbose" not in raws
+        assert "-abc" not in raws
+        assert "--empty=" not in raws
+
+    def test_a_container_only_tainted_path_named_by_an_unlisted_head_denies(self) -> None:
+        """S-4 + S-5: the container-resolved path's provenance fires the deny."""
+        path = "/workspace/scratch/implant.sh"
+        session = _ProbeSession({path: _container_row(path)})
+        collector = CollectingPathResolver()
+        classify(f"tclsh {path}", None, resolver=collector)
+
+        probes = asyncio.run(resolve_paths_in_container(session, collector.requests))
+
+        assert probes is not None
+        action = classify(f"tclsh {path}", None, resolver=container_path_resolver(probes))
+        named = next(target for target in action.named_paths if target.raw == path)
+        assert named.ref is not None and named.ref.inode_key == (41, 7)
+        ledger = ProvenanceLedger()
+        ledger.record(path, engagement_envelope())
+        decision = decide_action(action, ledger)
+        assert (decision.verdict, decision.reason) == (
+            "DENY",
+            ReasonCode.UNLISTED_INTERPRETER,
+        )

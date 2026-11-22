@@ -28,6 +28,20 @@ OFFICIAL_INDEX_HOSTS: frozenset[str] = frozenset(
     {"pypi.org", "files.pythonhosted.org", "registry.npmjs.org"}
 )
 
+# S-4: the reviewed readers list. These commands read tainted content and are
+# reviewed as safe to read it: the agent must be able to read the target's own
+# source. Reading is not exfiltration; the content is already in the sandbox.
+TAINT_READERS: frozenset[str] = frozenset({"cat", "grep", "less", "head", "tail"})
+
+# S-4: the commands that pass through without reading the content. They name a
+# path but never consume its bytes, so the tainted-path deny does not apply.
+TAINT_PASSTHROUGH: frozenset[str] = frozenset({"mkdir", "touch", "chmod"})
+
+# S-4: the exfiltration surface. These commands move tainted content out of the
+# sandbox; ``curl`` joins them only in its upload form (``-T``/``--upload-file``).
+EXFILTRATION_HEADS: frozenset[str] = frozenset({"tee", "scp", "nc", "ncat", "netcat", "socat"})
+CURL_UPLOAD_FLAGS: frozenset[str] = frozenset({"-T", "--upload-file"})
+
 
 class ActionKind(StrEnum):
     """The four declared action kinds. Anything else is R7 (fail-closed)."""
@@ -122,6 +136,10 @@ class Action(BaseModel):
     # A tainted named path is denied unless this is true (deny-by-default).
     head: str = ""
     interpreter_allowlisted: bool = False
+    # S-4: this member moves content out of the sandbox (``curl -T``, ``scp``,
+    # ``nc``, ``tee``). The exfiltration surface is denied even though it does
+    # not execute the tainted path.
+    exfiltrates: bool = False
     artifact_sources: tuple[ArtifactSource, ...] = ()
     index_tokens: tuple[str, ...] = ()
     cwd: Path | None = None
@@ -258,20 +276,38 @@ def _exec_target_tainted(ledger: ProvenanceLedger, action: Action) -> bool:
     return any(_is_tainted(_ref_state(ledger, t)) for t in action.targets)
 
 
+def _head_name(head: str) -> str:
+    """The command word of a head spelling (pure: no filesystem access)."""
+    return head.rsplit("/", 1)[-1]
+
+
 def _named_path_tainted_unlisted(ledger: ProvenanceLedger, action: Action) -> bool:
-    """S-4: a tainted path named by a command whose head is not allow-listed.
+    """S-4: a tainted path named by a command that is not a reviewed reader.
 
     The interpreter allow-table only probes operands for declared interpreters, so
     an unlisted interpreter (``tclsh``, ``deno``, ``Rscript``) could execute a
-    tainted script the gate never saw. The deny-by-default rule closes that: any
+    tainted script the gate never saw. The deny-by-default rule closes that: a
     command that names a tainted path is denied unless its head is an explicitly
     allow-listed interpreter (whose targets the existing R2/R3 rules already
     decide). A merely unrecorded path is not denied here — only taint is — so a
     legitimate read of an unrecorded file keeps its existing posture.
+
+    The deny is scoped to the commands that can move the content (S-4's reviewed
+    readers list): the reviewed readers (``cat``, ``grep``, ``less``, ``head``,
+    ``tail``) may read the target's own source, and the pass-through commands
+    (``mkdir``, ``touch``, ``chmod``) never read it. The exfiltration surface
+    (``tee``, ``scp``, ``nc``, ``curl -T``) stays denied, as does every command
+    the tables do not name (deny-by-default).
     """
     if action.interpreter_allowlisted:
         return False
-    return any(_is_tainted(_ref_state(ledger, t)) for t in action.named_paths)
+    if not any(_is_tainted(_ref_state(ledger, t)) for t in action.named_paths):
+        return False
+    head = _head_name(action.head)
+    if head in TAINT_READERS or head in TAINT_PASSTHROUGH:
+        return False
+    # A plain fetch is not exfiltration; only the upload form moves bytes.
+    return not (head == "curl" and not action.exfiltrates)
 
 
 def _exec_target_miss(ledger: ProvenanceLedger, action: Action) -> bool:

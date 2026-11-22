@@ -140,6 +140,96 @@ def test_r2p_an_unrecorded_named_path_is_not_denied_by_the_new_rule() -> None:
     assert decision.verdict == "ALLOW"
 
 
+@pytest.mark.parametrize("head", ["cat", "grep", "less", "head", "tail"])
+def test_r2p_a_reviewed_reader_may_read_the_tainted_source(head: str) -> None:
+    """S-4: the reviewed readers list — reading the target's own source is allowed."""
+    named = target("/workspace/scratch/x")
+    decision = decide_action(
+        action(
+            ActionKind.EXECUTE,
+            named_paths=(named,),
+            head=head,
+            interpreter_allowlisted=False,
+        ),
+        ledger_with(tainted=True),
+    )
+    assert decision.verdict == "ALLOW"
+
+
+@pytest.mark.parametrize("head", ["mkdir", "touch", "chmod"])
+def test_r2p_a_passthrough_command_is_not_denied(head: str) -> None:
+    """S-4: a command that never reads the content is not denied."""
+    named = target("/workspace/scratch/x")
+    decision = decide_action(
+        action(
+            ActionKind.EXECUTE,
+            named_paths=(named,),
+            head=head,
+            interpreter_allowlisted=False,
+        ),
+        ledger_with(tainted=True),
+    )
+    assert decision.verdict == "ALLOW"
+
+
+@pytest.mark.parametrize("head", ["tee", "scp", "nc"])
+def test_r2p_the_exfiltration_surface_is_denied(head: str) -> None:
+    """S-4: the exfiltration surface stays denied even though it does not execute."""
+    named = target("/workspace/scratch/x")
+    decision = decide_action(
+        action(
+            ActionKind.EXECUTE,
+            named_paths=(named,),
+            head=head,
+            interpreter_allowlisted=False,
+        ),
+        ledger_with(tainted=True),
+    )
+    assert (decision.verdict, decision.reason) == ("DENY", ReasonCode.UNLISTED_INTERPRETER)
+
+
+def test_r2p_curl_upload_is_denied_but_a_plain_fetch_is_not() -> None:
+    """S-4: ``curl -T`` moves bytes; a plain fetch does not."""
+    named = target("/workspace/scratch/x")
+    upload = decide_action(
+        action(
+            ActionKind.EXECUTE,
+            named_paths=(named,),
+            head="curl",
+            interpreter_allowlisted=False,
+            exfiltrates=True,
+        ),
+        ledger_with(tainted=True),
+    )
+    assert (upload.verdict, upload.reason) == ("DENY", ReasonCode.UNLISTED_INTERPRETER)
+    fetch = decide_action(
+        action(
+            ActionKind.EXECUTE,
+            named_paths=(named,),
+            head="curl",
+            interpreter_allowlisted=False,
+            exfiltrates=False,
+        ),
+        ledger_with(tainted=True),
+    )
+    assert fetch.verdict == "ALLOW"
+
+
+def test_r2p_an_unnamed_command_naming_a_tainted_path_still_denies() -> None:
+    """S-4: the reviewed lists are closed; an unnamed command keeps deny-by-default."""
+    named = target("/workspace/scratch/x")
+    decision = decide_action(
+        action(
+            ActionKind.EXECUTE,
+            named_paths=(named,),
+            head="ls",
+            interpreter_allowlisted=False,
+        ),
+        ledger_with(tainted=True),
+    )
+    assert (decision.verdict, decision.reason) == ("DENY", ReasonCode.UNLISTED_INTERPRETER)
+
+
 def test_official_index_hosts_constant() -> None:
     assert frozenset({"pypi.org", "files.pythonhosted.org", "registry.npmjs.org"}) == (
         OFFICIAL_INDEX_HOSTS

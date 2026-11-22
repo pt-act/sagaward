@@ -48,6 +48,8 @@ import bashlex
 
 from sagaward.core.provenance.artifact import ArtifactRef
 from sagaward.core.provenance.gate import (
+    CURL_UPLOAD_FLAGS,
+    EXFILTRATION_HEADS,
     OFFICIAL_INDEX_HOSTS,
     Action,
     ActionKind,
@@ -577,8 +579,10 @@ class ResolvedPathResolver:
     def probe(self, raw: str, cwd: Path | None) -> PathProbe:
         key = (raw, str(cwd) if cwd is not None else None, "path")
         found = self._probes.get(key)
-        return found if found is not None else PathProbe(
-            _unresolved(raw), exists=False, executable=False
+        return (
+            found
+            if found is not None
+            else PathProbe(_unresolved(raw), exists=False, executable=False)
         )
 
     def on_path(self, name: str) -> PathProbe | None:
@@ -1123,32 +1127,73 @@ def _flag_payload(argv: Sequence[str], flag: str) -> str:
     return flag
 
 
+def _fused_flag_value(token: str) -> str | None:
+    """The value of a fused long flag (``--flag=value``), or ``None``.
+
+    Only the long fused form is a declared shape. A bare flag (``--flag``), a
+    short cluster (``-abc``) and a short fused form (``-f=value``) carry no
+    value the classifier can attribute to a path, so they stay skipped.
+    """
+    if not token.startswith("--") or "=" not in token:
+        return None
+    _, _, value = token.partition("=")
+    if not value or value.startswith("-"):
+        return None
+    return value
+
+
 def _named_path_probes(argv: Sequence[str], cwd: Path | None) -> list[_Probe]:
-    """Every non-flag argument that names an existing path, regardless of the head (S-4).
+    """Every argument that names an existing path, regardless of the head (S-4).
 
     The interpreter allow-table only probes operands for declared interpreters, so
     an unlisted interpreter's script operand was invisible. This reads every
     non-flag argument as a path candidate; the gate denies a *tainted* one unless
-    the head is an allow-listed interpreter. A command-flag body is a command, not
-    a path, so it is skipped.
+    the head is an allow-listed interpreter or a reviewed reader. A command-flag
+    body is a command, not a path, so it is skipped. A fused long flag
+    (``--script=/path``) carries its value, and the value is a path the command
+    names, so it is probed too.
     """
     probes: list[_Probe] = []
     pending_command = False
-    for arg in argv[1:]:
+    for token in argv[1:]:
         if pending_command:
             pending_command = False
             continue
-        if arg in _COMMAND_FLAGS:
+        if token in _COMMAND_FLAGS:
             pending_command = True
             continue
-        if arg.startswith("-") or arg in {"-", "--"}:
-            continue
+        arg = token
+        if token.startswith("-"):
+            value = _fused_flag_value(token)
+            if value is None:
+                continue
+            arg = value
         if "$" in arg or "`" in arg:
             continue
         probe = _probe(arg, cwd)
         if probe.exists:
             probes.append(probe)
     return probes
+
+
+def _is_exfiltration(head: str, argv: Sequence[str]) -> bool:
+    """True when this member moves content out of the sandbox (S-4).
+
+    The exfiltration surface is a closed table: ``tee``, ``scp``, ``nc`` and its
+    aliases always move bytes; ``curl`` does so only in its upload form
+    (``-T``/``--upload-file``). A plain ``curl`` fetch is not exfiltration.
+    """
+    base = _base_name(head)
+    if base in EXFILTRATION_HEADS:
+        return True
+    if base != "curl":
+        return False
+    return any(
+        arg in CURL_UPLOAD_FLAGS
+        or arg.startswith("--upload-file=")
+        or (arg.startswith("-T") and len(arg) > 2)
+        for arg in argv[1:]
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -1964,6 +2009,10 @@ class _Classifier:
             named_paths=[probe.resolved for probe in _named_path_probes(argv, cwd)],
             head=effective_head or head,
             interpreter_allowlisted=_is_interpreter(effective_head or head),
+            exfiltrates=_is_exfiltration(
+                effective_head or head,
+                effective_argv if effective_head else argv,
+            ),
             sources=sources,
             index_tokens=index_tokens,
             install=install,
@@ -2531,6 +2580,7 @@ def _build_action(
     named_paths: list[ResolvedTarget],
     head: str,
     interpreter_allowlisted: bool,
+    exfiltrates: bool,
     sources: list[ArtifactSource],
     index_tokens: tuple[str, ...],
     install: bool,
@@ -2571,6 +2621,7 @@ def _build_action(
         named_paths=_dedupe(named_paths),
         head=head,
         interpreter_allowlisted=interpreter_allowlisted,
+        exfiltrates=exfiltrates,
         artifact_sources=tuple(sources),
         index_tokens=index_tokens,
         cwd=context.cwd,

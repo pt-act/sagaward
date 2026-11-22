@@ -74,6 +74,7 @@ GATE_HARNESS = "apf_action_gate"
 _RULE_BY_REASON: dict[ReasonCode, str] = {
     ReasonCode.QUARANTINE_REFERENCE: "R1",
     ReasonCode.TAINTED_EXECUTABLE: "R2",
+    ReasonCode.UNLISTED_INTERPRETER: "R2'",
     ReasonCode.UNTREATED_INTERPRETER_INPUT: "R3.8",
     ReasonCode.UNRESOLVED_QUARANTINE_REF: "R3.5",
     ReasonCode.TAINTED_CHMOD: "R4",
