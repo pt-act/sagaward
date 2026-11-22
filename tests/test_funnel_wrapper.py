@@ -155,7 +155,7 @@ class TestEmitHarnessRun(TestCase):
         emit_harness_run(
             "p4_race_harness",
             json.dumps({"verdict": "race", "report": {"evidence_class": "race_result"}}),
-            json.dumps({"target_key": _ENDPOINT}),
+            json.dumps({"endpoint_key": _ENDPOINT}),
         )
         record = self.state.funnel_log.get(pid)
         assert record is not None

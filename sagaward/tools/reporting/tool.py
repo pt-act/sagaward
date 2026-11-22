@@ -514,15 +514,21 @@ async def create_vulnerability_report(  # noqa: PLR0917 - the tool schema is the
             **corroborated against the recorded harness verdicts**: the effective
             class is the class of the most recent confirmed harness run recorded
             for this finding (matched by ``proposal_id``, else by ``endpoint``).
-            A claim with no corroborating verdict is filed as ``"none"``, which
-            down-grades the reported severity to ``info``/unconfirmed; the finding
-            stays visible and the original CVSS severity is recorded on the report.
-            Naming evidence cannot forge it — only a harness that actually ran can.
+            The match is **verified, not trusted**: a cited ``proposal_id`` only
+            counts when its proposal's ``endpoint_key`` equals ``endpoint``, and
+            the endpoint fallback requires the same equality — cite the
+            proposal's ``endpoint_key`` verbatim. A claim with no corroborating
+            verdict is filed as ``"none"``, which down-grades the reported
+            severity to ``info``/unconfirmed; the finding stays visible and the
+            original CVSS severity is recorded on the report. Naming evidence
+            cannot forge it — only a harness that actually ran can.
         proposal_id: Optional id returned by
             ``propose_vulnerability_investigation``. Pass it to link this
-            confirmed finding back to its proposal in the funnel (glass-box).
-            Omit it and the funnel best-effort-matches by endpoint; this never
-            affects the report itself or the impact gate.
+            finding back to its proposal in the funnel (glass-box). The citation
+            is verified against ``endpoint``; a citation for a different endpoint
+            is not corroborated. The matched proposal's id is recorded on the
+            report. Omit it and the funnel matches by ``endpoint``; this never
+            affects the report's narrative or the impact gate.
     """
     inner = ctx.context if isinstance(ctx.context, dict) else {}
     raw_agent_id = inner.get("agent_id")
@@ -541,13 +547,17 @@ async def create_vulnerability_report(  # noqa: PLR0917 - the tool schema is the
     from sagaward.report.state import get_global_report_state
 
     report_state = get_global_report_state()
+    matched_proposal_id: str | None = None
     if report_state is None:
         effective_evidence_class: str = "none"
         evidence_note: str | None = "no report state; the evidence class cannot be corroborated"
     else:
-        effective_evidence_class, evidence_note = report_state.resolve_evidence_class(
+        binding = report_state.resolve_evidence_class(
             cast("EvidenceClass", evidence_class), endpoint=endpoint, proposal_id=proposal_id
         )
+        effective_evidence_class = binding.evidence_class
+        evidence_note = binding.note
+        matched_proposal_id = binding.proposal_id
 
     result = await _do_create(
         title=title,
@@ -568,7 +578,7 @@ async def create_vulnerability_report(  # noqa: PLR0917 - the tool schema is the
         agent_name=agent_name,
         evidence_class=effective_evidence_class,
         artifacts=artifacts,
-        proposal_id=proposal_id,
+        proposal_id=matched_proposal_id,
     )
     if evidence_note is not None and isinstance(result, dict):
         result["evidence_note"] = evidence_note

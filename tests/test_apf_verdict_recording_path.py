@@ -237,17 +237,18 @@ class TestThePathStages:
     def test_stage_4_the_binding_reads_the_funnel_not_the_claim(self, state: ReportState) -> None:
         proposal_id = _propose(state)
         state.funnel_log.record_harness_verdict(proposal_id, "p2_diff_harness", "confirmed", "diff")
-        effective, note = state.resolve_evidence_class(
+        binding = state.resolve_evidence_class(
             "callback", endpoint=_ENDPOINT, proposal_id=proposal_id
         )
-        assert effective == "diff"
-        assert note is not None and "callback" in note
+        assert binding.evidence_class == "diff"
+        assert binding.note is not None and "callback" in binding.note
+        assert binding.proposal_id == proposal_id
 
-        effective, note = state.resolve_evidence_class(
+        binding = state.resolve_evidence_class(
             "callback", endpoint="GET /unrelated", proposal_id=None
         )
-        assert effective == "none"
-        assert note is not None
+        assert binding.evidence_class == "none"
+        assert binding.note is not None
 
 
 class TestTheAgentCannotChangeTheVerdict:
@@ -296,17 +297,21 @@ class TestTheAgentCannotChangeTheVerdict:
         after = [(v.verdict, v.evidence_class) for v in state.funnel_log.get(proposal_id).verdicts]  # type: ignore[union-attr]
         assert after == before
 
-    def test_the_binding_trusts_the_agent_supplied_match_key(self, state: ReportState) -> None:
-        """The named residual: the match key is the agent's argument.
+    def test_the_binding_rejects_a_borrowed_match_key(self, state: ReportState) -> None:
+        """Residual 1, fixed: the match key is verified, not trusted.
 
-        A report citing another finding's ``proposal_id`` borrows that finding's confirmed
-        class. The verdict is not fabricated, but it can be mis-attributed — see the audit's
-        residuals. This cell pins the current behaviour so a fix is a deliberate change.
+        A report citing another finding's ``proposal_id`` no longer borrows that finding's
+        confirmed class: the cited proposal's ``endpoint_key`` must equal the report's
+        endpoint. The mismatched citation resolves to ``none`` and the impact gate files
+        the finding as ``info``.
         """
         confirmed = _propose(state, endpoint_key="POST /api/v1/other")
         state.funnel_log.record_harness_verdict(confirmed, "p2_diff_harness", "confirmed", "diff")
         result = _file(evidence_class="diff", endpoint=_ENDPOINT, proposal_id=confirmed)
-        assert result["evidence_class"] == "diff"
+        assert result["evidence_class"] == "none"
+        assert result["severity"] == "info"
+        assert "evidence_note" in result
+        assert "proposal_id" not in state.vulnerability_reports[-1]
 
 
 class TestThePredicatesArePure:

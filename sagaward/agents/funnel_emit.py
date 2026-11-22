@@ -38,16 +38,12 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# Best-effort endpoint correlation: harness tools name their target differently. Explicit
-# ``proposal_id`` (when threaded) always wins inside ``record_harness_run``; this is the fallback.
-_ENDPOINT_ARG_KEYS: tuple[str, ...] = (
-    "endpoint",
-    "target",
-    "target_url",
-    "target_key",
-    "request_id",
-    "target_id",
-)
+# The join's precision (residual 2): only an endpoint-key-shaped argument can equal a
+# proposal's ``endpoint_key``. Hosts (``target``/``target_key``), captured request ids
+# (``request_id``) and target ids are *not* keys — correlating on them was the best-effort
+# join that could attach a verdict to the wrong proposal. Explicit ``proposal_id`` (when
+# threaded) always wins inside ``record_harness_run``; this is the fallback.
+_ENDPOINT_ARG_KEYS: tuple[str, ...] = ("endpoint_key", "endpoint")
 
 
 def _coerce_dict(value: Any) -> dict[str, Any] | None:
@@ -63,16 +59,12 @@ def _coerce_dict(value: Any) -> dict[str, Any] | None:
     return None
 
 
-def _extract_endpoint(args: dict[str, Any]) -> str | None:
+def _extract_endpoint_key(args: dict[str, Any]) -> str | None:
+    """Return the harness argument that is an endpoint key, if it passed one."""
     for key in _ENDPOINT_ARG_KEYS:
         value = args.get(key)
         if isinstance(value, str) and value.strip():
             return value.strip()
-    precondition = args.get("precondition")
-    if isinstance(precondition, dict):
-        setup = precondition.get("setup_request_id")
-        if isinstance(setup, str) and setup.strip():
-            return setup.strip()
     return None
 
 
@@ -126,7 +118,7 @@ def emit_harness_run(default_harness: str, result: Any, args_json: str) -> None:
         harness_name=harness_name,
         verdict=verdict,
         evidence_class=evidence_class,  # type: ignore[arg-type]
-        endpoint=_extract_endpoint(args),
+        endpoint=_extract_endpoint_key(args),
         proposal_id=proposal_id if isinstance(proposal_id, str) else None,
     )
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
@@ -40,6 +41,44 @@ _EVIDENCE_TO_HARNESS: dict[str, str] = {
     "reachability": "p3_reachability",
     "race_result": "p4_race_harness",
 }
+
+# The endpoint match's boundary (residual 3): a prefix is only a match when the longer key
+# continues on a path/query/fragment boundary (or the method/path space). This keeps
+# ``/api/user`` from matching ``/api/users`` while still matching a sub-path of the key.
+_ENDPOINT_SEPARATORS: frozenset[str] = frozenset({"/", "?", "#", " "})
+
+
+def _endpoint_matches(proposal_key: str, endpoint: str) -> bool:
+    """Tightened endpoint match: exact, or a prefix ending on a separator boundary.
+
+    Replaces the loose substring test (``needle in key or key in needle``) that let
+    ``/api/user`` match ``/api/users`` and a host match every path on it.
+    """
+    key = proposal_key.strip()
+    needle = endpoint.strip()
+    if not key or not needle:
+        return False
+    if key == needle:
+        return True
+    if key.startswith(needle):
+        return key[len(needle)] in _ENDPOINT_SEPARATORS
+    if needle.startswith(key):
+        return needle[len(key)] in _ENDPOINT_SEPARATORS
+    return False
+
+
+@dataclass(frozen=True)
+class EvidenceBinding:
+    """The binding's resolution: the effective class, its note, and the matched proposal.
+
+    ``proposal_id`` is the funnel record the binding actually consulted (``None`` when no
+    record matched). It is recorded on the report so the binding is inspectable after the
+    fact — the agent's cited id is not trusted, the matched one is.
+    """
+
+    evidence_class: EvidenceClass
+    note: str | None
+    proposal_id: str | None
 
 
 def _apply_impact_gate(
@@ -264,6 +303,10 @@ class ReportState:
             report["agent_name"] = agent_name
         if artifacts:
             report["artifacts"] = artifacts
+        if proposal_id:
+            # Residual 1: the binding's matched proposal is recorded on the report, so the
+            # binding is inspectable after the fact (the agent's cited id is not trusted).
+            report["proposal_id"] = proposal_id
 
         self.vulnerability_reports.append(report)
         logger.info(f"Added vulnerability report: {report_id} - {title}")
@@ -271,12 +314,14 @@ class ReportState:
         if self.vulnerability_found_callback:
             self.vulnerability_found_callback(report)
 
-        self._link_disposer_verdict_to_funnel(
+        linked_proposal_id = self._link_disposer_verdict_to_funnel(
             report_id=report_id,
             endpoint=endpoint,
             evidence_class=evidence_class,
             proposal_id=proposal_id,
         )
+        if linked_proposal_id is not None:
+            report["proposal_id"] = linked_proposal_id
 
         self.save_run_data()
         return report_id
@@ -288,7 +333,7 @@ class ReportState:
         endpoint: str | None,
         evidence_class: EvidenceClass,
         proposal_id: str | None,
-    ) -> None:
+    ) -> str | None:
         """Link-only: attach the final ``report_id`` onto its matching proposal record.
 
         Glass-box instrumentation only. As of the Spec B harness wiring, the *verdict* is
@@ -298,10 +343,12 @@ class ReportState:
         ``vulnerability_reports``. Evidence-less (``"none"``) findings carry no harness
         verdict and are not linked. If no proposal can be unambiguously matched, this is a
         no-op — so engagements that never used the propose tool are unaffected.
+
+        Returns the linked ``proposal_id`` (or ``None``) so the report can record it.
         """
         harness_name = _EVIDENCE_TO_HARNESS.get(evidence_class)
         if harness_name is None:
-            return  # "none" / unknown — not a disposer-confirmed report.
+            return None  # "none" / unknown — not a disposer-confirmed report.
 
         record: ProposalRecord | None = None
         if proposal_id is not None:
@@ -309,9 +356,10 @@ class ReportState:
         if record is None:
             record = self._match_open_proposal(endpoint)
         if record is None:
-            return
+            return None
 
         self.funnel_log.record_report(record.proposal_id, report_id)
+        return record.proposal_id
 
     def record_harness_run(
         self,
@@ -396,7 +444,7 @@ class ReportState:
         *,
         endpoint: str | None = None,
         proposal_id: str | None = None,
-    ) -> tuple[EvidenceClass, str | None]:
+    ) -> EvidenceBinding:
         """Bind a claimed evidence class to the recorded harness verdicts (S-1).
 
         The report tool's ``evidence_class`` is a *claim*, not a fact. The effective
@@ -406,27 +454,55 @@ class ReportState:
         ``info``). Naming evidence therefore cannot forge it: only a harness that
         actually ran and recorded a confirmed verdict can raise the class.
 
-        Returns ``(effective_class, note)``. ``note`` is ``None`` when the claim was
+        The match key is verified, not trusted (residual 1): a cited ``proposal_id``
+        only counts when that proposal's ``endpoint_key`` equals the report's
+        ``endpoint``, and the endpoint fallback requires the same equality. A report
+        can therefore not borrow another finding's confirmed class. The matched
+        proposal's id is returned so the report can record it.
+
+        Returns an :class:`EvidenceBinding`; ``note`` is ``None`` when the claim was
         corroborated, otherwise a short explanation for the tool's return payload.
         """
         record: ProposalRecord | None = None
+        mismatch_note: str | None = None
         if proposal_id is not None:
-            record = self.funnel_log.get(proposal_id)
+            cited = self.funnel_log.get(proposal_id)
+            if cited is not None:
+                if endpoint is not None and cited.endpoint_key.strip() == endpoint.strip():
+                    record = cited
+                else:
+                    mismatch_note = (
+                        f"the cited proposal '{proposal_id}' is for endpoint "
+                        f"'{cited.endpoint_key}', not this finding's endpoint; "
+                        "a confirmed class cannot be borrowed across findings"
+                    )
         if record is None:
-            record = self._match_recordable_proposal(endpoint)
+            record = self._match_recordable_proposal(endpoint, exact=True)
         if record is None:
-            return "none", "no recorded harness verdict matches this finding"
+            return EvidenceBinding(
+                "none",
+                mismatch_note or "no recorded harness verdict matches this finding",
+                None,
+            )
         for verdict in reversed(record.verdicts):
             if verdict.verdict == "confirmed" and verdict.evidence_class != "none":
                 if claimed != verdict.evidence_class:
-                    return verdict.evidence_class, (
+                    return EvidenceBinding(
+                        verdict.evidence_class,
                         f"claimed evidence_class '{claimed}' is not backed by the recorded "
-                        f"verdict; using the recorded '{verdict.evidence_class}'"
+                        f"verdict; using the recorded '{verdict.evidence_class}'",
+                        record.proposal_id,
                     )
-                return verdict.evidence_class, None
-        return "none", "no confirmed harness verdict is recorded for this finding"
+                return EvidenceBinding(verdict.evidence_class, None, record.proposal_id)
+        return EvidenceBinding(
+            "none",
+            "no confirmed harness verdict is recorded for this finding",
+            record.proposal_id,
+        )
 
-    def _match_recordable_proposal(self, endpoint: str | None) -> ProposalRecord | None:
+    def _match_recordable_proposal(
+        self, endpoint: str | None, *, exact: bool = False
+    ) -> ProposalRecord | None:
         """Best-effort single match for the emit-hook: a proposal for this endpoint.
 
         Unlike ``_match_open_proposal``, both prior verdicts *and* a linked report are allowed
@@ -434,17 +510,22 @@ class ReportState:
         whose ``report_id`` was attached by the link-only report path *before* the emit-wrapper
         fires on the tool's return — still records its verdict against that proposal. Still
         requires an unambiguous single endpoint match; explicit ``proposal_id`` is preferred.
+
+        The match is the tightened endpoint match (exact, or a prefix on a separator
+        boundary). ``exact=True`` is the binding's stricter rule: the report must cite the
+        proposal's ``endpoint_key`` verbatim.
         """
         if not endpoint:
             return None
         needle = endpoint.strip()
         if not needle:
             return None
+
+        def _matches(key: str) -> bool:
+            return key.strip() == needle if exact else _endpoint_matches(key, needle)
+
         matches = [
-            r
-            for r in self.funnel_log.list_records()
-            if r.endpoint_key
-            and (r.endpoint_key == needle or needle in r.endpoint_key or r.endpoint_key in needle)
+            r for r in self.funnel_log.list_records() if r.endpoint_key and _matches(r.endpoint_key)
         ]
         return matches[0] if len(matches) == 1 else None
 
@@ -466,7 +547,7 @@ class ReportState:
             if not r.verdicts
             and r.report_id is None
             and r.endpoint_key
-            and (r.endpoint_key == needle or needle in r.endpoint_key or r.endpoint_key in needle)
+            and _endpoint_matches(r.endpoint_key, needle)
         ]
         return matches[0] if len(matches) == 1 else None
 

@@ -131,27 +131,25 @@ def _record_confirmed(state: ReportState, endpoint: str, evidence_class: str) ->
 
 class TestResolveEvidenceClass:
     def test_confirmed_verdict_corroborates_the_claim(self, state: ReportState) -> None:
-        _record_confirmed(state, "https://example.test/api/users", "diff")
-        effective, note = state.resolve_evidence_class(
-            "diff", endpoint="https://example.test/api/users"
-        )
-        assert effective == "diff"
-        assert note is None
+        proposal_id = _record_confirmed(state, "https://example.test/api/users", "diff")
+        binding = state.resolve_evidence_class("diff", endpoint="https://example.test/api/users")
+        assert binding.evidence_class == "diff"
+        assert binding.note is None
+        assert binding.proposal_id == proposal_id
 
     def test_claim_without_a_verdict_resolves_to_none(self, state: ReportState) -> None:
-        effective, note = state.resolve_evidence_class(
-            "diff", endpoint="https://example.test/api/users"
-        )
-        assert effective == "none"
-        assert note is not None
+        binding = state.resolve_evidence_class("diff", endpoint="https://example.test/api/users")
+        assert binding.evidence_class == "none"
+        assert binding.note is not None
+        assert binding.proposal_id is None
 
     def test_claim_cannot_exceed_the_recorded_verdict(self, state: ReportState) -> None:
         _record_confirmed(state, "https://example.test/api/users", "diff")
-        effective, note = state.resolve_evidence_class(
+        binding = state.resolve_evidence_class(
             "callback", endpoint="https://example.test/api/users"
         )
-        assert effective == "diff"
-        assert note is not None and "callback" in note
+        assert binding.evidence_class == "diff"
+        assert binding.note is not None and "callback" in binding.note
 
     def test_unconfirmed_verdict_does_not_corroborate(self, state: ReportState) -> None:
         record = state.funnel_log.start_proposal(
@@ -161,19 +159,32 @@ class TestResolveEvidenceClass:
         state.funnel_log.record_harness_verdict(
             record.proposal_id, "p2_diff_harness", "unconfirmed", "none"
         )
-        effective, note = state.resolve_evidence_class(
-            "diff", endpoint="https://example.test/api/users"
-        )
-        assert effective == "none"
-        assert note is not None
+        binding = state.resolve_evidence_class("diff", endpoint="https://example.test/api/users")
+        assert binding.evidence_class == "none"
+        assert binding.note is not None
 
-    def test_proposal_id_wins_over_endpoint(self, state: ReportState) -> None:
+    def test_proposal_id_must_agree_with_the_endpoint(self, state: ReportState) -> None:
+        """Residual 1: a cited proposal only counts for its own endpoint.
+
+        The id is the agent's argument; the endpoint is the report's. A citation that
+        disagrees with the report's endpoint is not corroborated — the class cannot be
+        borrowed across findings.
+        """
         proposal_id = _record_confirmed(state, "https://example.test/api/users", "diff")
-        effective, note = state.resolve_evidence_class(
+
+        borrowed = state.resolve_evidence_class(
             "diff", endpoint="https://elsewhere.test", proposal_id=proposal_id
         )
-        assert effective == "diff"
-        assert note is None
+        assert borrowed.evidence_class == "none"
+        assert borrowed.note is not None and "not this finding's endpoint" in borrowed.note
+        assert borrowed.proposal_id is None
+
+        agreed = state.resolve_evidence_class(
+            "diff", endpoint="https://example.test/api/users", proposal_id=proposal_id
+        )
+        assert agreed.evidence_class == "diff"
+        assert agreed.note is None
+        assert agreed.proposal_id == proposal_id
 
 
 class TestReportToolBinding:
