@@ -77,6 +77,11 @@ ALLOWED_IMPORT_ROOTS = frozenset(
         "shlex",
         "sys",
         "urllib",
+        # S-5: the resolver seam. ``contextvars`` carries the active resolver
+        # through the classifier's module-level probe helpers; ``stat`` reads the
+        # mode bits (S_ISDIR/S_ISREG) the probe freezes.
+        "contextvars",
+        "stat",
     },
 )
 

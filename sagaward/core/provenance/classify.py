@@ -37,8 +37,10 @@ from __future__ import annotations
 import os
 import re
 import sys
+from contextvars import ContextVar
 from dataclasses import dataclass, field, replace
 from pathlib import Path
+from stat import S_ISDIR, S_ISREG
 from typing import TYPE_CHECKING, Any, Protocol
 from urllib.parse import urlsplit
 
@@ -61,7 +63,7 @@ from sagaward.core.provenance.seed import is_agent_writable
 
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Sequence
+    from collections.abc import Iterable, Mapping, Sequence
 
 
 # ---------------------------------------------------------------------------
@@ -407,25 +409,69 @@ class BashlexParser:
 
 
 # ---------------------------------------------------------------------------
-# Filesystem resolution — the one I/O point.
+# Filesystem resolution — the one I/O point, behind a resolver (S-5).
 # ---------------------------------------------------------------------------
+#
+# The classifier decides over a frozen snapshot of what a filesystem said. Which
+# filesystem is a parameter, not an assumption: the gate's subject is the
+# container, so the container's view is the one that must answer. ``classify``
+# takes a :class:`PathResolver`; the default is the host process's view (the
+# no-container fallback), and the runtime passes a resolver built from the
+# observation channel's in-container probe (``runtime/container_paths.py``).
 
 
 @dataclass(frozen=True, slots=True)
-class _Probe:
+class PathProbe:
     """A single path probe: what the filesystem said once, frozen."""
 
     resolved: ResolvedTarget
     exists: bool
     executable: bool
+    is_dir: bool = False
+    is_file: bool = False
+
+
+# Internal spelling kept for the classifier's own call sites.
+_Probe = PathProbe
+
+
+@dataclass(frozen=True, slots=True)
+class PathRequest:
+    """One path the classifier needs resolved, in the subject's namespace.
+
+    ``kind`` is ``"path"`` (resolve ``raw`` against ``cwd``) or ``"which"``
+    (resolve a bare command word on the subject's ``$PATH``). The request is the
+    unit the container probe answers; the host-side classifier never guesses.
+    """
+
+    raw: str
+    cwd: str | None
+    kind: str = "path"
+
+
+class PathResolver(Protocol):
+    """The classifier's only filesystem seam.
+
+    ``probe`` resolves a path spelling; ``on_path`` resolves a bare command word.
+    A resolver that cannot answer returns the refusing shape (``UNRESOLVED`` /
+    ``None``), never a host-side guess.
+    """
+
+    def probe(self, raw: str, cwd: Path | None) -> PathProbe:
+        """Resolve ``raw`` against ``cwd`` and read its mode."""
+        ...
+
+    def on_path(self, name: str) -> PathProbe | None:
+        """Resolve a bare command word on ``$PATH``; ``None`` when not found."""
+        ...
 
 
 def _unresolved(raw: str) -> ResolvedTarget:
     return ResolvedTarget(raw=raw, path=None, resolution=Resolution.UNRESOLVED, ref=None)
 
 
-def _probe(raw: str, cwd: Path | None) -> _Probe:
-    """Resolve ``raw`` against ``cwd`` once and read its mode.
+def _host_probe(raw: str, cwd: Path | None) -> PathProbe:
+    """Resolve ``raw`` against ``cwd`` once and read its mode, on the host.
 
     Only ``Path.stat`` / ``Path.resolve`` touch the filesystem. A path that will
     not resolve is a classification failure and becomes ``UNRESOLVED`` — the
@@ -437,34 +483,29 @@ def _probe(raw: str, cwd: Path | None) -> _Probe:
     try:
         resolved = candidate.resolve()
     except (OSError, RuntimeError):
-        return _Probe(_unresolved(raw), exists=False, executable=False)
+        return PathProbe(_unresolved(raw), exists=False, executable=False)
     try:
         status = resolved.stat()
     except OSError:
         # Not on disk: still a frozen identity by canonical spelling, no inode.
         ref = ArtifactRef(raw=raw, path_key=str(resolved), inode_key=None)
-        return _Probe(
+        return PathProbe(
             ResolvedTarget(raw=raw, path=resolved, resolution=Resolution.PATH, ref=ref),
             exists=False,
             executable=False,
         )
     ref = ArtifactRef(raw=raw, path_key=str(resolved), inode_key=(status.st_dev, status.st_ino))
-    return _Probe(
+    return PathProbe(
         ResolvedTarget(raw=raw, path=resolved, resolution=Resolution.PATH, ref=ref),
         exists=True,
         executable=bool(status.st_mode & 0o111),
+        is_dir=S_ISDIR(status.st_mode),
+        is_file=S_ISREG(status.st_mode),
     )
 
 
-def _with_executable(probe: _Probe) -> _Probe:
-    """Mark a probe exec-bearing by construction (an exec-by-construction flag)."""
-    if probe.resolved.resolution is Resolution.UNRESOLVED:
-        return probe
-    return _Probe(probe.resolved, exists=probe.exists, executable=True)
-
-
-def _on_path(name: str) -> _Probe | None:
-    """Probe ``$PATH`` for a bare command word; ``None`` when it is not found."""
+def _host_on_path(name: str) -> PathProbe | None:
+    """Probe the host ``$PATH`` for a bare command word; ``None`` when not found."""
     if not name or "/" in name or name.startswith("-"):
         return None
     for entry in os.environ.get("PATH", "").split(os.pathsep):
@@ -476,8 +517,109 @@ def _on_path(name: str) -> _Probe | None:
         except OSError:
             continue
         if status.st_mode & 0o111:
-            return _probe(str(candidate), None)
+            return _host_probe(str(candidate), None)
     return None
+
+
+class HostPathResolver:
+    """The host process's view. The no-container fallback, named as such."""
+
+    def probe(self, raw: str, cwd: Path | None) -> PathProbe:
+        return _host_probe(raw, cwd)
+
+    def on_path(self, name: str) -> PathProbe | None:
+        return _host_on_path(name)
+
+
+class CollectingPathResolver:
+    """Pass 1: record every path the classifier asks about; answer nothing.
+
+    The answers are deliberately the refusing shape — pass 1's ``Action`` is
+    discarded. Its only product is the request set the container probe resolves.
+    Every candidate is recorded *before* the classifier filters on existence or
+    mode, so the set is complete even when the host view would have hidden it.
+    """
+
+    def __init__(self) -> None:
+        self._requests: list[PathRequest] = []
+        self._seen: set[tuple[str, str | None, str]] = set()
+
+    def probe(self, raw: str, cwd: Path | None) -> PathProbe:
+        self._record(PathRequest(raw=raw, cwd=str(cwd) if cwd is not None else None))
+        return PathProbe(_unresolved(raw), exists=False, executable=False)
+
+    def on_path(self, name: str) -> PathProbe | None:
+        self._record(PathRequest(raw=name, cwd=None, kind="which"))
+        return None
+
+    def _record(self, request: PathRequest) -> None:
+        key = (request.raw, request.cwd, request.kind)
+        if key not in self._seen:
+            self._seen.add(key)
+            self._requests.append(request)
+
+    @property
+    def requests(self) -> tuple[PathRequest, ...]:
+        return tuple(self._requests)
+
+
+class ResolvedPathResolver:
+    """Pass 2: the container's answers, keyed by the request that asked.
+
+    A request the container did not answer is ``UNRESOLVED`` — the refusing
+    shape. The resolver never falls back to the host view: a container path that
+    the probe missed must not be decided by the host's inode.
+    """
+
+    def __init__(self, probes: Mapping[tuple[str, str | None, str], PathProbe]) -> None:
+        self._probes = dict(probes)
+
+    def probe(self, raw: str, cwd: Path | None) -> PathProbe:
+        key = (raw, str(cwd) if cwd is not None else None, "path")
+        found = self._probes.get(key)
+        return found if found is not None else PathProbe(
+            _unresolved(raw), exists=False, executable=False
+        )
+
+    def on_path(self, name: str) -> PathProbe | None:
+        return self._probes.get((name, None, "which"))
+
+
+class UnresolvedPathResolver:
+    """The container could not be asked: every path is the refusing shape."""
+
+    def probe(self, raw: str, cwd: Path | None) -> PathProbe:
+        return PathProbe(_unresolved(raw), exists=False, executable=False)
+
+    def on_path(self, name: str) -> PathProbe | None:
+        return None
+
+
+_DEFAULT_RESOLVER: PathResolver = HostPathResolver()
+_ACTIVE_RESOLVER: ContextVar[PathResolver] = ContextVar("apf_path_resolver")
+
+
+def _probe(raw: str, cwd: Path | None) -> PathProbe:
+    """Resolve through the active resolver (the one ``classify`` installed)."""
+    return _ACTIVE_RESOLVER.get(_DEFAULT_RESOLVER).probe(raw, cwd)
+
+
+def _with_executable(probe: PathProbe) -> PathProbe:
+    """Mark a probe exec-bearing by construction (an exec-by-construction flag)."""
+    if probe.resolved.resolution is Resolution.UNRESOLVED:
+        return probe
+    return PathProbe(
+        probe.resolved,
+        exists=probe.exists,
+        executable=True,
+        is_dir=probe.is_dir,
+        is_file=probe.is_file,
+    )
+
+
+def _on_path(name: str) -> PathProbe | None:
+    """Resolve a bare command word through the active resolver."""
+    return _ACTIVE_RESOLVER.get(_DEFAULT_RESOLVER).on_path(name)
 
 
 # ---------------------------------------------------------------------------
@@ -892,10 +1034,9 @@ def _env_flag_targets(env: dict[str, str], cwd: Path | None) -> list[_Probe]:
     return probes
 
 
-def _is_directory(probe: _Probe) -> bool:
+def _is_directory(probe: PathProbe) -> bool:
     """True when this probe resolved to a directory (never an executable target)."""
-    path = probe.resolved.path
-    return path is not None and path.is_dir()
+    return probe.is_dir
 
 
 def _module_operand(head: str, argv: Sequence[str]) -> tuple[int, str] | None:
@@ -924,8 +1065,9 @@ def _resolve_module(name: str, roots: Sequence[Path]) -> ResolvedTarget:
         candidates = [Path(f"{base}.py"), base / "__init__.py"]
         candidates.extend(sorted(base.parent.glob(f"{base.name}*{_MODULE_SOURCE_SUFFIX}")))
         for candidate in candidates:
-            if candidate.is_file():
-                return _probe(str(candidate), None).resolved
+            probe = _probe(str(candidate), None)
+            if probe.is_file:
+                return probe.resolved
     return _unresolved(name)
 
 
@@ -1123,7 +1265,7 @@ def _config_evidence(
     """
     tokens: list[str] = []
     for spelling, path in _config_paths(env, cwd, family):
-        if not path.is_file():
+        if not _probe(str(path), None).is_file:
             continue
         tokens.append(spelling)
         values = _config_index_values(path)
@@ -2494,6 +2636,7 @@ def classify(
     operator_approved: bool = False,
     parser: Parser | None = None,
     module_roots: Sequence[Path] | None = None,
+    resolver: PathResolver | None = None,
 ) -> Action:
     """Classify a shell ``command`` into a deny-dominant :class:`Action`.
 
@@ -2502,6 +2645,12 @@ def classify(
     references quarantine and allows it with a degraded audit otherwise.
     ``module_roots`` overrides the site-packages roots R12 resolves ``-m``
     selectors against (defaults to the running interpreter's recorded roots).
+
+    ``resolver`` is the filesystem the decision reads (S-5). The default is the
+    host process's view; the runtime installs a resolver built from the
+    observation channel's in-container probe, so the container's own view of a
+    path is the one that resolves. A resolver that cannot answer yields the
+    refusing shape, never a host-side guess.
     """
     active = parser or BashlexParser()
     context = _Context(
@@ -2509,7 +2658,11 @@ def classify(
         operator_approved=operator_approved,
         module_roots=tuple(module_roots) if module_roots is not None else _default_module_roots(),
     )
-    return _Classifier(active).classify(command, context)
+    token = _ACTIVE_RESOLVER.set(resolver or _DEFAULT_RESOLVER)
+    try:
+        return _Classifier(active).classify(command, context)
+    finally:
+        _ACTIVE_RESOLVER.reset(token)
 
 
 __all__ = [
@@ -2523,8 +2676,15 @@ __all__ = [
     "INTERPRETER_CLASS",
     "SHELL_BUILTINS",
     "BashlexParser",
+    "CollectingPathResolver",
+    "HostPathResolver",
     "ParseError",
     "Parser",
+    "PathProbe",
+    "PathRequest",
+    "PathResolver",
+    "ResolvedPathResolver",
+    "UnresolvedPathResolver",
     "classify",
     "host_of",
     "merged_interpreter_class",

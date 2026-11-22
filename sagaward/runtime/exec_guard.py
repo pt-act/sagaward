@@ -6,24 +6,27 @@ reaches the container; an ALLOW proceeds exactly as before (exec, then the
 provenance reconcilers). A gate failure refuses — the same fail-closed direction
 as the observation channel — and repeated failures escalate.
 
-**Which filesystem the classifier reads (S-5).** ``classify`` resolves every
-path with ``Path.resolve``/``Path.stat`` in the *host* process, not inside the
-container. The container's path spellings (``/workspace/...``, ``/etc/...``) are
-therefore read as the host sees the same spelling:
+**Which filesystem the classifier reads (S-5).** The decision is made in the
+host process, but the filesystem it reads is the *container's*. ``classify``
+takes a path resolver; when the run carries a sandbox session, ``authorize``
+runs the classification twice:
 
-* a path that exists only in the container is ``UNRESOLVED`` on the host — the
-  fail-closed shape, never a silent allow;
-* a path that exists on the host resolves to the *host's* inode, which may differ
-  from the container's file at the same spelling.
+1. a collecting pass records every path spelling the classifier asks about;
+2. the observation channel resolves that set **inside the container** (one
+   argv-form ``observation_exec``, ``runtime/container_paths.py``);
+3. the deciding pass runs over the container's answers.
 
-This is the documented boundary, not an accident: the decision runs with no
-interpreter shared with the subject, so it cannot ask the container. The
-integration test ``tests/test_apf_classifier_filesystem.py`` runs ``classify``
-against a live container's paths to show the divergence (integration-class;
-skipped when no container runtime is available).
+So a path that exists only in the container resolves to the container's inode
+and classifies correctly, and a path that exists on the host but not in the
+container is ``UNRESOLVED`` — the refusing shape — rather than silently read
+through the host's inode. When no session is attached (unit tests, no
+container), the host view is the fallback and is named as such in the audit.
 
-The decision runs in the host process with no interpreter shared with the
-subject: the same posture the observation channel carries, applied one layer up.
+**The honest limitation.** The fence verifies what the container's filesystem
+*spells* — the resolved path and its inode — not what its *bytes* contain. A
+path can resolve to the container's inode and still hold bytes the ledger never
+saw. The gap-ledger row for content verification stands; this fix closes the
+resolution gap, not the content gap.
 
 This module deliberately imports nothing from the agents SDK so the enforcement
 sequence is testable without one; ``agents/factory.py`` is the thin adapter.
@@ -38,13 +41,21 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from sagaward.core.provenance.classify import classify
+from sagaward.core.provenance.classify import (
+    CollectingPathResolver,
+    UnresolvedPathResolver,
+    classify,
+)
 from sagaward.core.provenance.gate import (
     Action,
     ActionDecision,
     ActionKind,
     ReasonCode,
     decide_action,
+)
+from sagaward.runtime.container_paths import (
+    container_path_resolver,
+    resolve_paths_in_container,
 )
 from sagaward.runtime.provenance_install import install_trigger, snapshot_install_prefixes
 from sagaward.runtime.provenance_reconcile import reconcile_after_exec
@@ -187,13 +198,18 @@ def _emit_funnel() -> None:
         logger.debug("apf_gate audit emit failed", exc_info=True)
 
 
-def _emit_gate_audit(action: Action, decision: ActionDecision, *, rule: str) -> None:
+def _emit_gate_audit(
+    action: Action, decision: ActionDecision, *, rule: str, resolver: str = "host"
+) -> None:
     """One audit line with the A7 detail, plus the emit-only funnel record."""
     detail = {
         "command": action.command,
         "targets": target_spellings(action),
         "degraded": decision.degraded,
         "reason": decision.reason.value,
+        # S-5: which filesystem the decision read. "container" is the subject's
+        # view; "host" is the no-session fallback and is named, never implied.
+        "resolver": resolver,
     }
     if decision.verdict == "DENY":
         logger.warning(
@@ -250,6 +266,30 @@ def _gate_state(context: dict[str, Any]) -> dict[str, Any]:
     return state
 
 
+async def _classify_in_subject_view(
+    context: dict[str, Any], command: str, cwd: str | None
+) -> tuple[Action, str]:
+    """Classify over the container's view when a session is attached (S-5).
+
+    Two passes: the collecting pass records every path the classifier asks
+    about, the observation channel resolves that set inside the container, and
+    the deciding pass runs over the answers. Without a session there is no
+    container to ask, so the host view is the fallback — returned as ``"host"``
+    so the audit names it.
+    """
+    session = context.get("sandbox_session")
+    workdir = Path(cwd) if cwd else None
+    if session is None:
+        return classify(command, workdir), "host"
+    collector = CollectingPathResolver()
+    classify(command, workdir, resolver=collector)
+    probes = await resolve_paths_in_container(session, collector.requests)
+    if probes is None:
+        # The container could not be asked: every path is the refusing shape.
+        return classify(command, workdir, resolver=UnresolvedPathResolver()), "container-unobserved"
+    return classify(command, workdir, resolver=container_path_resolver(probes)), "container"
+
+
 async def authorize(ctx: Any, command: str, cwd: str | None = None) -> GateOutcome:
     """Decide one command. Never raises: a failure of the gate is a refusal."""
     context = getattr(ctx, "context", None)
@@ -277,7 +317,7 @@ async def authorize(ctx: Any, command: str, cwd: str | None = None) -> GateOutco
             ),
         )
     try:
-        action = classify(command, Path(cwd) if cwd else None)
+        action, resolver_mode = await _classify_in_subject_view(context, command, cwd)
         decision = decide_action(action, ledger)
     except Exception as exc:  # noqa: BLE001 - gate failure must refuse, not raise
         failures = int(state.get("consecutive_failures", 0)) + 1
@@ -294,7 +334,7 @@ async def authorize(ctx: Any, command: str, cwd: str | None = None) -> GateOutco
             ),
         )
     rule = rule_id(action, decision)
-    _emit_gate_audit(action, decision, rule=rule)
+    _emit_gate_audit(action, decision, rule=rule, resolver=resolver_mode)
     if decision.verdict == "DENY":
         state["consecutive_failures"] = 0
         state["denied"] = int(state.get("denied", 0)) + 1

@@ -125,8 +125,10 @@ class TestEnforcementPoint:
 
         assert result == "EXECUTED"
         assert invoke.calls == 1
-        # snapshot (pre-exec) + quarantine page + scratch walk + install walk
-        assert len(session.calls) == 4
+        # S-5 path probe + snapshot (pre-exec) + quarantine page + scratch walk + install walk
+        assert len(session.calls) == 5
+        assert session.calls[0][1] is False, "the path probe is argv-form"
+        assert "-c" in session.calls[0][0]
         assert ctx.context["apf_gate"]["allowed"] == 1
 
     def test_a_degraded_decision_is_audited_with_the_command_text(self, caplog: Any) -> None:
@@ -185,12 +187,95 @@ class TestEnforcementPoint:
         asyncio.run(guarded_invoke(ctx, _raw(command), invoke))
 
         assert invoke.calls == 0, "a denied action must not exec"
-        assert session.calls == [], "no observation traffic for a denied action"
+        # S-5: the decision's own path probe is the only observation; no reconcile
+        # traffic follows a denial.
+        assert len(session.calls) == 1
+        assert "-c" in session.calls[0][0]
+
+
+class _ContainerSession:
+    """Answers the S-5 in-container path probe from a spelling -> row map."""
+
+    def __init__(self, rows: dict[str, dict[str, Any]]) -> None:
+        self._rows = rows
+        self.calls: list[tuple[tuple[str, ...], object]] = []
+
+    async def exec(
+        self,
+        *command: str,
+        timeout: float | None = None,  # noqa: ARG002 - mirrors the SDK signature
+        shell: bool | list[str] = True,
+    ) -> _Result:
+        argv = tuple(str(item) for item in command)
+        self.calls.append((argv, shell))
+        requests = json.loads(argv[-1])
+        out: list[dict[str, Any]] = []
+        for index, request in enumerate(requests):
+            row = self._rows.get(request["raw"])
+            if row is None:
+                out.append(
+                    {
+                        "index": index,
+                        "kind": request.get("kind", "path"),
+                        "raw": request["raw"],
+                        "path": request["raw"],
+                        "exists": False,
+                    }
+                )
+            else:
+                out.append({"index": index, "kind": request.get("kind", "path"), **row})
+        return _Result(json.dumps(out).encode())
+
+
+class TestContainerView:
+    """S-5: the decision reads the container's filesystem, not the host's."""
+
+    def test_a_container_only_tainted_path_is_resolved_and_denied(self) -> None:
+        from sagaward.core.provenance.content import engagement_envelope  # noqa: PLC0415
+
+        ledger = ProvenanceLedger()
+        ledger.record("/apf-container-only", engagement_envelope())
+        session = _ContainerSession(
+            {
+                "/apf-container-only": {
+                    "raw": "/apf-container-only",
+                    "path": "/apf-container-only",
+                    "exists": True,
+                    "executable": False,
+                    "is_dir": False,
+                    "is_file": True,
+                    "dev": 41,
+                    "ino": 7,
+                }
+            }
+        )
+        ctx = _Ctx({"provenance": ledger, "sandbox_session": session})
+
+        outcome = asyncio.run(authorize(ctx, "sh /apf-container-only"))
+
+        assert outcome.allowed is False
+        assert outcome.rule == "R2", "the container-resolved tainted operand is denied"
+
+    def test_the_audit_names_the_container_resolver(self, caplog: Any) -> None:
+        session = _ContainerSession({})
+        ctx = _Ctx({"provenance": ProvenanceLedger(), "sandbox_session": session})
+
+        with caplog.at_level(logging.INFO, logger="sagaward.runtime.exec_guard"):
+            asyncio.run(authorize(ctx, "ls -la"))
+
+        assert '"resolver": "container"' in caplog.text
+
+    def test_without_a_session_the_host_fallback_is_named(self, caplog: Any) -> None:
+        ctx = _Ctx({"provenance": ProvenanceLedger()})
+
+        with caplog.at_level(logging.INFO, logger="sagaward.runtime.exec_guard"):
+            asyncio.run(authorize(ctx, "ls -la"))
+
+        assert '"resolver": "host"' in caplog.text
 
 
 class TestStdinGate:
     """S-3: the write_stdin payloads pass the same gate as the exec payloads."""
-
     def test_stdin_reader_extracts_chars_and_skip_classes(self) -> None:
         assert stdin_command_text('{"chars": "ls -la"}') == ("ls -la", None)
         assert stdin_command_text("not json") == (None, "non_json")
