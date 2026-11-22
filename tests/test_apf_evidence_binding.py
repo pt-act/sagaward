@@ -208,5 +208,33 @@ class TestReportToolBinding:
         )
         assert result["success"] is True
         assert result["evidence_class"] == "diff"
-        assert result["severity"] == "high"
+        assert result["severity"] == "critical"
         assert "evidence_note" not in result
+
+    def test_the_spec_mapping_keeps_the_cvss_severity_for_confirmed_evidence(
+        self, state: ReportState
+    ) -> None:
+        """The spec's evidence-class mapping, pinned (S-1).
+
+        ``docs/engine/overview.mdx`` defines the classes as evidence *kinds* and
+        names ``none`` as the class that downgrades a finding; a confirmed class
+        keeps the CVSS-derived severity. The breakdown in ``_args`` is 9.8
+        (AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H), so a diff-backed finding is
+        ``critical`` — the evidence class is not a severity ceiling. This is the
+        same mapping ``test_report_impact_gate.py`` pins for the gate itself.
+        """
+        _record_confirmed(state, "https://example.test/api/users", "diff")
+        result = json.loads(
+            asyncio.run(
+                create_vulnerability_report(
+                    _Ctx(),
+                    **json.loads(
+                        _args(evidence_class="diff", endpoint="https://example.test/api/users")
+                    ),
+                )
+            )
+        )
+        assert result["evidence_class"] == "diff"
+        assert result["severity"] == "critical"
+        assert result["original_severity"] == "critical"
+        assert result["impact_gate_decision"] == "kept_from_cvss"

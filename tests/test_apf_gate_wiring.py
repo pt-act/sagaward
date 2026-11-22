@@ -100,6 +100,10 @@ def _raw(command: str, workdir: str | None = None) -> str:
     return json.dumps(payload)
 
 
+def _stdin(session_id: int, chars: str) -> str:
+    return json.dumps({"session_id": session_id, "chars": chars})
+
+
 class TestEnforcementPoint:
     def test_a_denied_command_never_executes(self, tmp_path: Path, caplog: Any) -> None:
         command = DENY_COMMAND.format(home=_home(tmp_path))
@@ -303,7 +307,8 @@ class TestContainerView:
 
 
 class TestStdinGate:
-    """S-3: the write_stdin payloads pass the same gate as the exec payloads."""
+    """S-3: the stdin payload is classified by the owning process's class."""
+
     def test_stdin_reader_extracts_chars_and_skip_classes(self) -> None:
         assert stdin_command_text('{"chars": "ls -la"}') == ("ls -la", None)
         assert stdin_command_text("not json") == (None, "non_json")
@@ -311,27 +316,111 @@ class TestStdinGate:
         assert stdin_command_text('{"session_id": 1}') == (None, "missing_chars")
         assert stdin_command_text('{"chars": 42}') == (None, "non_string_chars")
 
-    def test_a_tainted_stdin_payload_never_writes(self, tmp_path: Path) -> None:
+    def test_the_owning_bash_session_classifies_the_payload_as_bash(self, tmp_path: Path) -> None:
+        """The owning-bash cell: a bash session's stdin is a shell command."""
         command = DENY_COMMAND.format(home=_home(tmp_path))
-        ctx = _Ctx({"provenance": ProvenanceLedger()})
+        ctx = _Ctx({"provenance": ProvenanceLedger(), "apf_sessions": {7: "bash"}})
+        invoke = _Invoked()
+
+        result = asyncio.run(guarded_stdin_invoke(ctx, _stdin(7, command), invoke))
+
+        assert isinstance(result, str)
+        assert result.startswith("apf-action-gate: DENY")
+        assert "R5\u2033" in result
+        assert invoke.calls == 0
+
+    def test_the_owning_python_session_classifies_the_payload_as_python(self) -> None:
+        """The owning-python cell: python's stdin is python, not bash (R3.8)."""
+        ctx = _Ctx({"provenance": ProvenanceLedger(), "apf_sessions": {7: "python3"}})
         invoke = _Invoked()
 
         result = asyncio.run(
-            guarded_stdin_invoke(ctx, json.dumps({"chars": command}), invoke)
+            guarded_stdin_invoke(ctx, _stdin(7, "import os\nos.system('id')\n"), invoke)
         )
 
         assert isinstance(result, str)
         assert result.startswith("apf-action-gate: DENY")
+        assert "R3.8" in result
+        assert "untreated_interpreter_input" in result
+        assert invoke.calls == 0
+
+    def test_the_owning_non_interpreter_session_degrades_the_payload(
+        self, tmp_path: Path, caplog: Any
+    ) -> None:
+        """The owning-non-interpreter cell: a debugger's stdin is not bash.
+
+        The payload is the same tainted install command the bash cell denies;
+        gdb does not interpret it as a shell command, so it is the unresolved
+        shape — a degraded allow, never a bash parse of text that is not bash.
+        """
+        command = DENY_COMMAND.format(home=_home(tmp_path))
+        ctx = _Ctx({"provenance": ProvenanceLedger(), "apf_sessions": {7: "gdb ./target"}})
+        invoke = _Invoked("WRITTEN")
+
+        with caplog.at_level(logging.INFO, logger="sagaward.runtime.exec_guard"):
+            result = asyncio.run(guarded_stdin_invoke(ctx, _stdin(7, command), invoke))
+
+        assert result == "WRITTEN"
+        assert invoke.calls == 1
+        assert "apf_gate ALLOW R8" in caplog.text
+        assert '"stdin_owner": "unresolved"' in caplog.text
+
+    def test_an_unknown_owner_takes_the_fail_closed_posture(
+        self, tmp_path: Path, caplog: Any
+    ) -> None:
+        """The fail-closed cell: an unknown owner class is unresolved/degraded."""
+        from sagaward.core.provenance.paths import QUARANTINE_DIR  # noqa: PLC0415
+
+        command = DENY_COMMAND.format(home=_home(tmp_path))
+        ctx = _Ctx({"provenance": ProvenanceLedger()})
+        invoke = _Invoked("WRITTEN")
+
+        with caplog.at_level(logging.INFO, logger="sagaward.runtime.exec_guard"):
+            result = asyncio.run(guarded_stdin_invoke(ctx, _stdin(7, command), invoke))
+
+        assert result == "WRITTEN", "an unknown owner degrades, it does not parse as bash"
+        assert invoke.calls == 1
+        assert "apf_gate ALLOW R8" in caplog.text
+        assert '"stdin_owner": "unresolved"' in caplog.text
+
+        # The unresolved shape still gates a quarantine reference (R3.5).
+        caplog.clear()
+        gated = _Invoked()
+        with caplog.at_level(logging.INFO, logger="sagaward.runtime.exec_guard"):
+            refused = asyncio.run(
+                guarded_stdin_invoke(ctx, _stdin(7, f"cat {QUARANTINE_DIR}/x"), gated)
+            )
+        assert isinstance(refused, str)
+        assert "R3.5" in refused
+        assert gated.calls == 0
+
+    def test_the_gate_cell_reads_the_owner_recorded_by_the_exec(self, tmp_path: Path) -> None:
+        """The gate cell: the exec response records the owner the stdin door reads."""
+        ctx = _Ctx({"provenance": ProvenanceLedger()})
+        start = _Invoked(
+            "Chunk ID: abc123\nWall time: 0.1000 seconds\n"
+            "Process running with session ID 7\nOutput:\n"
+        )
+
+        asyncio.run(guarded_invoke(ctx, _raw("bash -c 'sleep 1000'"), start))
+
+        assert ctx.context["apf_sessions"] == {7: "bash -c 'sleep 1000'"}
+
+        command = DENY_COMMAND.format(home=_home(tmp_path))
+        invoke = _Invoked()
+        result = asyncio.run(guarded_stdin_invoke(ctx, _stdin(7, command), invoke))
+
+        assert isinstance(result, str)
+        assert result.startswith("apf-action-gate: DENY")
+        assert "R5\u2033" in result
         assert invoke.calls == 0
 
     def test_an_allowed_stdin_payload_writes(self, tmp_path: Path) -> None:
         command = ALLOW_COMMAND.format(home=_home(tmp_path))
-        ctx = _Ctx({"provenance": ProvenanceLedger()})
+        ctx = _Ctx({"provenance": ProvenanceLedger(), "apf_sessions": {7: "bash"}})
         invoke = _Invoked("WRITTEN")
 
-        result = asyncio.run(
-            guarded_stdin_invoke(ctx, json.dumps({"chars": command}), invoke)
-        )
+        result = asyncio.run(guarded_stdin_invoke(ctx, _stdin(7, command), invoke))
 
         assert result == "WRITTEN"
         assert invoke.calls == 1

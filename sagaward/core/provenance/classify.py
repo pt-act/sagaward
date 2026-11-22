@@ -2716,6 +2716,109 @@ def classify(
         _ACTIVE_RESOLVER.reset(token)
 
 
+# ---------------------------------------------------------------------------
+# S-3: a stdin payload's class is the owning process's interpreter class.
+# ---------------------------------------------------------------------------
+
+STDIN_SHELL = "shell"
+STDIN_CODE = "code"
+STDIN_UNRESOLVED = "unresolved"
+
+
+@dataclass(frozen=True, slots=True)
+class StdinOwnerClass:
+    """The interpreter class of the process that owns a session's stdin (S-3).
+
+    ``kind`` is ``STDIN_SHELL`` (the payload is a shell command), ``STDIN_CODE``
+    (the payload is the interpreter's own language — an unobserved operand,
+    R3.8) or ``STDIN_UNRESOLVED`` (the owner is not an interpreter the gate can
+    parse, or is unknown — the fail-closed posture). ``head`` is the owner's
+    effective head spelling, carried for the audit.
+    """
+
+    kind: str
+    head: str = ""
+
+
+def owner_interpreter_class(owner_command: str | None) -> StdinOwnerClass:
+    """Classify the command that started the session whose stdin is written.
+
+    The stdin payload is not bash by default: it is whatever the owning process
+    interprets. The head is read with the same effective-head model the parses
+    use (``VAR=value`` prefixes stripped, ``exec``/``command``/``builtin`` and
+    ``busybox`` unwrapped), so ``exec bash`` classifies as bash. An owner that
+    is not a declared interpreter — a debugger, a database client, an editor —
+    or that cannot be read at all is ``STDIN_UNRESOLVED``: the gate never parses
+    non-shell text as bash. A wrapper the head model does not unwrap (``env``)
+    takes that same fail-closed posture rather than guessing its operand.
+    """
+    if not owner_command or not owner_command.strip():
+        return StdinOwnerClass(STDIN_UNRESOLVED)
+    first = owner_command.strip().splitlines()[0]
+    tokens = [_strip_quotes(token) for token in re.findall(r"\S+", first)]
+    if not tokens:
+        return StdinOwnerClass(STDIN_UNRESOLVED)
+    _env, argv = _split_assignments(tokens)
+    head, _rest = _head_after_wrappers(argv)
+    if not head:
+        return StdinOwnerClass(STDIN_UNRESOLVED)
+    base = _base_name(head)
+    if base in _SHELL_INTERPRETERS:
+        return StdinOwnerClass(STDIN_SHELL, base)
+    if _is_python(head) or base in _CODE_INTERPRETERS:
+        return StdinOwnerClass(STDIN_CODE, base)
+    return StdinOwnerClass(STDIN_UNRESOLVED, base)
+
+
+def classify_stdin(
+    payload: str,
+    owner_command: str | None,
+    cwd: Path | None = None,
+    *,
+    operator_approved: bool = False,
+    parser: Parser | None = None,
+    module_roots: Sequence[Path] | None = None,
+    resolver: PathResolver | None = None,
+) -> Action:
+    """Classify a ``write_stdin`` payload by the owning process's class (S-3).
+
+    A shell session's stdin is a shell command, so it takes the full parse and
+    the same deny-dominant decision as an exec payload. A code interpreter's
+    stdin (``python``, ``perl``, ``node``, …) is that interpreter's own
+    language: the gate cannot observe it, so it is the unobserved operand R3.8
+    already denies for a bare REPL. Any other owner — a debugger, a database
+    client, an editor — does not interpret its stdin as code the gate can
+    parse, so the payload is the unresolved shape: denied when it references
+    quarantine, degraded otherwise. An unknown owner takes that same
+    fail-closed posture.
+    """
+    owner = owner_interpreter_class(owner_command)
+    if owner.kind == STDIN_SHELL:
+        return classify(
+            payload,
+            cwd,
+            operator_approved=operator_approved,
+            parser=parser,
+            module_roots=module_roots,
+            resolver=resolver,
+        )
+    context = _Context(
+        cwd=cwd,
+        operator_approved=operator_approved,
+        module_roots=tuple(module_roots) if module_roots is not None else _default_module_roots(),
+    )
+    if owner.kind == STDIN_CODE:
+        return Action(
+            kind=ActionKind.EXECUTE,
+            command=payload,
+            interpreter_input=(_unresolved(f"<stdin>:{owner.head}"),),
+            cwd=cwd,
+            references_quarantine=_references_quarantine_text(payload, cwd),
+            operator_approved=operator_approved,
+        )
+    return _unresolved_action(payload, context)
+
+
 __all__ = [
     "BUSYBOX_APPLETS",
     "BUSYBOX_EXEC_WRAPPER_APPLETS",
@@ -2726,6 +2829,9 @@ __all__ = [
     "INDEX_SELECTION_FLAGS",
     "INTERPRETER_CLASS",
     "SHELL_BUILTINS",
+    "STDIN_CODE",
+    "STDIN_SHELL",
+    "STDIN_UNRESOLVED",
     "BashlexParser",
     "CollectingPathResolver",
     "HostPathResolver",
@@ -2735,8 +2841,11 @@ __all__ = [
     "PathRequest",
     "PathResolver",
     "ResolvedPathResolver",
+    "StdinOwnerClass",
     "UnresolvedPathResolver",
     "classify",
+    "classify_stdin",
     "host_of",
     "merged_interpreter_class",
+    "owner_interpreter_class",
 ]

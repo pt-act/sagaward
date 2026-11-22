@@ -36,6 +36,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -43,8 +44,11 @@ from typing import TYPE_CHECKING, Any
 
 from sagaward.core.provenance.classify import (
     CollectingPathResolver,
+    PathResolver,
     UnresolvedPathResolver,
     classify,
+    classify_stdin,
+    owner_interpreter_class,
 )
 from sagaward.core.provenance.gate import (
     Action,
@@ -134,10 +138,12 @@ def exec_workdir(raw_input: str) -> str | None:
 def stdin_command_text(raw_input: str) -> tuple[str | None, str | None]:
     """``(chars, None)`` or ``(None, skip_class)`` for a ``write_stdin`` payload.
 
-    ``write_stdin`` feeds a string to a running shell's stdin; that string is a
-    command in exactly the sense ``exec_command``'s ``command`` is. The payload
-    shape differs (``chars``, not ``command``), so it gets its own reader but the
-    same skip classes and the same authorize path (S-3).
+    ``write_stdin`` feeds a string to a running process's stdin. Whether that
+    string is a command depends on the process that owns the session (S-3): a
+    shell reads it as a command, a python session reads it as python, and a
+    debugger or database client reads it as neither. The payload shape differs
+    from ``exec_command``'s (``chars``, not ``command``), so it gets its own
+    reader but the same skip classes and the same authorize path.
     """
     try:
         parsed = json.loads(raw_input)
@@ -151,6 +157,55 @@ def stdin_command_text(raw_input: str) -> tuple[str | None, str | None]:
     if not isinstance(chars, str):
         return None, "non_string_chars"
     return chars, None
+
+
+def stdin_session_id(raw_input: str) -> int | None:
+    """The ``session_id`` a ``write_stdin`` payload names, when it names one."""
+    try:
+        parsed = json.loads(raw_input)
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(parsed, dict):
+        return None
+    session_id = parsed.get("session_id")
+    if isinstance(session_id, bool) or not isinstance(session_id, int):
+        return None
+    return session_id
+
+
+# The exec tool's response names the session it left running; that response is
+# the only place the session id and the command that started it meet (S-3).
+_SESSION_ID = re.compile(r"Process running with session ID (\d+)")
+
+
+def _record_session(context: dict[str, Any], command: str, result: Any) -> None:
+    """Record which command owns a PTY session (S-3).
+
+    The stdin door needs the owning command to know what language the payload is
+    in. The exec response carries the session id; the command is the one the
+    gate just decided, so the registry is the session's process context.
+    """
+    if not isinstance(result, str):
+        return
+    match = _SESSION_ID.search(result)
+    if match is None:
+        return
+    sessions = context.get("apf_sessions")
+    if not isinstance(sessions, dict):
+        sessions = {}
+        context["apf_sessions"] = sessions
+    sessions[int(match.group(1))] = command
+
+
+def _session_owner(context: dict[str, Any], session_id: int | None) -> str | None:
+    """The command that started ``session_id``, or ``None`` when unknown (S-3)."""
+    if session_id is None:
+        return None
+    sessions = context.get("apf_sessions")
+    if not isinstance(sessions, dict):
+        return None
+    owner = sessions.get(session_id)
+    return owner if isinstance(owner, str) else None
 
 
 def rule_id(action: Action, decision: ActionDecision) -> str:
@@ -200,7 +255,12 @@ def _emit_funnel() -> None:
 
 
 def _emit_gate_audit(
-    action: Action, decision: ActionDecision, *, rule: str, resolver: str = "host"
+    action: Action,
+    decision: ActionDecision,
+    *,
+    rule: str,
+    resolver: str = "host",
+    stdin_owner: str | None = None,
 ) -> None:
     """One audit line with the A7 detail, plus the emit-only funnel record."""
     detail = {
@@ -212,6 +272,10 @@ def _emit_gate_audit(
         # view; "host" is the no-session fallback and is named, never implied.
         "resolver": resolver,
     }
+    if stdin_owner is not None:
+        # S-3: the class the payload was decided under, so the trace shows why a
+        # debugger's input degraded instead of being parsed as bash.
+        detail["stdin_owner"] = stdin_owner
     if decision.verdict == "DENY":
         logger.warning(
             "apf_gate DENY %s (%s) detail=%s",
@@ -268,7 +332,12 @@ def _gate_state(context: dict[str, Any]) -> dict[str, Any]:
 
 
 async def _classify_in_subject_view(
-    context: dict[str, Any], command: str, cwd: str | None
+    context: dict[str, Any],
+    command: str,
+    cwd: str | None,
+    *,
+    stdin: bool = False,
+    owner_command: str | None = None,
 ) -> tuple[Action, str]:
     """Classify over the container's view when a session is attached (S-5).
 
@@ -277,22 +346,43 @@ async def _classify_in_subject_view(
     the deciding pass runs over the answers. Without a session there is no
     container to ask, so the host view is the fallback — returned as ``"host"``
     so the audit names it.
+
+    ``stdin`` selects the S-3 entry point: the payload is classified by the
+    owning process's interpreter class, not as a bash command by default.
     """
     session = context.get("sandbox_session")
     workdir = Path(cwd) if cwd else None
+
+    def run(resolver: PathResolver | None = None) -> Action:
+        if stdin:
+            return classify_stdin(command, owner_command, workdir, resolver=resolver)
+        return classify(command, workdir, resolver=resolver)
+
     if session is None:
-        return classify(command, workdir), "host"
+        return run(), "host"
     collector = CollectingPathResolver()
-    classify(command, workdir, resolver=collector)
+    run(collector)
     probes = await resolve_paths_in_container(session, collector.requests)
     if probes is None:
         # The container could not be asked: every path is the refusing shape.
-        return classify(command, workdir, resolver=UnresolvedPathResolver()), "container-unobserved"
-    return classify(command, workdir, resolver=container_path_resolver(probes)), "container"
+        return run(UnresolvedPathResolver()), "container-unobserved"
+    return run(container_path_resolver(probes)), "container"
 
 
-async def authorize(ctx: Any, command: str, cwd: str | None = None) -> GateOutcome:
-    """Decide one command. Never raises: a failure of the gate is a refusal."""
+async def authorize(
+    ctx: Any,
+    command: str,
+    cwd: str | None = None,
+    *,
+    stdin: bool = False,
+    owner_command: str | None = None,
+) -> GateOutcome:
+    """Decide one command. Never raises: a failure of the gate is a refusal.
+
+    ``stdin`` marks a ``write_stdin`` payload; ``owner_command`` is the command
+    that started the session it is written to (S-3). An unknown owner is the
+    fail-closed posture: the payload is unresolved, never parsed as bash.
+    """
     context = getattr(ctx, "context", None)
     if not isinstance(context, dict):
         return GateOutcome(
@@ -318,7 +408,9 @@ async def authorize(ctx: Any, command: str, cwd: str | None = None) -> GateOutco
             ),
         )
     try:
-        action, resolver_mode = await _classify_in_subject_view(context, command, cwd)
+        action, resolver_mode = await _classify_in_subject_view(
+            context, command, cwd, stdin=stdin, owner_command=owner_command
+        )
         decision = decide_action(action, ledger)
     except Exception as exc:  # noqa: BLE001 - gate failure must refuse, not raise
         failures = int(state.get("consecutive_failures", 0)) + 1
@@ -335,7 +427,13 @@ async def authorize(ctx: Any, command: str, cwd: str | None = None) -> GateOutco
             ),
         )
     rule = rule_id(action, decision)
-    _emit_gate_audit(action, decision, rule=rule, resolver=resolver_mode)
+    _emit_gate_audit(
+        action,
+        decision,
+        rule=rule,
+        resolver=resolver_mode,
+        stdin_owner=owner_interpreter_class(owner_command).kind if stdin else None,
+    )
     if decision.verdict == "DENY":
         state["consecutive_failures"] = 0
         state["denied"] = int(state.get("denied", 0)) + 1
@@ -394,12 +492,16 @@ async def guarded_invoke(
     started_ns = time.time_ns()
     trigger = install_trigger(command) if command is not None else None
     snapshot = None
-    if trigger is not None:
-        context = getattr(ctx, "context", None)
-        session = context.get("sandbox_session") if isinstance(context, dict) else None
+    context = getattr(ctx, "context", None)
+    if trigger is not None and isinstance(context, dict):
+        session = context.get("sandbox_session")
         if session is not None:
             snapshot = await snapshot_install_prefixes(session, trigger)
     result = await invoke()
+    if command is not None and isinstance(context, dict):
+        # S-3: the exec response names the session it left running; record the
+        # command that owns it so the stdin door knows the payload's language.
+        _record_session(context, command, result)
     await reconcile_after_exec(
         ctx,
         command=command,
@@ -420,15 +522,25 @@ async def guarded_stdin_invoke(
 ) -> Any:
     """Authorize a stdin payload, then write it (S-3).
 
-    The write_stdin payloads are commands: they are fed to a running shell's
-    stdin. They pass through the same ``command_or_skip`` skip classes and the
-    same ``authorize`` decision as the exec payloads, so a tainted command cannot
-    reach the shell through the stdin door. A denied payload returns the refusal
+    The payload is classified by the **owning process's** interpreter class, not
+    as a bash command by default: a bash session's stdin is a shell command and
+    takes the full decision, a python session's stdin is python (the unobserved
+    operand R3.8 denies), and a debugger's or database client's stdin is not
+    code the gate can parse, so it is the unresolved shape. An unknown owner
+    takes that same fail-closed posture. A denied payload returns the refusal
     before anything is written.
     """
     chars, skip = stdin_command_text(raw_input)
     if chars is not None:
-        outcome = await authorize(ctx, chars, exec_workdir(raw_input))
+        context = getattr(ctx, "context", None)
+        owner = (
+            _session_owner(context, stdin_session_id(raw_input))
+            if isinstance(context, dict)
+            else None
+        )
+        outcome = await authorize(
+            ctx, chars, exec_workdir(raw_input), stdin=True, owner_command=owner
+        )
         if not outcome.allowed:
             logger.info("%s refused by %s", tool_name, outcome.rule)
             return outcome.refusal
@@ -448,5 +560,6 @@ __all__ = [
     "guarded_stdin_invoke",
     "rule_id",
     "stdin_command_text",
+    "stdin_session_id",
     "target_spellings",
 ]
