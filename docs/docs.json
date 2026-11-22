@@ -25,7 +25,8 @@
             "pages": [
               "engine/overview",
               "engine/detection-primitives",
-              "engine/propose-dispose"
+              "engine/propose-dispose",
+              "engine/verdict-recording-path"
             ]
           },
           {

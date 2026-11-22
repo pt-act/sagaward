@@ -1,0 +1,114 @@
+---
+title: "The Verdict Recording Path"
+description: "How a harness verdict is recorded, what the agent controls, and where the trust boundary sits"
+---
+
+S-1 bound `evidence_class` to the funnel's recorded harness verdicts: a claim with no
+corroborating confirmed verdict is filed as `none` and the impact gate down-grades the finding
+to `info`. This page documents the path that *records* the verdict, so the "unforgeable
+evidence" property is inspectable rather than asserted: which code records the verdict, which
+code binds the evidence class, and which of those the agent can influence.
+
+## The path, in four stages
+
+| Stage | Code | Owner | The agent's influence |
+| --- | --- | --- | --- |
+| 0. Proposal | `propose_vulnerability_investigation` (`sagaward/tools/inventory/tools.py:302`) → `FunnelLog.start_proposal` (`sagaward/report/proposals.py:45`) → `ProposalRecord` (`sagaward/core/proposals/models.py:98`) | Agent supplies the content; the harness records it | Full content: `endpoint_key`, `param_name`, `cwe`, `harnesses_selected`, C1–C8 answers, intervention flags. **No `evidence_class` field exists on the record** — the type cannot express a disposition. |
+| 1. Harness invocation | The disposer tool call (`auth_matrix`, `report_oob_confirmed_candidate`, `run_race_harness`, `run_business_logic_violation_test`) | Agent chooses the experiment | The inputs: `request_id`, `target_key`, `identity_role`, the `precondition` dict, `candidate_id`/`engagement_id`, `flow_name`/`invariant_kind`, `scope_rules`. |
+| 2. Confirmation | The deterministic predicate (below) | Harness | None. The predicate is a pure function of observed responses/artifacts. |
+| 3. Verdict recording | `wrap_harness_tool` (`sagaward/agents/funnel_emit.py:134`) → `emit_harness_run` (`:79`) → `ReportState.record_harness_run` (`sagaward/report/state.py:316`) → `FunnelLog.record_harness_verdict` (`sagaward/report/proposals.py:74`) → `ProposalRecord.add_verdict` (`sagaward/core/proposals/models.py:120`) | Harness | None. The wrapper is installed at agent construction (`sagaward/agents/factory.py:98-105`); it is not a tool the agent can call. |
+| 4. Evidence-class binding | `create_vulnerability_report` (`sagaward/tools/reporting/tool.py:323`) → `ReportState.resolve_evidence_class` (`sagaward/report/state.py:393`) → `_do_create` → `add_vulnerability_report` (`:188`) → `_apply_impact_gate` (`:45`) | Harness (the funnel lookup) | The *claim* only. The effective class is the recorded verdict's. |
+
+### Stage 2 — the confirmation predicates, named
+
+Each disposer decides confirmation with a pure, model-independent function:
+
+- **`diff`** — `diff()` (`sagaward/core/diff/engine.py:203`) → `_flag_candidates` (`:121`).
+  IDOR/BFLA/expired-authorization are boolean predicates over normalized responses
+  (`_is_success`, `_is_denied`, `_is_bfla`, `_is_expired_authorized`); the candidate's
+  `evidence_class` is the literal `"diff"` (`sagaward/core/diff/models.py:57`).
+- **`callback`** — `Correlator.correlate` (`sagaward/core/oob/correlator.py:25`). `confirmed`
+  only for a token this registry minted, in this engagement, inside its window (`:68-76`);
+  unminted hits are `quarantined`, cross-engagement hits `foreign`, late hits `expired`.
+- **`race_result`** — `verdict()` (`sagaward/core/race/verdict.py:12`), a pure function of
+  `commit_count` (`collect_commit_count`, `sagaward/core/race/collector.py:57`); timing is
+  never an input.
+- **Business logic** — `evaluate` (`sagaward/core/logic/gate.py:24`): a typed deterministic
+  artifact must be attached *and* the violation must reproduce on re-run.
+
+The harness files its own report through `_do_create` with a hard-coded class
+(`sagaward/tools/identity/tools.py:235`, `sagaward/tools/oob/tools.py:275`,
+`sagaward/tools/race/tools.py:126`, `sagaward/tools/logic/tools.py:76`). That path is the
+trusted writer and deliberately bypasses the binding; the binding guards the *agent's* report
+tool.
+
+## The agent's control surface
+
+**The agent can control:**
+
+- the proposal's content — which endpoint, which CWE it suspects, which harnesses it intends
+  to run, its C1–C8 self-answers;
+- the harness's inputs — which captured request is replayed, which identity role, the
+  precondition dict, the candidate/engagement ids, the flow and invariant kind;
+- the report's narrative — title, description, impact, technical analysis, PoC, remediation,
+  CVSS breakdown, CVE/CWE, code locations, endpoint, method;
+- the **claimed** `evidence_class`, and the `proposal_id`/`endpoint` it cites when filing.
+
+**The agent cannot control:**
+
+- the confirmation predicate — it is a pure function over observed responses and artifacts;
+- the verdict's recording — the emit wrapper derives `(verdict, evidence_class)` from the
+  harness's *return value* (`sagaward/agents/funnel_emit.py:109-114`), and no tool writes a
+  verdict;
+- the evidence class's binding — `resolve_evidence_class` reads the funnel and returns the
+  recorded class (`sagaward/report/state.py:419-427`);
+- the impact gate — `none` is down-graded to `info` (`sagaward/report/state.py:45-58`).
+
+## The trust boundary
+
+Two seams, both named in code:
+
+1. **The disposer's return value** — `wrap_harness_tool._on_invoke`
+   (`sagaward/agents/funnel_emit.py:150-156`). The agent's arguments go in; the harness's
+   return comes out; the wrapper reads only the return and passes it through unchanged. The
+   agent's control ends at `args_json`.
+2. **The funnel lookup** — `resolve_evidence_class` (`sagaward/report/state.py:393-427`). The
+   claim crosses into the lookup; only recorded verdicts come back. A claim that exceeds the
+   recorded class is replaced by the recorded class and a note is returned.
+
+## The cells
+
+`tests/test_apf_verdict_recording_path.py` pins the path and the boundary:
+
+- the proposal record carries no `evidence_class` and starts with zero verdicts;
+- the confirmation input is the harness's return, not the agent's arguments — an
+  `evidence_class` key in the tool arguments is ignored;
+- the emit wrapper returns the tool output unchanged and records from the return;
+- the verdict's recording has exactly three call sites in the package, none of them a tool;
+- the binding reads the funnel, not the claim (claim exceeds verdict → recorded class; no
+  verdict → `none`);
+- end-to-end: an agent's forged claim is filed as `none`/`info`, and the same claim resolves
+  to the harness's class only after a confirmed harness run is recorded;
+- the report path is link-only — filing a report writes no verdict;
+- the confirmation predicates are pure (`verdict()` and `diff()` over fixed inputs).
+
+## Residuals (named, not fixed)
+
+The guarantee is **"the agent cannot fabricate a verdict"**, not "every report is bound". Four
+gaps are named here for review:
+
+1. **The match key is agent-supplied.** `resolve_evidence_class` trusts the `proposal_id` and
+   `endpoint` the agent passes. An agent can cite another finding's confirmed verdict (by
+   `proposal_id`) or a substring-matching endpoint, and the class is borrowed across findings.
+   The verdict is not fabricated, but it can be mis-attributed. Recommended fix: require the
+   matched proposal's `endpoint_key` to equal the report's endpoint, and record the matched
+   `proposal_id` on the report for inspection.
+2. **The proposal↔verdict join is best-effort.** The emit wrapper correlates by an endpoint
+   extracted from the harness's arguments (`target_key`/`request_id`), which need not equal the
+   proposal's `endpoint_key`; a confirmed run with no match auto-registers a synthetic proposal
+   (`sagaward/report/state.py:371`). A verdict can therefore exist without the agent's
+   proposal, and the binding then corroborates by endpoint.
+3. **The endpoint match is a loose substring test** (`sagaward/report/state.py:447`):
+   `needle in r.endpoint_key or r.endpoint_key in needle`.
+4. **The harness's own report path bypasses the binding by design.** The harness is the trusted
+   writer; the binding only guards the agent's `create_vulnerability_report` tool.
